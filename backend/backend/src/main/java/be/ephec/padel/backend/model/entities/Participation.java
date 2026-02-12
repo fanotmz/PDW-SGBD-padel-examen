@@ -2,6 +2,9 @@ package be.ephec.padel.backend.model.entities;
 
 import jakarta.persistence.*;
 
+import java.util.ArrayList;
+import java.util.List;
+
 @Entity
 @Table(
         name = "participation",
@@ -13,13 +16,20 @@ public class Participation {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne(optional = false)
+
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "match_id", nullable = false)
     private MatchPadel match;
+
 
     @ManyToOne(optional = false)
     @JoinColumn(name = "joueur_matricule", nullable = false)
     private Joueur joueur;
+
+    @OneToMany(mappedBy = "participation",
+            cascade = CascadeType.ALL,
+            orphanRemoval = true)
+    private List<Paiement> paiements = new ArrayList<>();
 
     public Participation() {
     }
@@ -41,11 +51,25 @@ public class Participation {
         return joueur;
     }
 
+    public List<Paiement> getPaiements() {
+        return paiements;
+    }
+
     public void setMatch(MatchPadel match) {
         this.match = match;
     }
 
     public void setJoueur(Joueur joueur) {
         this.joueur = joueur;
+    }
+
+    public void addPaiement(Paiement paiement) {
+        paiements.add(paiement);
+        paiement.setParticipation(this);
+    }
+
+    public void removePaiement(Paiement paiement) {
+        paiements.remove(paiement);
+        paiement.setParticipation(null);
     }
 }

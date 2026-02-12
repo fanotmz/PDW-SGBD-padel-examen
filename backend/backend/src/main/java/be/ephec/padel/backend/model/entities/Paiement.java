@@ -13,7 +13,8 @@ public class Paiement {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne(optional = false)
+
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "participation_id", nullable = false)
     private Participation participation;
 

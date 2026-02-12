@@ -3,6 +3,9 @@ package be.ephec.padel.backend.model.entities;
 import be.ephec.padel.backend.model.enums.TypeJoueur;
 import jakarta.persistence.*;
 
+import java.util.ArrayList;
+import java.util.List;
+
 @Entity
 @Table(name = "joueur")
 public class Joueur {
@@ -17,6 +20,17 @@ public class Joueur {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private TypeJoueur type;
+
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "joueur_matricule", nullable = false)
+    private Joueur joueur;
+
+
+    @OneToMany(mappedBy = "joueur")
+    private List<Participation> participations = new ArrayList<>();
+
+    @OneToMany(mappedBy = "joueur")
+    private List<MouvementSolde> mouvements = new ArrayList<>();
 
     public Joueur() {
     }
@@ -37,6 +51,14 @@ public class Joueur {
 
     public TypeJoueur getType() {
         return type;
+    }
+
+    public List<Participation> getParticipations() {
+        return participations;
+    }
+
+    public List<MouvementSolde> getMouvements() {
+        return mouvements;
     }
 
     public void setNom(String nom) {
