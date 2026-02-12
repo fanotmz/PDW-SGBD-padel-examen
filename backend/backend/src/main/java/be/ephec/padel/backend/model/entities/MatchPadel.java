@@ -4,6 +4,8 @@ import be.ephec.padel.backend.model.enums.MatchVisibilite;
 import jakarta.persistence.*;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "match_padel")
@@ -13,11 +15,11 @@ public class MatchPadel {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne(optional = false)
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "terrain_id", nullable = false)
     private Terrain terrain;
 
-    @ManyToOne(optional = false)
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "organisateur_matricule", nullable = false)
     private Joueur organisateur;
 
@@ -28,10 +30,18 @@ public class MatchPadel {
     @Column(nullable = false)
     private MatchVisibilite visibilite;
 
+    @OneToMany(mappedBy = "match",
+            cascade = CascadeType.ALL,
+            orphanRemoval = true)
+    private List<Participation> participations = new ArrayList<>();
+
     public MatchPadel() {
     }
 
-    public MatchPadel(Terrain terrain, Joueur organisateur, LocalDateTime dateDebut, MatchVisibilite visibilite) {
+    public MatchPadel(Terrain terrain,
+                      Joueur organisateur,
+                      LocalDateTime dateDebut,
+                      MatchVisibilite visibilite) {
         this.terrain = terrain;
         this.organisateur = organisateur;
         this.dateDebut = dateDebut;
@@ -58,6 +68,10 @@ public class MatchPadel {
         return visibilite;
     }
 
+    public List<Participation> getParticipations() {
+        return participations;
+    }
+
     public void setTerrain(Terrain terrain) {
         this.terrain = terrain;
     }
@@ -73,4 +87,15 @@ public class MatchPadel {
     public void setVisibilite(MatchVisibilite visibilite) {
         this.visibilite = visibilite;
     }
+
+    public void addParticipation(Participation participation) {
+        participations.add(participation);
+        participation.setMatch(this);
+    }
+
+    public void removeParticipation(Participation participation) {
+        participations.remove(participation);
+        participation.setMatch(null);
+    }
 }
+

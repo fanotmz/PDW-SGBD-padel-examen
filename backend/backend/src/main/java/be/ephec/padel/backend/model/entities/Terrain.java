@@ -13,9 +13,10 @@ public class Terrain {
     @Column(nullable = false)
     private String nom;
 
-    @ManyToOne(optional = false)
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "site_id", nullable = false)
     private Site site;
+
 
     public Terrain() {
     }

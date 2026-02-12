@@ -2,6 +2,9 @@ package be.ephec.padel.backend.model.entities;
 
 import jakarta.persistence.*;
 
+import java.util.ArrayList;
+import java.util.List;
+
 @Entity
 @Table(name = "site")
 public class Site {
@@ -16,6 +19,10 @@ public class Site {
     @Column(nullable = false)
     private String ville;
 
+    @OneToMany(mappedBy = "site",
+            cascade = CascadeType.ALL,
+            orphanRemoval = true)
+    private List<Terrain> terrains = new ArrayList<>();
 
     public Site() {
     }
@@ -37,11 +44,25 @@ public class Site {
         return ville;
     }
 
+    public List<Terrain> getTerrains() {
+        return terrains;
+    }
+
     public void setNom(String nom) {
         this.nom = nom;
     }
 
     public void setVille(String ville) {
         this.ville = ville;
+    }
+
+    public void addTerrain(Terrain terrain) {
+        terrains.add(terrain);
+        terrain.setSite(this);
+    }
+
+    public void removeTerrain(Terrain terrain) {
+        terrains.remove(terrain);
+        terrain.setSite(null);
     }
 }
