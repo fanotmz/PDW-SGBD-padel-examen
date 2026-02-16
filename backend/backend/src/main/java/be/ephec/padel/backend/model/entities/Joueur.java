@@ -3,6 +3,7 @@ package be.ephec.padel.backend.model.entities;
 import be.ephec.padel.backend.model.enums.TypeJoueur;
 import jakarta.persistence.*;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -21,10 +22,12 @@ public class Joueur {
     @Column(nullable = false)
     private TypeJoueur type;
 
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "joueur_matricule", nullable = false)
-    private Joueur joueur;
+    @Column(nullable = false, precision = 12, scale = 2)
+    private BigDecimal solde = BigDecimal.ZERO;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "site_id")
+    private Site site;
 
     @OneToMany(mappedBy = "joueur")
     private List<Participation> participations = new ArrayList<>();
@@ -39,6 +42,15 @@ public class Joueur {
         this.matricule = matricule;
         this.nom = nom;
         this.type = type;
+        this.solde = BigDecimal.ZERO;
+    }
+
+    public Joueur(String matricule, String nom, TypeJoueur type, Site site) {
+        this.matricule = matricule;
+        this.nom = nom;
+        this.type = type;
+        this.site = site;
+        this.solde = BigDecimal.ZERO;
     }
 
     public String getMatricule() {
@@ -51,6 +63,14 @@ public class Joueur {
 
     public TypeJoueur getType() {
         return type;
+    }
+
+    public BigDecimal getSolde() {
+        return solde;
+    }
+
+    public Site getSite() {
+        return site;
     }
 
     public List<Participation> getParticipations() {
@@ -67,5 +87,13 @@ public class Joueur {
 
     public void setType(TypeJoueur type) {
         this.type = type;
+    }
+
+    public void setSolde(BigDecimal solde) {
+        this.solde = (solde == null) ? BigDecimal.ZERO : solde;
+    }
+
+    public void setSite(Site site) {
+        this.site = site;
     }
 }
