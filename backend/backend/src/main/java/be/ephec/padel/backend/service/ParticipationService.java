@@ -1,5 +1,6 @@
 package be.ephec.padel.backend.service;
 
+import be.ephec.padel.backend.common.Tarifs;
 import be.ephec.padel.backend.exception.BusinessException;
 import be.ephec.padel.backend.exception.NotFoundException;
 import be.ephec.padel.backend.model.entities.Joueur;
@@ -18,7 +19,7 @@ import java.math.BigDecimal;
 @Transactional
 public class ParticipationService {
 
-    private static final BigDecimal PART_JOUEUR = new BigDecimal("15.00");
+    private static final BigDecimal PART_JOUEUR = Tarifs.PART_PAR_JOUEUR;
 
     private final ParticipationRepository participationRepository;
     private final MatchPadelRepository matchPadelRepository;
@@ -38,14 +39,15 @@ public class ParticipationService {
         this.paiementService = paiementService;
     }
 
-
-
     public Participation rejoindreEtPayerMatchPublic(Long matchId, String joueurMatricule, BigDecimal montant) {
         MatchPadel match = getMatchOrThrow(matchId);
 
         if (match.getVisibilite() != MatchVisibilite.PUBLIC) {
             throw new BusinessException("Match privé : seule l'organisation peut ajouter des joueurs.");
         }
+
+        // ✅ En match PUBLIC : paiement obligatoire et complet (= 15.00)
+        BigDecimal m = validerMontantPublic(montant);
 
         Joueur joueur = getJoueurOrThrow(joueurMatricule);
 
@@ -54,8 +56,9 @@ public class ParticipationService {
 
         Participation saved = participationRepository.save(new Participation(match, joueur));
 
+        // dette puis paiement immédiat (validation au paiement)
         soldeService.debiter(joueurMatricule, PART_JOUEUR);
-        paiementService.payerParticipation(saved.getId(), montant);
+        paiementService.payerParticipation(saved.getId(), m);
 
         return saved;
     }
@@ -81,9 +84,21 @@ public class ParticipationService {
 
         Participation saved = participationRepository.save(new Participation(match, joueurAAjouter));
 
+        // en privé : inscription => dette (paiement ultérieur via endpoint paiement)
         soldeService.debiter(joueurMatriculeAAjouter, PART_JOUEUR);
 
         return saved;
+    }
+
+    private BigDecimal validerMontantPublic(BigDecimal montant) {
+        if (montant == null) throw new BusinessException("Montant obligatoire");
+        if (montant.signum() <= 0) throw new BusinessException("Montant invalide");
+
+        BigDecimal m = montant.setScale(2, BigDecimal.ROUND_HALF_UP);
+        if (m.compareTo(PART_JOUEUR) != 0) {
+            throw new BusinessException("Pour un match public, le paiement doit être de " + PART_JOUEUR);
+        }
+        return m;
     }
 
     private MatchPadel getMatchOrThrow(Long matchId) {

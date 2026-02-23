@@ -1,5 +1,6 @@
 package be.ephec.padel.backend.service;
 
+import be.ephec.padel.backend.common.Tarifs;
 import be.ephec.padel.backend.exception.BusinessException;
 import be.ephec.padel.backend.exception.NotFoundException;
 import be.ephec.padel.backend.model.entities.Paiement;
@@ -17,8 +18,7 @@ import java.time.LocalDateTime;
 @Transactional
 public class PaiementService {
 
-    private static final BigDecimal PRIX_MATCH = new BigDecimal("60.00");
-    private static final BigDecimal PART_JOUEUR = PRIX_MATCH.divide(new BigDecimal("4"), 2, RoundingMode.HALF_UP); // 15.00
+    private static final BigDecimal PART_JOUEUR = Tarifs.PART_PAR_JOUEUR;
 
     private final PaiementRepository paiementRepository;
     private final ParticipationRepository participationRepository;
@@ -38,7 +38,6 @@ public class PaiementService {
 
         BigDecimal m = validerMontant(montant);
 
-        // Total déjà payé pour cette participation (0 si aucun paiement)
         BigDecimal dejaPaye = paiementRepository.sumMontantByParticipationId(participationId);
         if (dejaPaye == null) dejaPaye = BigDecimal.ZERO;
         dejaPaye = dejaPaye.setScale(2, RoundingMode.HALF_UP);
@@ -52,19 +51,14 @@ public class PaiementService {
             throw new BusinessException("Paiement trop élevé. Reste à payer = " + reste);
         }
 
-        // 1) Enregistrer le paiement (trace)
         Paiement saved = paiementRepository.save(new Paiement(participation, m, LocalDateTime.now()));
 
-        // 2) Réduire la dette du joueur
         String matricule = participation.getJoueur().getMatricule();
         soldeService.crediter(matricule, m);
 
         return saved;
     }
 
-    /**
-     * Paiement en donnant matchId + matricule.
-     */
     public Paiement payerPourMatch(Long matchId, String joueurMatricule, BigDecimal montant) {
         Participation participation = participationRepository
                 .findByMatch_IdAndJoueur_Matricule(matchId, joueurMatricule)
