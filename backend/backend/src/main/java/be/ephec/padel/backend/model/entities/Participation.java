@@ -21,8 +21,7 @@ public class Participation {
     @JoinColumn(name = "match_id", nullable = false)
     private MatchPadel match;
 
-
-    @ManyToOne(optional = false)
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "joueur_matricule", nullable = false)
     private Joueur joueur;
 
