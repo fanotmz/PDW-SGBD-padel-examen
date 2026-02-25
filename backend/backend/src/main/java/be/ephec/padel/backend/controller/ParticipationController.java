@@ -9,6 +9,7 @@ import be.ephec.padel.backend.service.ParticipationService;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import java.net.URI;
 
 @RestController
 @RequestMapping("/api/v1/matchs")
@@ -31,7 +32,8 @@ public class ParticipationController {
                 req.getMontant()
         );
 
-        return ResponseEntity.ok(ParticipationMapper.toDto(participation));
+        URI location = URI.create("/api/v1/matchs/" + matchId);
+        return ResponseEntity.created(location).body(ParticipationMapper.toDto(participation));
     }
 
     @PostMapping("/{matchId}/participants/prive")
@@ -45,6 +47,7 @@ public class ParticipationController {
                 req.getJoueurMatriculeAAjouter()
         );
 
-        return ResponseEntity.ok(ParticipationMapper.toDto(participation));
+        URI location = URI.create("/api/v1/matchs/" + matchId);
+        return ResponseEntity.created(location).body(ParticipationMapper.toDto(participation));
     }
 }

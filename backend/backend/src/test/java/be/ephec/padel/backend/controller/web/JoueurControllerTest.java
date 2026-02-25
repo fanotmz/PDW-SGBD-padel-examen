@@ -1,6 +1,7 @@
-package be.ephec.padel.backend.controller;
+package be.ephec.padel.backend.controller.web;
 
 import be.ephec.padel.backend.config.SecurityConfig;
+import be.ephec.padel.backend.controller.JoueurController;
 import be.ephec.padel.backend.error.ApiExceptionHandler;
 import be.ephec.padel.backend.exception.NotFoundException;
 import be.ephec.padel.backend.model.entities.Joueur;

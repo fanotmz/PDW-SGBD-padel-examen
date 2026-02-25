@@ -1,6 +1,7 @@
-package be.ephec.padel.backend.controller;
+package be.ephec.padel.backend.controller.web;
 
 import be.ephec.padel.backend.config.SecurityConfig;
+import be.ephec.padel.backend.controller.ParticipationController;
 import be.ephec.padel.backend.error.ApiExceptionHandler;
 import be.ephec.padel.backend.exception.BusinessException;
 import be.ephec.padel.backend.exception.NotFoundException;
@@ -22,6 +23,7 @@ import java.math.BigDecimal;
 
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
@@ -54,7 +56,7 @@ class ParticipationControllerTest {
     // -------------------------
 
     @Test
-    void rejoindrePublic_ok_200_et_body() throws Exception {
+    void rejoindrePublic_ok_201_et_body_et_location() throws Exception {
         long matchId = 10L;
         String matricule = "J001";
         Participation saved = participation(77L, matchId, matricule);
@@ -63,11 +65,13 @@ class ParticipationControllerTest {
                 .thenReturn(saved);
 
         mvc.perform(post("/api/v1/matchs/{matchId}/participants/public", matchId)
+                        .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 { "joueurMatricule": "J001", "montant": 15.00 }
                                 """))
-                .andExpect(status().isOk())
+                .andExpect(status().isCreated())
+                .andExpect(header().string("Location", "/api/v1/matchs/" + matchId))
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.id").value(77))
                 .andExpect(jsonPath("$.matchId").value((int) matchId))
@@ -79,6 +83,7 @@ class ParticipationControllerTest {
         long matchId = 10L;
 
         mvc.perform(post("/api/v1/matchs/{matchId}/participants/public", matchId)
+                        .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{}"))
                 .andExpect(status().isBadRequest())
@@ -93,6 +98,7 @@ class ParticipationControllerTest {
                 .thenThrow(new NotFoundException("Match introuvable"));
 
         mvc.perform(post("/api/v1/matchs/{matchId}/participants/public", matchId)
+                        .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 { "joueurMatricule": "J001", "montant": 15.00 }
@@ -110,6 +116,7 @@ class ParticipationControllerTest {
                 .thenThrow(new BusinessException("Match déjà complet"));
 
         mvc.perform(post("/api/v1/matchs/{matchId}/participants/public", matchId)
+                        .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 { "joueurMatricule": "J001", "montant": 15.00 }
@@ -124,7 +131,7 @@ class ParticipationControllerTest {
     // -------------------------
 
     @Test
-    void ajouterPrive_ok_200_et_body() throws Exception {
+    void ajouterPrive_ok_201_et_body_et_location() throws Exception {
         long matchId = 11L;
         Participation saved = participation(88L, matchId, "J009");
 
@@ -132,11 +139,13 @@ class ParticipationControllerTest {
                 .thenReturn(saved);
 
         mvc.perform(post("/api/v1/matchs/{matchId}/participants/prive", matchId)
+                        .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 { "organisateurMatricule": "ORG1", "joueurMatriculeAAjouter": "J009" }
                                 """))
-                .andExpect(status().isOk())
+                .andExpect(status().isCreated())
+                .andExpect(header().string("Location", "/api/v1/matchs/" + matchId))
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.id").value(88))
                 .andExpect(jsonPath("$.matchId").value((int) matchId))
@@ -148,6 +157,7 @@ class ParticipationControllerTest {
         long matchId = 11L;
 
         mvc.perform(post("/api/v1/matchs/{matchId}/participants/prive", matchId)
+                        .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{}"))
                 .andExpect(status().isBadRequest())
@@ -162,6 +172,7 @@ class ParticipationControllerTest {
                 .thenThrow(new NotFoundException("Joueur introuvable"));
 
         mvc.perform(post("/api/v1/matchs/{matchId}/participants/prive", matchId)
+                        .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 { "organisateurMatricule": "ORG1", "joueurMatriculeAAjouter": "J009" }
@@ -179,6 +190,7 @@ class ParticipationControllerTest {
                 .thenThrow(new BusinessException("Seul l'organisateur peut ajouter des joueurs à ce match."));
 
         mvc.perform(post("/api/v1/matchs/{matchId}/participants/prive", matchId)
+                        .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 { "organisateurMatricule": "ORG1", "joueurMatriculeAAjouter": "J009" }

@@ -1,6 +1,7 @@
-package be.ephec.padel.backend.controller;
+package be.ephec.padel.backend.controller.security;
 
 import be.ephec.padel.backend.config.SecurityConfig;
+import be.ephec.padel.backend.controller.AdminController;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
