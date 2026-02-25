@@ -99,6 +99,7 @@ class MatchPadelServiceTest {
         assertEquals(new BigDecimal("20.00"), dto.getMontantPaye());
         assertEquals(Tarifs.PRIX_MATCH.subtract(new BigDecimal("20.00")), dto.getResteAPayer());
     }
+
     @Test
     void getMatchDto_montantPayeNull_considererZero() {
         MatchPadel m = mock(MatchPadel.class);
@@ -322,6 +323,67 @@ class MatchPadelServiceTest {
                 service.creerMatch(1L, "S0001", date, MatchVisibilite.PUBLIC));
     }
 
+    @Test
+    void creerMatch_refuse_si_terrain_occupe_overlap() {
+        Terrain t = mock(Terrain.class);
+        when(terrainRepo.findById(1L)).thenReturn(Optional.of(t));
+
+        Joueur orga = mock(Joueur.class);
+        when(orga.getType()).thenReturn(TypeJoueur.GLOBAL);
+        when(orga.getSolde()).thenReturn(BigDecimal.ZERO);
+        when(joueurRepo.findById("G0001")).thenReturn(Optional.of(orga));
+
+        LocalDateTime date = LocalDateTime.now().plusDays(2);
+
+        MatchPadel existing = mock(MatchPadel.class);
+        when(existing.getDateDebut()).thenReturn(date.minusMinutes(30));
+
+        when(matchRepo.findByTerrainIdAndDateDebutBetween(eq(1L), any(LocalDateTime.class), any(LocalDateTime.class)))
+                .thenReturn(List.of(existing));
+
+        assertThrows(BusinessException.class, () ->
+                service.creerMatch(1L, "G0001", date, MatchVisibilite.PUBLIC));
+
+        verify(matchRepo, never()).save(any());
+        verify(participationRepo, never()).save(any());
+        verify(soldeService, never()).debiter(anyString(), any());
+        verify(paiementService, never()).payerParticipation(anyLong(), any());
+    }
+
+    @Test
+    void creerMatch_ok_si_match_existant_finit_juste_a_la_limite_105min() {
+        Terrain t = mock(Terrain.class);
+        when(terrainRepo.findById(1L)).thenReturn(Optional.of(t));
+
+        Joueur orga = mock(Joueur.class);
+        when(orga.getType()).thenReturn(TypeJoueur.GLOBAL);
+        when(orga.getSolde()).thenReturn(BigDecimal.ZERO);
+        when(joueurRepo.findById("G0001")).thenReturn(Optional.of(orga));
+
+        LocalDateTime date = LocalDateTime.now().plusDays(2);
+
+        MatchPadel existing = mock(MatchPadel.class);
+        when(existing.getDateDebut()).thenReturn(date.minusMinutes(105)); // pile à la limite
+
+        when(matchRepo.findByTerrainIdAndDateDebutBetween(eq(1L), any(LocalDateTime.class), any(LocalDateTime.class)))
+                .thenReturn(List.of(existing));
+
+        MatchPadel savedMatch = mock(MatchPadel.class);
+        when(matchRepo.save(any(MatchPadel.class))).thenReturn(savedMatch);
+
+        Participation p = mock(Participation.class);
+        when(p.getId()).thenReturn(123L);
+        when(participationRepo.save(any(Participation.class))).thenReturn(p);
+
+        MatchPadel res = service.creerMatch(1L, "G0001", date, MatchVisibilite.PUBLIC);
+        assertSame(savedMatch, res);
+
+        verify(matchRepo).save(any(MatchPadel.class));
+        verify(participationRepo).save(any(Participation.class));
+        verify(soldeService).debiter(eq("G0001"), eq(Tarifs.PART_PAR_JOUEUR));
+        verify(paiementService).payerParticipation(eq(123L), eq(Tarifs.PART_PAR_JOUEUR));
+    }
+
     // ----------------
     // creerMatch happy paths
     // ----------------
@@ -337,6 +399,9 @@ class MatchPadelServiceTest {
         when(orga.getType()).thenReturn(TypeJoueur.GLOBAL);
         when(orga.getSolde()).thenReturn(BigDecimal.ZERO);
         when(joueurRepo.findById("G0001")).thenReturn(Optional.of(orga));
+
+        when(matchRepo.findByTerrainIdAndDateDebutBetween(eq(1L), any(LocalDateTime.class), any(LocalDateTime.class)))
+                .thenReturn(List.of());
 
         // save match
         MatchPadel savedMatch = mock(MatchPadel.class);
