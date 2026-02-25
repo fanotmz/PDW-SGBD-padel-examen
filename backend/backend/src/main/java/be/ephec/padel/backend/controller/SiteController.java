@@ -45,8 +45,4 @@ public class SiteController {
                 .body(SiteMapper.toDto(created));
     }
 
-    @GetMapping("/_whoami")
-    public String whoami() {
-        return "SITE_CONTROLLER_V2";
-    }
 }

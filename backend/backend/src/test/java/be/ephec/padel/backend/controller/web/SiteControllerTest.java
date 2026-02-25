@@ -1,6 +1,7 @@
-package be.ephec.padel.backend.controller;
+package be.ephec.padel.backend.controller.web;
 
 import be.ephec.padel.backend.config.SecurityConfig;
+import be.ephec.padel.backend.controller.SiteController;
 import be.ephec.padel.backend.error.ApiExceptionHandler;
 import be.ephec.padel.backend.exception.BusinessException;
 import be.ephec.padel.backend.exception.NotFoundException;
@@ -16,6 +17,7 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -29,20 +31,6 @@ class SiteControllerTest {
 
     @MockitoBean
     SiteService siteService;
-
-    private Site site(Long id, String nom, String ville) {
-        Site s = new Site(nom, ville);
-        // pas de setter id -> on mock l'objet si besoin
-        // mais ici on va plutôt utiliser Mockito pour getId()
-        return s;
-    }
-
-    @Test
-    void whoami_ok_200() throws Exception {
-        mvc.perform(get("/api/v1/sites/_whoami"))
-                .andExpect(status().isOk())
-                .andExpect(content().string("SITE_CONTROLLER_V2"));
-    }
 
     @Test
     void list_ok_200_jsonArray() throws Exception {
@@ -106,6 +94,7 @@ class SiteControllerTest {
         when(siteService.creerSite(anyString(), anyString())).thenReturn(created);
 
         mvc.perform(post("/api/v1/sites")
+                        .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {
@@ -124,6 +113,7 @@ class SiteControllerTest {
     @Test
     void create_validation_400_nom_blank() throws Exception {
         mvc.perform(post("/api/v1/sites")
+                        .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {
@@ -142,6 +132,7 @@ class SiteControllerTest {
                 .thenThrow(new BusinessException("Nom de site déjà utilisé"));
 
         mvc.perform(post("/api/v1/sites")
+                        .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {

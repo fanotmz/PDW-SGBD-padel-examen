@@ -1,6 +1,7 @@
-package be.ephec.padel.backend.controller;
+package be.ephec.padel.backend.controller.web;
 
 import be.ephec.padel.backend.config.SecurityConfig;
+import be.ephec.padel.backend.controller.PaiementController;
 import be.ephec.padel.backend.error.ApiExceptionHandler;
 import be.ephec.padel.backend.exception.BusinessException;
 import be.ephec.padel.backend.exception.NotFoundException;
