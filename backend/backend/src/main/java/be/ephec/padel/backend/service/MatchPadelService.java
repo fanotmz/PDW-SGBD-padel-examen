@@ -20,10 +20,15 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Service
 @Transactional
 public class MatchPadelService {
+
+    private static final long DUREE_MATCH_MIN = 90;
+    private static final long BUFFER_MIN = 15;
+    private static final long SLOT_MIN = DUREE_MATCH_MIN + BUFFER_MIN; // 105
 
     private final MatchPadelRepository matchPadelRepository;
     private final TerrainRepository terrainRepository;
@@ -114,12 +119,18 @@ public class MatchPadelService {
         Joueur organisateur = joueurRepository.findById(organisateurMatricule)
                 .orElseThrow(() -> new NotFoundException("Joueur introuvable"));
 
+        // Règle dette : dette si solde > 0
         if (organisateur.getSolde() != null && organisateur.getSolde().signum() > 0) {
             throw new BusinessException("Réservation impossible : dette en cours (" + organisateur.getSolde() + ").");
         }
 
+        // Fenêtres GLOBAL/SITE/LIBRE + règles site
         verifierDroitReservation(organisateur, terrain, dateDebut, now);
 
+        // Issue 14 : overlap terrain (durée match + buffer)
+        verifierTerrainDisponible(terrainId, dateDebut);
+
+        // Création match
         MatchPadel match = new MatchPadel(terrain, organisateur, dateDebut, visibilite);
         MatchPadel saved = matchPadelRepository.save(match);
 
@@ -134,6 +145,32 @@ public class MatchPadelService {
         return saved;
     }
 
+    private void verifierTerrainDisponible(Long terrainId, LocalDateTime newStart) {
+        if (terrainId == null) throw new BusinessException("Terrain obligatoire");
+        if (newStart == null) throw new BusinessException("Date début obligatoire");
+
+        LocalDateTime from = newStart.minusMinutes(SLOT_MIN);
+        LocalDateTime to = newStart.plusMinutes(SLOT_MIN);
+
+        List<MatchPadel> candidats =
+                matchPadelRepository.findByTerrainIdAndDateDebutBetween(terrainId, from, to);
+
+        LocalDateTime newEndBuffer = newStart.plusMinutes(SLOT_MIN);
+
+        for (MatchPadel existing : candidats) {
+            LocalDateTime existingStart = existing.getDateDebut();
+            if (existingStart == null) continue;
+
+            LocalDateTime existingEndBuffer = existingStart.plusMinutes(SLOT_MIN);
+
+            boolean overlap = existingStart.isBefore(newEndBuffer) && newStart.isBefore(existingEndBuffer);
+            if (overlap) {
+                throw new BusinessException(
+                        "Terrain indisponible : un match est déjà prévu sur ce terrain (1h30 + 15 minutes de battement)."
+                );
+            }
+        }
+    }
     private void verifierDroitReservation(Joueur orga,
                                           Terrain terrain,
                                           LocalDateTime dateDebut,
@@ -154,6 +191,10 @@ public class MatchPadelService {
                 if (orga.getSite() == null) {
                     throw new BusinessException("Joueur SITE sans site associé.");
                 }
+                if (terrain.getSite() == null) {
+                    throw new BusinessException("Terrain sans site associé.");
+                }
+
                 Long siteJoueur = orga.getSite().getId();
                 Long siteTerrain = terrain.getSite().getId();
 

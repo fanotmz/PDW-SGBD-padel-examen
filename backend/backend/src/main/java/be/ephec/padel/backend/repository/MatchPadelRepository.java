@@ -10,18 +10,37 @@ import java.util.List;
 import java.util.Optional;
 
 public interface MatchPadelRepository extends JpaRepository<MatchPadel, Long> {
-    List<MatchPadel> findByTerrainId(Long terrainId);
+
+    @Query("select m from MatchPadel m where m.terrain.id = :terrainId")
+    List<MatchPadel> findByTerrainId(@Param("terrainId") Long terrainId);
     List<MatchPadel> findByDateDebutBetween(LocalDateTime start, LocalDateTime end);
+    @Query("""
+        select m
+        from MatchPadel m
+        where m.terrain.id = :terrainId
+          and m.dateDebut between :start and :end
+        """)
+    List<MatchPadel> findByTerrainIdAndDateDebutBetween(@Param("terrainId") Long terrainId,
+                                                        @Param("start") LocalDateTime start,
+                                                        @Param("end") LocalDateTime end);
+    @Query("""
+        select (count(m) > 0)
+        from MatchPadel m
+        where m.terrain.id = :terrainId
+          and m.dateDebut between :start and :end
+        """)
+    boolean existsByTerrainIdAndDateDebutBetween(@Param("terrainId") Long terrainId,
+                                                 @Param("start") LocalDateTime start,
+                                                 @Param("end") LocalDateTime end);
 
     @Query("""
-select distinct m
-from MatchPadel m
-join fetch m.terrain t
-join fetch t.site
-join fetch m.organisateur o
-left join fetch m.participations p
-where m.id = :id
-""")
+        select distinct m
+        from MatchPadel m
+        join fetch m.terrain t
+        join fetch t.site
+        join fetch m.organisateur o
+        left join fetch m.participations p
+        where m.id = :id
+        """)
     Optional<MatchPadel> findByIdWithDetails(@Param("id") Long id);
 }
-
