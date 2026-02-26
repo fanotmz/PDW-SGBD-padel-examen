@@ -1,7 +1,9 @@
 package be.ephec.padel.backend.repository;
 
 import be.ephec.padel.backend.model.entities.MatchPadel;
+import jakarta.persistence.LockModeType;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -32,7 +34,6 @@ public interface MatchPadelRepository extends JpaRepository<MatchPadel, Long> {
     boolean existsByTerrainIdAndDateDebutBetween(@Param("terrainId") Long terrainId,
                                                  @Param("start") LocalDateTime start,
                                                  @Param("end") LocalDateTime end);
-
     @Query("""
         select distinct m
         from MatchPadel m
@@ -43,4 +44,13 @@ public interface MatchPadelRepository extends JpaRepository<MatchPadel, Long> {
         where m.id = :id
         """)
     Optional<MatchPadel> findByIdWithDetails(@Param("id") Long id);
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("""
+        select m from MatchPadel m
+        left join fetch m.participations p
+        left join fetch p.joueur
+        where m.id = :id
+    """)
+    Optional<MatchPadel> findByIdForUpdateWithParticipations(@Param("id") Long id);
 }

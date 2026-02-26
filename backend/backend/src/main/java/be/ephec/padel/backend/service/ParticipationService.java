@@ -14,6 +14,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 
 @Service
 @Transactional
@@ -40,23 +41,27 @@ public class ParticipationService {
     }
 
     public Participation rejoindreEtPayerMatchPublic(Long matchId, String joueurMatricule, BigDecimal montant) {
-        MatchPadel match = getMatchOrThrow(matchId);
+
+        MatchPadel match = matchPadelRepository.findByIdForUpdateWithParticipations(matchId)
+                .orElseThrow(() -> new NotFoundException("Match introuvable"));
 
         if (match.getVisibilite() != MatchVisibilite.PUBLIC) {
             throw new BusinessException("Match privé : seule l'organisation peut ajouter des joueurs.");
         }
 
-        // ✅ En match PUBLIC : paiement obligatoire et complet (= 15.00)
         BigDecimal m = validerMontantPublic(montant);
 
         Joueur joueur = getJoueurOrThrow(joueurMatricule);
 
         verifierNonDejaInscrit(matchId, joueurMatricule);
-        verifierPlaceDisponible(matchId);
+
+        // ✅ place dispo vérifiée sous verrou
+        if (match.getParticipations().size() >= 4) {
+            throw new BusinessException("Match déjà complet");
+        }
 
         Participation saved = participationRepository.save(new Participation(match, joueur));
 
-        // dette puis paiement immédiat (validation au paiement)
         soldeService.debiter(joueurMatricule, PART_JOUEUR);
         paiementService.payerParticipation(saved.getId(), m);
 
@@ -94,7 +99,7 @@ public class ParticipationService {
         if (montant == null) throw new BusinessException("Montant obligatoire");
         if (montant.signum() <= 0) throw new BusinessException("Montant invalide");
 
-        BigDecimal m = montant.setScale(2, BigDecimal.ROUND_HALF_UP);
+        BigDecimal m = montant.setScale(2, RoundingMode.HALF_UP);
         if (m.compareTo(PART_JOUEUR) != 0) {
             throw new BusinessException("Pour un match public, le paiement doit être de " + PART_JOUEUR);
         }
