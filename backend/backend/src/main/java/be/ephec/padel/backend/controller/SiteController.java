@@ -1,6 +1,7 @@
 package be.ephec.padel.backend.controller;
 
 import be.ephec.padel.backend.dto.request.CreateSiteRequest;
+import be.ephec.padel.backend.dto.request.UpdateSiteHorairesRequest;
 import be.ephec.padel.backend.dto.response.SiteDto;
 import be.ephec.padel.backend.mapper.SiteMapper;
 import be.ephec.padel.backend.model.entities.Site;
@@ -44,5 +45,13 @@ public class SiteController {
         return ResponseEntity.created(location)
                 .body(SiteMapper.toDto(created));
     }
+    @PutMapping("/{id}/horaires")
+    public ResponseEntity<SiteDto> updateHoraires(
+            @PathVariable Long id,
+            @Valid @RequestBody UpdateSiteHorairesRequest request) {
 
+        Site updated = siteService.updateHoraires(id, request);
+
+        return ResponseEntity.ok(SiteMapper.toDto(updated));
+    }
 }

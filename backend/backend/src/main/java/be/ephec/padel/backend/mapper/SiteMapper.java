@@ -14,7 +14,10 @@ public final class SiteMapper {
         return new SiteDto(
                 site.getId(),
                 site.getNom(),
-                site.getVille()
+                site.getVille(),
+                site.getHeureOuverture(),
+                site.getHeureFermeture(),
+                site.getJoursFermeture()
         );
     }
 

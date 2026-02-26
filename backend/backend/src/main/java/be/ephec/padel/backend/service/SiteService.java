@@ -1,5 +1,6 @@
 package be.ephec.padel.backend.service;
 
+import be.ephec.padel.backend.dto.request.UpdateSiteHorairesRequest;
 import be.ephec.padel.backend.exception.BusinessException;
 import be.ephec.padel.backend.exception.NotFoundException;
 import be.ephec.padel.backend.model.entities.Site;
@@ -38,5 +39,25 @@ public class SiteService {
         }
 
         return siteRepository.save(new Site(nom, ville));
+    }
+    @Transactional
+    public Site updateHoraires(Long siteId, UpdateSiteHorairesRequest req) {
+
+        Site site = siteRepository.findById(siteId)
+                .orElseThrow(() -> new NotFoundException("Site introuvable"));
+
+        if (!req.getHeureOuverture().isBefore(req.getHeureFermeture())) {
+            throw new BusinessException("L'heure d'ouverture doit être avant l'heure de fermeture.");
+        }
+
+        site.setHeureOuverture(req.getHeureOuverture());
+        site.setHeureFermeture(req.getHeureFermeture());
+
+        site.getJoursFermeture().clear();
+        if (req.getJoursFermeture() != null) {
+            site.getJoursFermeture().addAll(req.getJoursFermeture());
+        }
+
+        return site;
     }
 }
