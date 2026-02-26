@@ -4,19 +4,14 @@ import be.ephec.padel.backend.common.Tarifs;
 import be.ephec.padel.backend.dto.response.MatchDto;
 import be.ephec.padel.backend.exception.BusinessException;
 import be.ephec.padel.backend.exception.NotFoundException;
-import be.ephec.padel.backend.model.entities.Joueur;
-import be.ephec.padel.backend.model.entities.MatchPadel;
-import be.ephec.padel.backend.model.entities.Participation;
-import be.ephec.padel.backend.model.entities.Terrain;
+import be.ephec.padel.backend.model.entities.*;
 import be.ephec.padel.backend.model.enums.MatchVisibilite;
 import be.ephec.padel.backend.model.enums.TypeJoueur;
-import be.ephec.padel.backend.repository.JoueurRepository;
-import be.ephec.padel.backend.repository.MatchPadelRepository;
-import be.ephec.padel.backend.repository.PaiementRepository;
-import be.ephec.padel.backend.repository.ParticipationRepository;
-import be.ephec.padel.backend.repository.TerrainRepository;
+import be.ephec.padel.backend.repository.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import java.time.DayOfWeek;
+import java.time.LocalTime;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -37,14 +32,14 @@ public class MatchPadelService {
     private final ParticipationRepository participationRepository;
     private final PaiementService paiementService;
     private final PaiementRepository paiementRepository;
-
+    private final FermetureGlobaleRepository fermetureGlobaleRepository;
     public MatchPadelService(MatchPadelRepository matchPadelRepository,
                              TerrainRepository terrainRepository,
                              JoueurRepository joueurRepository,
                              SoldeService soldeService,
                              ParticipationRepository participationRepository,
                              PaiementService paiementService,
-                             PaiementRepository paiementRepository) {
+                             PaiementRepository paiementRepository, FermetureGlobaleRepository fermetureGlobaleRepository) {
         this.matchPadelRepository = matchPadelRepository;
         this.terrainRepository = terrainRepository;
         this.joueurRepository = joueurRepository;
@@ -52,6 +47,7 @@ public class MatchPadelService {
         this.participationRepository = participationRepository;
         this.paiementService = paiementService;
         this.paiementRepository = paiementRepository;
+        this.fermetureGlobaleRepository = fermetureGlobaleRepository;
     }
 
     @Transactional(readOnly = true)
@@ -96,6 +92,49 @@ public class MatchPadelService {
         );
     }
 
+    private void verifierFermetureGlobale(LocalDateTime dateDebut) {
+        if (dateDebut == null) throw new BusinessException("Date début obligatoire");
+        if (fermetureGlobaleRepository.existsByDate(dateDebut.toLocalDate())) {
+            throw new BusinessException("Réservation impossible : fermeture globale (jour férié).");
+        }
+    }
+    private void verifierOuvertureSite(Terrain terrain, LocalDateTime dateDebut) {
+        if (terrain == null || terrain.getSite() == null) {
+            throw new BusinessException("Terrain sans site associé.");
+        }
+
+        Site site = terrain.getSite();
+
+        // Jour fermé ?
+        DayOfWeek jour = dateDebut.getDayOfWeek();
+        if (site.getJoursFermeture().contains(jour)) {
+            throw new BusinessException("Réservation impossible : site fermé ce jour-là.");
+        }
+
+        LocalTime ouverture = site.getHeureOuverture();
+        LocalTime fermeture = site.getHeureFermeture();
+        if (ouverture == null || fermeture == null) {
+            throw new BusinessException("Horaires d'ouverture non configurés pour ce site.");
+        }
+
+        // Horaires invalides
+        if (!ouverture.isBefore(fermeture)) {
+            throw new BusinessException("Horaires du site invalides (ouverture >= fermeture).");
+        }
+
+        LocalTime start = dateDebut.toLocalTime();
+        LocalTime end = dateDebut.plusMinutes(SLOT_MIN).toLocalTime(); // 105 min (match + battement)
+
+        // Si le créneau dépasse minuit, on refuse (hors scope)
+        if (end.isBefore(start)) {
+            throw new BusinessException("Réservation impossible : le créneau dépasse minuit.");
+        }
+
+        if (start.isBefore(ouverture) || end.isAfter(fermeture)) {
+            throw new BusinessException("Réservation impossible : en dehors des horaires d'ouverture.");
+        }
+    }
+
     public MatchPadel creerMatch(Long terrainId,
                                  String organisateurMatricule,
                                  LocalDateTime dateDebut,
@@ -124,10 +163,10 @@ public class MatchPadelService {
             throw new BusinessException("Réservation impossible : dette en cours (" + organisateur.getSolde() + ").");
         }
 
-        // Fenêtres GLOBAL/SITE/LIBRE + règles site
         verifierDroitReservation(organisateur, terrain, dateDebut, now);
 
-        // Issue 14 : overlap terrain (durée match + buffer)
+        verifierFermetureGlobale(dateDebut);
+        verifierOuvertureSite(terrain, dateDebut);
         verifierTerrainDisponible(terrainId, dateDebut);
 
         // Création match

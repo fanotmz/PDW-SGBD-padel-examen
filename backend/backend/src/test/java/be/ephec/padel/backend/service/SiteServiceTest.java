@@ -1,5 +1,6 @@
 package be.ephec.padel.backend.service;
 
+import be.ephec.padel.backend.dto.request.UpdateSiteHorairesRequest;
 import be.ephec.padel.backend.exception.BusinessException;
 import be.ephec.padel.backend.exception.NotFoundException;
 import be.ephec.padel.backend.model.entities.Site;
@@ -7,8 +8,11 @@ import be.ephec.padel.backend.repository.SiteRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import java.time.DayOfWeek;
+import java.time.LocalTime;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -106,5 +110,69 @@ class SiteServiceTest {
 
         verify(siteRepo).existsByNom("Site A");
         verify(siteRepo).save(any(Site.class));
+    }
+
+    @Test
+    void updateHoraires_ok_met_a_jour_ouverture_fermeture_et_jours() {
+        // arrange
+        Site site = new Site("Site A", "Bruxelles");
+        when(siteRepo.findById(1L)).thenReturn(Optional.of(site));
+
+        UpdateSiteHorairesRequest req = new UpdateSiteHorairesRequest();
+        req.setHeureOuverture(LocalTime.of(8, 0));
+        req.setHeureFermeture(LocalTime.of(22, 0));
+        req.setJoursFermeture(Set.of(DayOfWeek.SUNDAY));
+
+        // act
+        Site updated = service.updateHoraires(1L, req);
+
+        // assert
+        assertSame(site, updated);
+        assertEquals(LocalTime.of(8, 0), updated.getHeureOuverture());
+        assertEquals(LocalTime.of(22, 0), updated.getHeureFermeture());
+        assertTrue(updated.getJoursFermeture().contains(DayOfWeek.SUNDAY));
+
+        verify(siteRepo).findById(1L);
+        verifyNoMoreInteractions(siteRepo);
+    }
+
+    @Test
+    void updateHoraires_refuse_si_ouverture_apres_ou_egale_fermeture() {
+        // arrange
+        Site site = new Site("Site A", "Bruxelles");
+        when(siteRepo.findById(1L)).thenReturn(Optional.of(site));
+
+        UpdateSiteHorairesRequest req = new UpdateSiteHorairesRequest();
+        req.setHeureOuverture(LocalTime.of(22, 0));
+        req.setHeureFermeture(LocalTime.of(22, 0)); // égal -> KO
+        req.setJoursFermeture(Set.of(DayOfWeek.MONDAY));
+
+        // act + assert
+        BusinessException ex = assertThrows(BusinessException.class,
+                () -> service.updateHoraires(1L, req));
+
+        assertTrue(ex.getMessage().toLowerCase().contains("ouverture"));
+
+        // le site ne doit pas être modifié
+        assertNull(site.getHeureOuverture());
+        assertNull(site.getHeureFermeture());
+        assertTrue(site.getJoursFermeture() == null || site.getJoursFermeture().isEmpty());
+
+        verify(siteRepo).findById(1L);
+        verifyNoMoreInteractions(siteRepo);
+    }
+
+    // (optionnel mais utile)
+    @Test
+    void updateHoraires_site_introuvable_notFound() {
+        when(siteRepo.findById(99L)).thenReturn(Optional.empty());
+
+        UpdateSiteHorairesRequest req = new UpdateSiteHorairesRequest();
+        req.setHeureOuverture(LocalTime.of(8, 0));
+        req.setHeureFermeture(LocalTime.of(22, 0));
+
+        assertThrows(NotFoundException.class, () -> service.updateHoraires(99L, req));
+        verify(siteRepo).findById(99L);
+        verifyNoMoreInteractions(siteRepo);
     }
 }
