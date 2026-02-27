@@ -3,6 +3,7 @@ package be.ephec.padel.backend.model.entities;
 import be.ephec.padel.backend.model.enums.TypeJoueur;
 import jakarta.persistence.*;
 
+import java.time.LocalDateTime;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
@@ -24,6 +25,9 @@ public class Joueur {
 
     @Column(nullable = false, precision = 12, scale = 2)
     private BigDecimal solde = BigDecimal.ZERO;
+
+    @Column(name = "penalite_jusqua")
+    private LocalDateTime penaliteJusqua;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "site_id")
@@ -95,5 +99,12 @@ public class Joueur {
 
     public void setSite(Site site) {
         this.site = site;
+    }
+    public LocalDateTime getPenaliteJusqua() {
+        return penaliteJusqua;
+    }
+
+    public void setPenaliteJusqua(LocalDateTime penaliteJusqua) {
+        this.penaliteJusqua = penaliteJusqua;
     }
 }

@@ -4,6 +4,7 @@ import be.ephec.padel.backend.model.entities.Joueur;
 import be.ephec.padel.backend.model.entities.MouvementSolde;
 import be.ephec.padel.backend.model.enums.TypeJoueur;
 import be.ephec.padel.backend.model.enums.TypeMouvement;
+import be.ephec.padel.backend.support.SqlServerTestContainerConfig;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;

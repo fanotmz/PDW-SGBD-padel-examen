@@ -53,4 +53,30 @@ public interface MatchPadelRepository extends JpaRepository<MatchPadel, Long> {
         where m.id = :id
     """)
     Optional<MatchPadel> findByIdForUpdateWithParticipations(@Param("id") Long id);
+
+    @Query("""
+    select distinct m
+    from MatchPadel m
+    join fetch m.organisateur o
+    left join fetch m.participations p
+    left join fetch p.joueur pj
+    where m.j1TraiteLe is null
+      and m.dateDebut >= :from
+      and m.dateDebut < :to
+""")
+    List<MatchPadel> findAtraiterJ1AvecDetails(@Param("from") LocalDateTime from,
+                                               @Param("to") LocalDateTime to);
+
+    @Query("""
+    select distinct m
+    from MatchPadel m
+    join fetch m.organisateur o
+    left join fetch m.participations p
+    left join fetch p.joueur pj
+    where m.soldeTraiteLe is null
+      and m.dateDebut >= :from
+      and m.dateDebut < :to
+""")
+    List<MatchPadel> findAtraiterDebutMatchAvecDetails(@Param("from") LocalDateTime from,
+                                                       @Param("to") LocalDateTime to);
 }

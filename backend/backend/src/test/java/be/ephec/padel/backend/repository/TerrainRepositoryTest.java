@@ -2,6 +2,7 @@ package be.ephec.padel.backend.repository;
 
 import be.ephec.padel.backend.model.entities.Site;
 import be.ephec.padel.backend.model.entities.Terrain;
+import be.ephec.padel.backend.support.SqlServerTestContainerConfig;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
