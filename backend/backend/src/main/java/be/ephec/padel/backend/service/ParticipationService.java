@@ -40,7 +40,13 @@ public class ParticipationService {
         this.paiementService = paiementService;
     }
 
-    public Participation rejoindreEtPayerMatchPublic(Long matchId, String joueurMatricule, BigDecimal montant) {
+    /**
+     * Match PUBLIC : "premier payé = premier servi"
+     * -> sous verrou pessimiste (findByIdForUpdateWithParticipations)
+     * -> inscription + dette (15) + paiement immédiat
+     * -> si le joueur a une dette existante, il paie (15 + dette)
+     */
+    public Participation rejoindreEtPayerMatchPublic(Long matchId, String joueurMatricule) {
 
         MatchPadel match = matchPadelRepository.findByIdForUpdateWithParticipations(matchId)
                 .orElseThrow(() -> new NotFoundException("Match introuvable"));
@@ -49,23 +55,46 @@ public class ParticipationService {
             throw new BusinessException("Match privé : seule l'organisation peut ajouter des joueurs.");
         }
 
-        BigDecimal m = validerMontantPublic(montant);
-
         Joueur joueur = getJoueurOrThrow(joueurMatricule);
 
         verifierNonDejaInscrit(matchId, joueurMatricule);
 
-        // ✅ place dispo vérifiée sous verrou
+        // place dispo vérifiée sous verrou
         if (match.getParticipations().size() >= 4) {
             throw new BusinessException("Match déjà complet");
         }
 
+        // montant à payer = 15 + dette existante (solde = dette)
+        BigDecimal dette = joueur.getSolde() == null ? BigDecimal.ZERO : joueur.getSolde().setScale(2, RoundingMode.HALF_UP);
+        BigDecimal montant = PART_JOUEUR.add(dette).setScale(2, RoundingMode.HALF_UP);
+
         Participation saved = participationRepository.save(new Participation(match, joueur));
 
+        // inscription => dette de participation (15)
         soldeService.debiter(joueurMatricule, PART_JOUEUR);
-        paiementService.payerParticipation(saved.getId(), m);
+
+        // paiement => (15 + dette) : rembourse dette + paie la part
+        paiementService.payerParticipationAvecRattrapageDette(saved.getId(), montant);
 
         return saved;
+    }
+
+    /**
+     * Calcule le montant attendu pour l'UI : 15 + dette actuelle.
+     */
+    public BigDecimal calculerMontantAttenduPourMatchPublic(Long matchId, String joueurMatricule) {
+
+        MatchPadel match = matchPadelRepository.findById(matchId)
+                .orElseThrow(() -> new NotFoundException("Match introuvable"));
+
+        if (match.getVisibilite() != MatchVisibilite.PUBLIC) {
+            throw new BusinessException("Match privé : ce calcul n'est valable que pour un match public.");
+        }
+
+        Joueur joueur = getJoueurOrThrow(joueurMatricule);
+
+        BigDecimal dette = joueur.getSolde() == null ? BigDecimal.ZERO : joueur.getSolde().setScale(2, RoundingMode.HALF_UP);
+        return PART_JOUEUR.add(dette).setScale(2, RoundingMode.HALF_UP);
     }
 
     public Participation ajouterJoueurParOrganisateur(Long matchId,
@@ -93,17 +122,6 @@ public class ParticipationService {
         soldeService.debiter(joueurMatriculeAAjouter, PART_JOUEUR);
 
         return saved;
-    }
-
-    private BigDecimal validerMontantPublic(BigDecimal montant) {
-        if (montant == null) throw new BusinessException("Montant obligatoire");
-        if (montant.signum() <= 0) throw new BusinessException("Montant invalide");
-
-        BigDecimal m = montant.setScale(2, RoundingMode.HALF_UP);
-        if (m.compareTo(PART_JOUEUR) != 0) {
-            throw new BusinessException("Pour un match public, le paiement doit être de " + PART_JOUEUR);
-        }
-        return m;
     }
 
     private MatchPadel getMatchOrThrow(Long matchId) {

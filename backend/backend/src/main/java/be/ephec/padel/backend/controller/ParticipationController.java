@@ -2,6 +2,7 @@ package be.ephec.padel.backend.controller;
 
 import be.ephec.padel.backend.dto.request.AddPlayerToPrivateMatchRequest;
 import be.ephec.padel.backend.dto.request.JoinPublicMatchRequest;
+import be.ephec.padel.backend.dto.response.MontantAttenduResponse;
 import be.ephec.padel.backend.dto.response.ParticipationDto;
 import be.ephec.padel.backend.mapper.ParticipationMapper;
 import be.ephec.padel.backend.model.entities.Participation;
@@ -9,6 +10,8 @@ import be.ephec.padel.backend.service.ParticipationService;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.math.BigDecimal;
 import java.net.URI;
 
 @RestController
@@ -28,8 +31,7 @@ public class ParticipationController {
 
         Participation participation = participationService.rejoindreEtPayerMatchPublic(
                 matchId,
-                req.getJoueurMatricule(),
-                req.getMontant()
+                req.getJoueurMatricule()
         );
 
         URI location = URI.create("/api/v1/matchs/" + matchId);
@@ -49,5 +51,24 @@ public class ParticipationController {
 
         URI location = URI.create("/api/v1/matchs/" + matchId);
         return ResponseEntity.created(location).body(ParticipationMapper.toDto(participation));
+    }
+
+    @GetMapping("/{matchId}/participants/public/{matricule}/montant")
+    public ResponseEntity<BigDecimal> getMontantAttendu(
+            @PathVariable Long matchId,
+            @PathVariable String matricule) {
+
+        return ResponseEntity.ok(participationService.calculerMontantAttenduPourMatchPublic(matchId, matricule));
+    }
+    @GetMapping("/{matchId}/participants/public/montant-attendu")
+    public ResponseEntity<MontantAttenduResponse> getMontantAttenduPourMatchPublic(
+            @PathVariable Long matchId,
+            @RequestParam String joueurMatricule) {
+
+        return ResponseEntity.ok(
+                new MontantAttenduResponse(
+                        participationService.calculerMontantAttenduPourMatchPublic(matchId, joueurMatricule)
+                )
+        );
     }
 }

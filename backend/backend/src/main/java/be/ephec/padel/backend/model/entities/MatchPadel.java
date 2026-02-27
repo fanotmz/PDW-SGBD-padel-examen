@@ -26,14 +26,22 @@ public class MatchPadel {
     @Column(name = "date_debut", nullable = false)
     private LocalDateTime dateDebut;
 
+    @Column(name = "j1_traite_le")
+    private LocalDateTime j1TraiteLe;
+
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private MatchVisibilite visibilite;
+
+    @Column(name = "solde_traite_le")
+    private LocalDateTime soldeTraiteLe;
 
     @OneToMany(mappedBy = "match",
             cascade = CascadeType.ALL,
             orphanRemoval = true)
     private List<Participation> participations = new ArrayList<>();
+
 
     public MatchPadel() {
     }
@@ -76,6 +84,13 @@ public class MatchPadel {
         this.terrain = terrain;
     }
 
+    public LocalDateTime getJ1TraiteLe() {
+        return j1TraiteLe;
+    }
+
+    public void setJ1TraiteLe(LocalDateTime j1TraiteLe) {
+        this.j1TraiteLe = j1TraiteLe;
+    }
     public void setOrganisateur(Joueur organisateur) {
         this.organisateur = organisateur;
     }
@@ -88,6 +103,13 @@ public class MatchPadel {
         this.visibilite = visibilite;
     }
 
+    public LocalDateTime getSoldeTraiteLe() {
+        return soldeTraiteLe;
+    }
+
+    public void setSoldeTraiteLe(LocalDateTime soldeTraiteLe) {
+        this.soldeTraiteLe = soldeTraiteLe;
+    }
     public void addParticipation(Participation participation) {
         participations.add(participation);
         participation.setMatch(this);

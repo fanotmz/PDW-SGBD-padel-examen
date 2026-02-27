@@ -15,17 +15,17 @@ public interface PaiementRepository extends JpaRepository<Paiement, Long> {
     List<Paiement> findByParticipation_Match_Id(Long matchId);
 
     @Query("""
-        select coalesce(sum(p.montant), 0)
-        from Paiement p
-        where p.participation.id = :participationId
-    """)
+    select coalesce(sum(p.montant), 0)
+    from Paiement p
+    where p.participation.id = :participationId
+""")
     BigDecimal sumMontantByParticipationId(@Param("participationId") Long participationId);
-
     @Query("""
-        select coalesce(sum(pa.montant), 0)
-        from Paiement pa
-        join pa.participation part
-        where part.match.id = :matchId
-    """)
+    select coalesce(sum(p.montant), 0)
+    from Paiement p
+    join p.participation pa
+    join pa.match m
+    where m.id = :matchId
+""")
     BigDecimal sumMontantByMatchId(@Param("matchId") Long matchId);
 }

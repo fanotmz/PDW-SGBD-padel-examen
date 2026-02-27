@@ -67,6 +67,53 @@ public class PaiementService {
         return payerParticipation(participation.getId(), montant);
     }
 
+    public Paiement payerParticipationAvecRattrapageDette(Long participationId, BigDecimal montant) {
+        Participation participation = participationRepository.findById(participationId)
+                .orElseThrow(() -> new NotFoundException("Participation introuvable"));
+
+        BigDecimal m = validerMontant(montant);
+
+        String matricule = participation.getJoueur().getMatricule();
+
+        // Dette actuelle du joueur (dans votre modèle: solde > 0 = dette)
+        BigDecimal dette = participation.getJoueur().getSolde();
+        if (dette == null) dette = BigDecimal.ZERO;
+        dette = dette.setScale(2, RoundingMode.HALF_UP);
+
+        // Ce qu'il reste à payer pour cette participation (max 15 au total)
+        BigDecimal dejaPaye = paiementRepository.sumMontantByParticipationId(participationId);
+        if (dejaPaye == null) dejaPaye = BigDecimal.ZERO;
+        dejaPaye = dejaPaye.setScale(2, RoundingMode.HALF_UP);
+
+        BigDecimal restePart = PART_JOUEUR.subtract(dejaPaye).setScale(2, RoundingMode.HALF_UP);
+        if (restePart.signum() <= 0) {
+            throw new BusinessException("Participation déjà payée en totalité.");
+        }
+
+        // Montant total dû = reste de la part (<=15) + dette existante
+        BigDecimal totalDu = restePart.add(dette).setScale(2, RoundingMode.HALF_UP);
+
+        // Si pas de dette, on reste strict (comme avant): impossible de payer plus que la part restante
+        // Si dette > 0, on autorise de payer jusqu'à (restePart + dette)
+        if (m.compareTo(totalDu) > 0) {
+            throw new BusinessException("Paiement trop élevé. Total dû (part + dette) = " + totalDu);
+        }
+
+        // On enregistre le paiement tel quel (peut être > 15 si dette > 0)
+        Paiement saved = paiementRepository.save(new Paiement(participation, m, LocalDateTime.now()));
+
+        // On crédite la totalité: cela rembourse d'abord la dette puis la part (selon votre logique soldeService)
+        soldeService.crediter(matricule, m);
+
+        return saved;
+    }
+    public Paiement payerPourMatchAvecRattrapageDette(Long matchId, String joueurMatricule, BigDecimal montant) {
+        Participation participation = participationRepository
+                .findByMatch_IdAndJoueur_Matricule(matchId, joueurMatricule)
+                .orElseThrow(() -> new NotFoundException("Participation introuvable pour ce match/joueur"));
+
+        return payerParticipationAvecRattrapageDette(participation.getId(), montant);
+    }
     private BigDecimal validerMontant(BigDecimal montant) {
         if (montant == null) {
             throw new BusinessException("Montant obligatoire");
