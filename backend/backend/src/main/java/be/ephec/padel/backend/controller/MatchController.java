@@ -1,15 +1,23 @@
 package be.ephec.padel.backend.controller;
 
 import be.ephec.padel.backend.dto.request.CreateMatchRequest;
+import be.ephec.padel.backend.dto.response.ApiErrorDto;
 import be.ephec.padel.backend.dto.response.MatchDto;
 import be.ephec.padel.backend.model.entities.MatchPadel;
 import be.ephec.padel.backend.service.MatchPadelService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.net.URI;
 
+@Tag(name = "Matchs", description = "Gestion des matchs de padel")
 @RestController
 @RequestMapping("/api/v1/matchs")
 public class MatchController {
@@ -20,11 +28,25 @@ public class MatchController {
         this.matchPadelService = matchPadelService;
     }
 
+    @Operation(summary = "Récupérer un match", description = "Retourne le match (DTO) par son identifiant.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Match trouvé"),
+            @ApiResponse(responseCode = "404", description = "Match introuvable",
+                    content = @Content(schema = @Schema(implementation = ApiErrorDto.class)))
+    })
     @GetMapping("/{id}")
     public ResponseEntity<MatchDto> getOne(@PathVariable Long id) {
         return ResponseEntity.ok(matchPadelService.getMatchDto(id));
     }
 
+    @Operation(summary = "Créer un match", description = "Crée un match (PUBLIC ou PRIVE) si les règles métier sont respectées.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "201", description = "Match créé"),
+            @ApiResponse(responseCode = "400", description = "Validation ou règle métier non respectée",
+                    content = @Content(schema = @Schema(implementation = ApiErrorDto.class))),
+            @ApiResponse(responseCode = "404", description = "Terrain / site / organisateur introuvable",
+                    content = @Content(schema = @Schema(implementation = ApiErrorDto.class)))
+    })
     @PostMapping
     public ResponseEntity<MatchDto> create(@Valid @RequestBody CreateMatchRequest req) {
         MatchPadel created = matchPadelService.creerMatch(

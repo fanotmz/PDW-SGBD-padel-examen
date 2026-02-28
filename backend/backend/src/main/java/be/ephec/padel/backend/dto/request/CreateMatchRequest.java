@@ -1,20 +1,21 @@
 package be.ephec.padel.backend.dto.request;
 
 import be.ephec.padel.backend.model.enums.MatchVisibilite;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.*;
 
 import java.time.LocalDateTime;
 
 public class CreateMatchRequest {
 
     @NotNull
+    @Positive
     private Long terrainId;
 
     @NotBlank
     private String organisateurMatricule;
 
-    @NotNull
+    @NotNull(message = "Date de début obligatoire")
+    @Future(message = "La date de début doit être dans le futur")
     private LocalDateTime dateDebut;
 
     @NotNull

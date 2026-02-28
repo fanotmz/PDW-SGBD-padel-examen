@@ -8,13 +8,15 @@ import jakarta.validation.ConstraintViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
 import java.time.LocalDateTime;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 @RestControllerAdvice
@@ -50,14 +52,52 @@ public class ApiExceptionHandler {
         return ResponseEntity.badRequest().body(error);
     }
 
+    // ✅ 403 (auth ok, mais pas les droits)
+    @ExceptionHandler(AccessDeniedException.class)
+    public ResponseEntity<ApiErrorDto> handleAccessDenied(
+            AccessDeniedException ex,
+            HttpServletRequest request) {
+
+        ApiErrorDto error = buildError(
+                HttpStatus.FORBIDDEN,
+                "Access denied",
+                request.getRequestURI(),
+                null
+        );
+
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(error);
+    }
+
+    // ✅ 401 (pas authentifié / auth invalide)
+    @ExceptionHandler(AuthenticationException.class)
+    public ResponseEntity<ApiErrorDto> handleAuthentication(
+            AuthenticationException ex,
+            HttpServletRequest request) {
+
+        ApiErrorDto error = buildError(
+                HttpStatus.UNAUTHORIZED,
+                "Authentication required",
+                request.getRequestURI(),
+                null
+        );
+
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(error);
+    }
+
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ApiErrorDto> handleValidation(
             MethodArgumentNotValidException ex,
             HttpServletRequest request) {
 
-        Map<String, String> details = new HashMap<>();
-        ex.getBindingResult().getFieldErrors()
-                .forEach(err -> details.put(err.getField(), err.getDefaultMessage()));
+        // ✅ ne pas écraser : on garde le premier message et on concatène si plusieurs erreurs
+        Map<String, String> details = new LinkedHashMap<>();
+        ex.getBindingResult().getFieldErrors().forEach(err -> {
+            details.merge(
+                    err.getField(),
+                    err.getDefaultMessage(),
+                    (oldMsg, newMsg) -> oldMsg + "; " + newMsg
+            );
+        });
 
         ApiErrorDto error = buildError(
                 HttpStatus.BAD_REQUEST,
@@ -74,10 +114,11 @@ public class ApiExceptionHandler {
             ConstraintViolationException ex,
             HttpServletRequest request) {
 
-        Map<String, String> details = new HashMap<>();
-        ex.getConstraintViolations().forEach(v -> details.put(
+        Map<String, String> details = new LinkedHashMap<>();
+        ex.getConstraintViolations().forEach(v -> details.merge(
                 v.getPropertyPath().toString(),
-                v.getMessage()
+                v.getMessage(),
+                (oldMsg, newMsg) -> oldMsg + "; " + newMsg
         ));
 
         ApiErrorDto error = buildError(
@@ -127,7 +168,6 @@ public class ApiExceptionHandler {
             Exception ex,
             HttpServletRequest request) {
 
-        // Ne pas exposer les détails internes en production.
         ApiErrorDto error = buildError(
                 HttpStatus.INTERNAL_SERVER_ERROR,
                 "Unexpected error",
@@ -151,7 +191,6 @@ public class ApiExceptionHandler {
         dto.setMessage(message);
         dto.setPath(path);
         dto.setDetails(details);
-
         return dto;
     }
 }

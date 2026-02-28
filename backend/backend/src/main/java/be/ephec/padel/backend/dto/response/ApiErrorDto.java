@@ -1,20 +1,32 @@
 package be.ephec.padel.backend.dto.response;
 
+import io.swagger.v3.oas.annotations.media.Schema;
+
 import java.time.LocalDateTime;
 import java.util.Map;
 
+@Schema(description = "Format standard d'erreur renvoyé par l'API")
 public class ApiErrorDto {
 
+    @Schema(example = "2026-02-27T22:22:23.984853714")
     private LocalDateTime timestamp;
+
+    @Schema(example = "400")
     private int status;
+
+    @Schema(example = "Bad Request")
     private String error;
+
+    @Schema(example = "Validation failed")
     private String message;
+
+    @Schema(example = "/api/v1/matchs")
     private String path;
 
-    /**
-     * Optionnel : détails de validation (champ/param -> message).
-     * Null si pas applicable.
-     */
+    @Schema(
+            description = "Détails de validation (champ/param -> message). Null si pas applicable.",
+            example = "{\"dateDebut\":\"La date de début doit être dans le futur\",\"terrainId\":\"doit être supérieur à 0\"}"
+    )
     private Map<String, String> details;
 
     public ApiErrorDto() {
