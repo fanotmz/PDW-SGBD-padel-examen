@@ -2,6 +2,7 @@ package be.ephec.padel.backend.dto.request;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Positive;
 
 public class CreateTerrainRequest {
 
@@ -9,6 +10,7 @@ public class CreateTerrainRequest {
     private String nom;
 
     @NotNull
+    @Positive
     private Long siteId;
 
     public String getNom() { return nom; }
