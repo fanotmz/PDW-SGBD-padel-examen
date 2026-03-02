@@ -5,12 +5,14 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 
 import java.math.BigDecimal;
+import java.util.List;
 import java.util.Optional;
 
 public interface JoueurRepository extends JpaRepository<Joueur, String> {
 
     Optional<Joueur> findById(String matricule); // déjà fourni par JpaRepository
     boolean existsById(String matricule);
+    List<Joueur> findBySite_Id(Long siteId);
 
     @Query("""
         select coalesce(sum(j.solde), 0)
