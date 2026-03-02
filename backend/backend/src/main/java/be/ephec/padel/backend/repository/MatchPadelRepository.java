@@ -79,4 +79,12 @@ public interface MatchPadelRepository extends JpaRepository<MatchPadel, Long> {
 """)
     List<MatchPadel> findAtraiterDebutMatchAvecDetails(@Param("from") LocalDateTime from,
                                                        @Param("to") LocalDateTime to);
+    @Query("""
+    select count(m)
+    from MatchPadel m
+    where m.dateDebut >= :from
+      and m.dateDebut < :to
+""")
+    long countByDateDebutBetween(@Param("from") LocalDateTime from,
+                                 @Param("to") LocalDateTime to);
 }
