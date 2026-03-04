@@ -85,6 +85,16 @@ public interface MatchPadelRepository extends JpaRepository<MatchPadel, Long> {
     where m.dateDebut >= :from
       and m.dateDebut < :to
 """)
-    long countByDateDebutBetween(@Param("from") LocalDateTime from,
-                                 @Param("to") LocalDateTime to);
+
+    long countByDateDebutBetween(LocalDateTime from, LocalDateTime to);
+
+    @Query("""
+        select count(m)
+        from MatchPadel m
+        where m.dateDebut >= :from
+          and m.dateDebut < :to
+          and m.terrain.site.id = :siteId
+    """)
+    long countByDateDebutBetweenAndSiteId(LocalDateTime from, LocalDateTime to, Long siteId);
 }
+

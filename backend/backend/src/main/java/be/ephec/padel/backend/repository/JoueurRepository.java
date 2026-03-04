@@ -27,4 +27,19 @@ public interface JoueurRepository extends JpaRepository<Joueur, String> {
         where j.solde > 0
     """)
     long countJoueursEnDette();
+    @Query("""
+        select coalesce(sum(j.solde), 0)
+        from Joueur j
+        where j.solde > 0
+          and j.site.id = :siteId
+    """)
+    BigDecimal sumDettesBySiteId(Long siteId);
+
+    @Query("""
+        select count(j)
+        from Joueur j
+        where j.solde > 0
+          and j.site.id = :siteId
+    """)
+    long countJoueursEnDetteBySiteId(Long siteId);
 }

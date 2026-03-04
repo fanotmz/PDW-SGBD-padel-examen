@@ -1,5 +1,6 @@
 package be.ephec.padel.backend.config;
 
+import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -17,39 +18,65 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 import org.springframework.security.web.SecurityFilterChain;
 
+import java.util.ArrayList;
+import java.util.List;
+
 @Configuration
 public class SecurityConfig {
 
-    // valeurs par défaut si env vars absentes
-    @Value("${app.security.admin.username:admin}")
-    private String adminUsername;
+    @Value("${app.security.admin.global.username:adminGlobal}")
+    private String adminGlobalUsername;
 
-    @Value("${app.security.admin.password:admin123}")
-    private String adminPassword;
+    // Pas de mot de passe par défaut (doit venir d'une env var / secret)
+    @Value("${app.security.admin.global.password:}")
+    private String adminGlobalPassword;
+
+    /**
+     * Admins site sous forme:
+     *   app.security.admin.site.users=adminSite1:1,adminSite2:2
+     * Le ":siteId" est utilisé ailleurs (périmètre). Ici on ne garde que le username.
+     */
+    @Value("${app.security.admin.site.users:adminSite1:1,adminSite2:2}")
+    private String adminSiteUsers;
+
+    // Pas de mot de passe par défaut (doit venir d'une env var / secret)
+    @Value("${app.security.admin.site.password:}")
+    private String adminSitePassword;
+
+    @PostConstruct
+    void validateSecrets() {
+        if (adminGlobalPassword == null || adminGlobalPassword.isBlank()) {
+            throw new IllegalStateException(
+                    "Missing secret: app.security.admin.global.password (env: APP_SECURITY_ADMIN_GLOBAL_PASSWORD)"
+            );
+        }
+        if (adminSitePassword == null || adminSitePassword.isBlank()) {
+            throw new IllegalStateException(
+                    "Missing secret: app.security.admin.site.password (env: APP_SECURITY_ADMIN_SITE_PASSWORD)"
+            );
+        }
+    }
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
-                // API REST -> pas de session, pas de CSRF
                 .csrf(csrf -> csrf.disable())
                 .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-
-                // règles d'accès
                 .authorizeHttpRequests(auth -> auth
-                        // Swagger public
                         .requestMatchers("/swagger-ui/**", "/swagger-ui.html", "/v3/api-docs/**").permitAll()
 
-                        // Admin protégé (IMPORTANT: avant /api/v1/**)
-                        .requestMatchers("/api/v1/admin/**").hasRole("ADMIN")
+                        // Global-only
+                        .requestMatchers("/api/v1/admin/stats/**").hasRole("ADMIN_GLOBAL")
 
-                        // API user publique (matricule only)
+                        // Global ou Site
+                        .requestMatchers("/api/v1/admin/sites/**").hasAnyRole("ADMIN_GLOBAL", "ADMIN_SITE")
+                        .requestMatchers("/api/v1/admin/**").hasAnyRole("ADMIN_GLOBAL", "ADMIN_SITE")
+
+                        // API publique
                         .requestMatchers("/api/v1/**").permitAll()
 
-                        // le reste protégé
                         .anyRequest().authenticated()
                 )
-
-                // Auth Basic (simple pour Postman/Swagger)
                 .httpBasic(Customizer.withDefaults());
 
         return http.build();
@@ -57,13 +84,33 @@ public class SecurityConfig {
 
     @Bean
     public UserDetailsService users(PasswordEncoder encoder) {
-        return new InMemoryUserDetailsManager(
-                User.builder()
-                        .username(adminUsername)
-                        .password(encoder.encode(adminPassword))
-                        .roles("ADMIN")
-                        .build()
-        );
+        List<org.springframework.security.core.userdetails.UserDetails> users = new ArrayList<>();
+
+        // Admin global
+        users.add(User.builder()
+                .username(adminGlobalUsername)
+                .password(encoder.encode(adminGlobalPassword))
+                .roles("ADMIN_GLOBAL")
+                .build());
+
+        // Admins site (on ignore le :siteId ici)
+        for (String entry : adminSiteUsers.split(",")) {
+            String trimmed = entry.trim();
+            if (trimmed.isEmpty()) continue;
+
+            String[] parts = trimmed.split(":");
+            String username = parts[0].trim();
+
+            if (username.isEmpty()) continue;
+
+            users.add(User.builder()
+                    .username(username)
+                    .password(encoder.encode(adminSitePassword))
+                    .roles("ADMIN_SITE")
+                    .build());
+        }
+
+        return new InMemoryUserDetailsManager(users);
     }
 
     @Bean

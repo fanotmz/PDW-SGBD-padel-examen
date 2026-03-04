@@ -1,7 +1,7 @@
 package be.ephec.padel.backend.config;
 
-import io.swagger.v3.oas.models.Components;
 import io.swagger.v3.oas.models.OpenAPI;
+import io.swagger.v3.oas.models.Components;
 import io.swagger.v3.oas.models.security.SecurityRequirement;
 import io.swagger.v3.oas.models.security.SecurityScheme;
 import org.springframework.context.annotation.Bean;
@@ -12,12 +12,12 @@ public class OpenApiConfig {
 
     @Bean
     public OpenAPI openAPI() {
+        final String schemeName = "basicAuth";
         return new OpenAPI()
-                .components(new Components().addSecuritySchemes("basicAuth",
+                .addSecurityItem(new SecurityRequirement().addList(schemeName))
+                .components(new Components().addSecuritySchemes(schemeName,
                         new SecurityScheme()
                                 .type(SecurityScheme.Type.HTTP)
-                                .scheme("basic")
-                ))
-                .addSecurityItem(new SecurityRequirement().addList("basicAuth"));
+                                .scheme("basic")));
     }
 }
