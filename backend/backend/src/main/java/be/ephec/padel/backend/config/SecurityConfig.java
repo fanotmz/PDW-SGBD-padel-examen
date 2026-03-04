@@ -17,6 +17,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 
 import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.http.HttpMethod;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -59,27 +60,50 @@ public class SecurityConfig {
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-        http
+        return http
                 .csrf(csrf -> csrf.disable())
                 .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
+
+                        // Swagger / OpenAPI
                         .requestMatchers("/swagger-ui/**", "/swagger-ui.html", "/v3/api-docs/**").permitAll()
 
-                        // Global-only
+                        // ===== ADMIN =====
+
+                        // Stats globales : ADMIN_GLOBAL uniquement
                         .requestMatchers("/api/v1/admin/stats/**").hasRole("ADMIN_GLOBAL")
 
-                        // Global ou Site
+                        // Endpoints admin par site : ADMIN_GLOBAL ou ADMIN_SITE
                         .requestMatchers("/api/v1/admin/sites/**").hasAnyRole("ADMIN_GLOBAL", "ADMIN_SITE")
+
+                        // Autres endpoints admin : ADMIN_GLOBAL ou ADMIN_SITE
                         .requestMatchers("/api/v1/admin/**").hasAnyRole("ADMIN_GLOBAL", "ADMIN_SITE")
 
-                        // API publique
+                        // ===== API publique mais avec exceptions sensibles (Issue 62) =====
+
+                        // Joueurs : listing + création réservés à l'admin global
+                        .requestMatchers(HttpMethod.GET, "/api/v1/joueurs").hasRole("ADMIN_GLOBAL")
+                        .requestMatchers(HttpMethod.POST, "/api/v1/joueurs").hasRole("ADMIN_GLOBAL")
+
+                        // Sites : création + update horaires réservés à l'admin global
+                        .requestMatchers(HttpMethod.POST, "/api/v1/sites").hasRole("ADMIN_GLOBAL")
+                        .requestMatchers(HttpMethod.PUT, "/api/v1/sites/*/horaires").hasRole("ADMIN_GLOBAL")
+
+                        // Terrains : création réservée à l'admin global
+                        .requestMatchers(HttpMethod.POST, "/api/v1/terrains").hasRole("ADMIN_GLOBAL")
+
+                        // Fermetures globales : création + suppression réservées à l'admin global
+                        .requestMatchers(HttpMethod.POST, "/api/v1/fermetures-globales").hasRole("ADMIN_GLOBAL")
+                        .requestMatchers(HttpMethod.DELETE, "/api/v1/fermetures-globales/*").hasRole("ADMIN_GLOBAL")
+
+                        // Tout le reste sous /api/v1 reste public (pour l’instant)
                         .requestMatchers("/api/v1/**").permitAll()
 
+                        // Fallback
                         .anyRequest().authenticated()
                 )
-                .httpBasic(Customizer.withDefaults());
-
-        return http.build();
+                .httpBasic(Customizer.withDefaults())
+                .build();
     }
 
     @Bean

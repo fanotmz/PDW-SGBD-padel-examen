@@ -8,6 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 
 import static org.hamcrest.Matchers.containsString;
@@ -26,13 +27,37 @@ class FermetureGlobaleControllerTest extends SqlServerTestContainerConfig {
         fermetureGlobaleRepository.deleteAll();
     }
 
+    // ===== Issue 62 : public refusé sur WRITE =====
+
     @Test
+    void public_ne_peut_pas_creer_401() throws Exception {
+        mvc.perform(post("/api/v1/fermetures-globales")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"date\":\"2026-03-15\",\"motif\":\"Maintenance\"}"))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void public_ne_peut_pas_supprimer_401() throws Exception {
+        mvc.perform(delete("/api/v1/fermetures-globales/1"))
+                .andExpect(status().isUnauthorized());
+    }
+
+    // GET reste public
+    @Test
+    void get_list_public_ok_200() throws Exception {
+        mvc.perform(get("/api/v1/fermetures-globales"))
+                .andExpect(status().isOk());
+    }
+
+    // ===== Admin global : WRITE autorisé =====
+
+    @Test
+    @WithMockUser(roles = "ADMIN_GLOBAL")
     void post_cree_fermeture_globale_et_get_list_la_retourne() throws Exception {
         mvc.perform(post("/api/v1/fermetures-globales")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("""
-                                { "date": "2026-03-15", "motif": "Maintenance" }
-                                """))
+                        .content("{\"date\":\"2026-03-15\",\"motif\":\"Maintenance\"}"))
                 .andExpect(status().isCreated())
                 .andExpect(header().string("Location", containsString("/api/v1/fermetures-globales/")))
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
@@ -47,33 +72,32 @@ class FermetureGlobaleControllerTest extends SqlServerTestContainerConfig {
     }
 
     @Test
+    @WithMockUser(roles = "ADMIN_GLOBAL")
     void post_refuse_doublon_date() throws Exception {
         mvc.perform(post("/api/v1/fermetures-globales")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{ \"date\": \"2026-03-15\", \"motif\": \"A\" }"))
+                        .content("{\"date\":\"2026-03-15\",\"motif\":\"A\"}"))
                 .andExpect(status().isCreated());
 
         mvc.perform(post("/api/v1/fermetures-globales")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{ \"date\": \"2026-03-15\", \"motif\": \"B\" }"))
+                        .content("{\"date\":\"2026-03-15\",\"motif\":\"B\"}"))
                 .andExpect(status().isBadRequest())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.message").value(containsString("existe déjà")));
     }
 
     @Test
+    @WithMockUser(roles = "ADMIN_GLOBAL")
     void delete_supprime_et_retourne_204() throws Exception {
-        String body = "{ \"date\": \"2026-03-15\", \"motif\": \"Maintenance\" }";
-
         String location = mvc.perform(post("/api/v1/fermetures-globales")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(body))
+                        .content("{\"date\":\"2026-03-15\",\"motif\":\"Maintenance\"}"))
                 .andExpect(status().isCreated())
                 .andReturn()
                 .getResponse()
                 .getHeader("Location");
 
-        // Location = /api/v1/fermetures-globales/{id}
         String id = location.substring(location.lastIndexOf('/') + 1);
 
         mvc.perform(delete("/api/v1/fermetures-globales/" + id))

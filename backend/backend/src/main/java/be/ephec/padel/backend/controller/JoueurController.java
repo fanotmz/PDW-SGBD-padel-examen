@@ -6,6 +6,7 @@ import be.ephec.padel.backend.dto.response.JoueurDto;
 import be.ephec.padel.backend.mapper.JoueurMapper;
 import be.ephec.padel.backend.model.entities.Joueur;
 import be.ephec.padel.backend.service.JoueurService;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -23,6 +24,7 @@ public class JoueurController {
         this.joueurService = joueurService;
     }
 
+    @SecurityRequirement(name = "basicAuth")
     @GetMapping
     public ResponseEntity<List<JoueurDto>> list() {
         List<JoueurDto> dtos = joueurService.lister().stream()
@@ -43,6 +45,7 @@ public class JoueurController {
         return ResponseEntity.ok(new DetteDto(dette));
     }
 
+    @SecurityRequirement(name = "basicAuth")
     @PostMapping
     public ResponseEntity<JoueurDto> create(@Valid @RequestBody JoueurCreateRequest req) {
         Joueur created = joueurService.creerJoueur(

@@ -12,8 +12,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
+
 import java.util.List;
 
 import static org.mockito.ArgumentMatchers.*;
@@ -35,7 +37,33 @@ class JoueurControllerTest {
         return new Joueur(matricule, nom, type);
     }
 
+    // ===== Issue 62 : public doit être refusé sur listing / création =====
+
     @Test
+    void public_ne_peut_pas_lister_401() throws Exception {
+        mvc.perform(get("/api/v1/joueurs"))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void public_ne_peut_pas_creer_401() throws Exception {
+        mvc.perform(post("/api/v1/joueurs")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "matricule": "G0001",
+                                  "nom": "Alice",
+                                  "type": "GLOBAL",
+                                  "siteId": null
+                                }
+                                """))
+                .andExpect(status().isUnauthorized());
+    }
+
+    // ===== Admin global : listing / création autorisés =====
+
+    @Test
+    @WithMockUser(roles = "ADMIN_GLOBAL")
     void list_ok_200_jsonArray() throws Exception {
         when(joueurService.lister()).thenReturn(List.of(
                 realJoueur("G0001", "Alice", TypeJoueur.GLOBAL),
@@ -52,6 +80,8 @@ class JoueurControllerTest {
                 .andExpect(jsonPath("$[1].nom").value("Bob"))
                 .andExpect(jsonPath("$[1].type").value("LIBRE"));
     }
+
+    // ===== Endpoints publics conservés (pas d'auth "joueur" dans le projet) =====
 
     @Test
     void getOne_ok_200() throws Exception {
@@ -96,6 +126,7 @@ class JoueurControllerTest {
     }
 
     @Test
+    @WithMockUser(roles = "ADMIN_GLOBAL")
     void create_ok_201_location_et_body() throws Exception {
         Joueur created = realJoueur("G0001", "Alice", TypeJoueur.GLOBAL);
 
@@ -121,6 +152,7 @@ class JoueurControllerTest {
     }
 
     @Test
+    @WithMockUser(roles = "ADMIN_GLOBAL")
     void create_validation_400_si_body_invalide() throws Exception {
         mvc.perform(post("/api/v1/joueurs")
                         .contentType(MediaType.APPLICATION_JSON)

@@ -6,6 +6,7 @@ import be.ephec.padel.backend.dto.response.AdminMatchsStatsDto;
 import be.ephec.padel.backend.dto.response.JoueurAdminDto;
 import be.ephec.padel.backend.service.AdminSiteService;
 import be.ephec.padel.backend.service.AdminSiteStatsService;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.web.bind.annotation.*;
@@ -13,6 +14,7 @@ import org.springframework.web.bind.annotation.*;
 import java.time.LocalDate;
 import java.util.List;
 
+@SecurityRequirement(name = "basicAuth")
 @RestController
 @RequestMapping("/api/v1/admin/sites")
 @Tag(name = "Admin Site")

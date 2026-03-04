@@ -6,6 +6,7 @@ import be.ephec.padel.backend.dto.response.SiteDto;
 import be.ephec.padel.backend.mapper.SiteMapper;
 import be.ephec.padel.backend.model.entities.Site;
 import be.ephec.padel.backend.service.SiteService;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -37,6 +38,7 @@ public class SiteController {
         return ResponseEntity.ok(SiteMapper.toDto(site));
     }
 
+    @SecurityRequirement(name = "basicAuth")
     @PostMapping
     public ResponseEntity<SiteDto> create(@Valid @RequestBody CreateSiteRequest req) {
         Site created = siteService.creerSite(req.getNom(), req.getVille());
@@ -45,6 +47,8 @@ public class SiteController {
         return ResponseEntity.created(location)
                 .body(SiteMapper.toDto(created));
     }
+
+    @SecurityRequirement(name = "basicAuth")
     @PutMapping("/{id}/horaires")
     public ResponseEntity<SiteDto> updateHoraires(
             @PathVariable Long id,
