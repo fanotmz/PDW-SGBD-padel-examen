@@ -12,14 +12,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
-import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest(controllers = SiteController.class)
@@ -84,7 +83,22 @@ class SiteControllerTest {
                 .andExpect(jsonPath("$.message").value("Site introuvable"));
     }
 
+    // ===== Issue 62 : public refusé sur WRITE =====
+
     @Test
+    void public_ne_peut_pas_creer_site_401() throws Exception {
+        mvc.perform(post("/api/v1/sites")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                { "nom": "Nouveau Site", "ville": "Charleroi" }
+                                """))
+                .andExpect(status().isUnauthorized());
+    }
+
+    // ===== Admin global : WRITE autorisé =====
+
+    @Test
+    @WithMockUser(roles = "ADMIN_GLOBAL")
     void create_ok_201_location_et_body() throws Exception {
         Site created = org.mockito.Mockito.mock(Site.class);
         when(created.getId()).thenReturn(123L);
@@ -94,7 +108,6 @@ class SiteControllerTest {
         when(siteService.creerSite(anyString(), anyString())).thenReturn(created);
 
         mvc.perform(post("/api/v1/sites")
-                        .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {
@@ -111,9 +124,9 @@ class SiteControllerTest {
     }
 
     @Test
+    @WithMockUser(roles = "ADMIN_GLOBAL")
     void create_validation_400_nom_blank() throws Exception {
         mvc.perform(post("/api/v1/sites")
-                        .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {
@@ -127,12 +140,12 @@ class SiteControllerTest {
     }
 
     @Test
+    @WithMockUser(roles = "ADMIN_GLOBAL")
     void create_business_400_nom_deja_utilise() throws Exception {
         when(siteService.creerSite("Dup", "Bruxelles"))
                 .thenThrow(new BusinessException("Nom de site déjà utilisé"));
 
         mvc.perform(post("/api/v1/sites")
-                        .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {

@@ -4,12 +4,14 @@ import be.ephec.padel.backend.dto.response.AdminCaStatsDto;
 import be.ephec.padel.backend.dto.response.AdminDettesStatsDto;
 import be.ephec.padel.backend.dto.response.AdminMatchsStatsDto;
 import be.ephec.padel.backend.service.AdminStatsService;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
 import java.util.Map;
 
+@SecurityRequirement(name = "basicAuth")
 @RestController
 @RequestMapping("/api/v1/admin")
 public class AdminGlobalController {

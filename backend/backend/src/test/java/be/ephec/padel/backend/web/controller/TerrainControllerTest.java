@@ -13,6 +13,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.test.web.servlet.MockMvc;
@@ -34,10 +35,6 @@ class TerrainControllerTest {
     @MockitoBean
     TerrainService terrainService;
 
-    /**
-     * Construit de vraies entités JPA (pas des mocks Mockito) et force les IDs via ReflectionTestUtils.
-     * => évite UnfinishedStubbingException et problèmes de méthodes finales/proxies.
-     */
     private Terrain terrain(Long id, String nom, Long siteId) {
         Site s = new Site("SiteTest", "VilleTest");
         ReflectionTestUtils.setField(s, "id", siteId);
@@ -102,16 +99,27 @@ class TerrainControllerTest {
                 .andExpect(jsonPath("$.message").value("Terrain introuvable"));
     }
 
+    // ===== Issue 62 : public refusé sur WRITE =====
+
     @Test
+    void public_ne_peut_pas_creer_terrain_401() throws Exception {
+        mvc.perform(post("/api/v1/terrains")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"nom\":\"T1\",\"siteId\":10}"))
+                .andExpect(status().isUnauthorized());
+    }
+
+    // ===== Admin global : WRITE autorisé =====
+
+    @Test
+    @WithMockUser(roles = "ADMIN_GLOBAL")
     void create_ok_201_location_et_body() throws Exception {
         when(terrainService.creerTerrain(eq("T1"), eq(10L)))
                 .thenReturn(terrain(123L, "T1", 10L));
 
         mvc.perform(post("/api/v1/terrains")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("""
-                                { "nom": "T1", "siteId": 10 }
-                                """))
+                        .content("{\"nom\":\"T1\",\"siteId\":10}"))
                 .andExpect(status().isCreated())
                 .andExpect(header().string("Location", "/api/v1/terrains/123"))
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
@@ -121,6 +129,7 @@ class TerrainControllerTest {
     }
 
     @Test
+    @WithMockUser(roles = "ADMIN_GLOBAL")
     void create_validation_400_si_body_invalide() throws Exception {
         mvc.perform(post("/api/v1/terrains")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -130,15 +139,14 @@ class TerrainControllerTest {
     }
 
     @Test
+    @WithMockUser(roles = "ADMIN_GLOBAL")
     void create_businessException_400() throws Exception {
         when(terrainService.creerTerrain(eq("T1"), eq(10L)))
                 .thenThrow(new BusinessException("Terrain déjà existant"));
 
         mvc.perform(post("/api/v1/terrains")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("""
-                                { "nom": "T1", "siteId": 10 }
-                                """))
+                        .content("{\"nom\":\"T1\",\"siteId\":10}"))
                 .andExpect(status().isBadRequest())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.message").value("Terrain déjà existant"));
