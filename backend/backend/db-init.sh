@@ -27,12 +27,18 @@ DECLARE @pwd   nvarchar(128) = N'${DB_PASSWORD}';
 DECLARE @loginQuoted nvarchar(260) = N'[' + REPLACE(@login, N']', N']]') + N']';
 DECLARE @pwdEsc      nvarchar(260) = REPLACE(@pwd, N'''', N'''''');
 
--- 1) Create server login if missing
+-- 1) Create server login if missing, otherwise ensure password matches
 IF NOT EXISTS (SELECT 1 FROM sys.server_principals WHERE name = @login)
 BEGIN
   DECLARE @sql nvarchar(max) =
     N'CREATE LOGIN ' + @loginQuoted + N' WITH PASSWORD = ''' + @pwdEsc + N''';';
   EXEC(@sql);
+END
+ELSE
+BEGIN
+  DECLARE @sqlAlt nvarchar(max) =
+    N'ALTER LOGIN ' + @loginQuoted + N' WITH PASSWORD = ''' + @pwdEsc + N''';';
+  EXEC(@sqlAlt);
 END;
 
 -- 2) Create database user if missing
