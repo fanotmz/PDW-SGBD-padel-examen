@@ -1,0 +1,465 @@
+databaseChangeLog:
+- changeSet:
+    id: 1772674650267-1
+    author: fanoa (generated)
+    changes:
+    - createTable:
+        columns:
+        - column:
+            computed: false
+            constraints:
+              nullable: false
+              primaryKey: true
+              primaryKeyName: PK__joueur__30962D10616334EA
+            name: matricule
+            type: varchar(10)
+        - column:
+            computed: false
+            constraints:
+              nullable: false
+            name: nom
+            type: varchar(255)
+        - column:
+            computed: false
+            constraints:
+              nullable: false
+            name: solde
+            type: numeric(12, 2)
+        - column:
+            computed: false
+            constraints:
+              nullable: false
+            name: type
+            type: varchar(255)
+        - column:
+            computed: false
+            name: site_id
+            type: bigint
+        - column:
+            computed: false
+            name: penalite_jusqua
+            type: datetime2(6)
+        tableName: joueur
+- changeSet:
+    id: 1772674650267-2
+    author: fanoa (generated)
+    changes:
+    - createTable:
+        columns:
+        - column:
+            autoIncrement: true
+            computed: false
+            constraints:
+              nullable: false
+              primaryKey: true
+              primaryKeyName: PK__match_pa__3213E83F6BF388E0
+            name: id
+            type: bigint
+        - column:
+            computed: false
+            constraints:
+              nullable: false
+            name: date_debut
+            type: datetime2(6)
+        - column:
+            computed: false
+            constraints:
+              nullable: false
+            name: visibilite
+            type: varchar(255)
+        - column:
+            computed: false
+            constraints:
+              nullable: false
+            name: organisateur_matricule
+            type: varchar(10)
+        - column:
+            computed: false
+            constraints:
+              nullable: false
+            name: terrain_id
+            type: bigint
+        - column:
+            computed: false
+            name: j1_traite_le
+            type: datetime2(6)
+        - column:
+            computed: false
+            name: solde_traite_le
+            type: datetime2(6)
+        tableName: match_padel
+- changeSet:
+    id: 1772674650267-3
+    author: fanoa (generated)
+    changes:
+    - createTable:
+        columns:
+        - column:
+            autoIncrement: true
+            computed: false
+            constraints:
+              nullable: false
+              primaryKey: true
+              primaryKeyName: PK__mouvemen__3213E83F6A60180F
+            name: id
+            type: bigint
+        - column:
+            computed: false
+            constraints:
+              nullable: false
+            name: date_mouvement
+            type: datetime2(6)
+        - column:
+            computed: false
+            constraints:
+              nullable: false
+            name: montant
+            type: numeric(10, 2)
+        - column:
+            computed: false
+            constraints:
+              nullable: false
+            name: type
+            type: varchar(255)
+        - column:
+            computed: false
+            constraints:
+              nullable: false
+            name: joueur_matricule
+            type: varchar(10)
+        tableName: mouvement_solde
+- changeSet:
+    id: 1772674650267-4
+    author: fanoa (generated)
+    changes:
+    - createTable:
+        columns:
+        - column:
+            computed: false
+            constraints:
+              nullable: false
+              primaryKey: true
+              primaryKeyName: PK__site_jou__3AF44CE6F62F8213
+            name: site_id
+            type: bigint
+        - column:
+            computed: false
+            constraints:
+              nullable: false
+              primaryKey: true
+              primaryKeyName: PK__site_jou__3AF44CE6F62F8213
+            name: jour
+            type: varchar(255)
+        tableName: site_jour_fermeture
+- changeSet:
+    id: 1772674650267-5
+    author: fanoa (generated)
+    changes:
+    - createTable:
+        columns:
+        - column:
+            autoIncrement: true
+            computed: false
+            constraints:
+              nullable: false
+              primaryKey: true
+              primaryKeyName: PK__terrain__3213E83F3B4C8878
+            name: id
+            type: bigint
+        - column:
+            computed: false
+            constraints:
+              nullable: false
+            name: nom
+            type: varchar(255)
+        - column:
+            computed: false
+            constraints:
+              nullable: false
+            name: site_id
+            type: bigint
+        tableName: terrain
+- changeSet:
+    id: 1772674650267-6
+    author: fanoa (generated)
+    changes:
+    - createTable:
+        columns:
+        - column:
+            autoIncrement: true
+            computed: false
+            constraints:
+              nullable: false
+              primaryKey: true
+              primaryKeyName: PK__particip__3213E83F1E67D3AA
+            name: id
+            type: bigint
+        - column:
+            computed: false
+            constraints:
+              nullable: false
+            name: joueur_matricule
+            type: varchar(10)
+        - column:
+            computed: false
+            constraints:
+              nullable: false
+            name: match_id
+            type: bigint
+        tableName: participation
+- changeSet:
+    id: 1772674650267-7
+    author: fanoa (generated)
+    changes:
+    - createTable:
+        columns:
+        - column:
+            autoIncrement: true
+            computed: false
+            constraints:
+              nullable: false
+              primaryKey: true
+              primaryKeyName: PK__paiement__3213E83F52EE51B5
+            name: id
+            type: bigint
+        - column:
+            computed: false
+            constraints:
+              nullable: false
+            name: date_paiement
+            type: datetime2(6)
+        - column:
+            computed: false
+            constraints:
+              nullable: false
+            name: montant
+            type: numeric(10, 2)
+        - column:
+            computed: false
+            constraints:
+              nullable: false
+            name: participation_id
+            type: bigint
+        tableName: paiement
+- changeSet:
+    id: 1772674650267-8
+    author: fanoa (generated)
+    changes:
+    - createTable:
+        columns:
+        - column:
+            autoIncrement: true
+            computed: false
+            constraints:
+              nullable: false
+              primaryKey: true
+              primaryKeyName: PK__fermetur__3213E83FBD323077
+            name: id
+            type: bigint
+        - column:
+            computed: false
+            constraints:
+              nullable: false
+            name: date_fermeture
+            type: date
+        - column:
+            computed: false
+            name: motif
+            type: varchar(255)
+        tableName: fermeture_globale
+- changeSet:
+    id: 1772674650267-9
+    author: fanoa (generated)
+    changes:
+    - createTable:
+        columns:
+        - column:
+            autoIncrement: true
+            computed: false
+            constraints:
+              nullable: false
+              primaryKey: true
+              primaryKeyName: PK__site__3213E83F5D67859A
+            name: id
+            type: bigint
+        - column:
+            computed: false
+            constraints:
+              nullable: false
+            name: nom
+            type: varchar(255)
+        - column:
+            computed: false
+            constraints:
+              nullable: false
+            name: ville
+            type: varchar(255)
+        - column:
+            computed: false
+            name: heure_fermeture
+            type: time
+        - column:
+            computed: false
+            name: heure_ouverture
+            type: time
+        tableName: site
+- changeSet:
+    id: 1772674650267-10
+    author: fanoa (generated)
+    changes:
+    - addForeignKeyConstraint:
+        baseColumnNames: organisateur_matricule
+        baseTableName: match_padel
+        constraintName: FK5cwj1ybjgq8qimsg3b65fyt9a
+        deferrable: false
+        initiallyDeferred: false
+        onDelete: NO ACTION
+        onUpdate: NO ACTION
+        referencedColumnNames: matricule
+        referencedTableName: joueur
+        validate: true
+- changeSet:
+    id: 1772674650267-11
+    author: fanoa (generated)
+    changes:
+    - addForeignKeyConstraint:
+        baseColumnNames: joueur_matricule
+        baseTableName: mouvement_solde
+        constraintName: FK851e5378k2x31923wst1t3pj3
+        deferrable: false
+        initiallyDeferred: false
+        onDelete: NO ACTION
+        onUpdate: NO ACTION
+        referencedColumnNames: matricule
+        referencedTableName: joueur
+        validate: true
+- changeSet:
+    id: 1772674650267-12
+    author: fanoa (generated)
+    changes:
+    - addForeignKeyConstraint:
+        baseColumnNames: joueur_matricule
+        baseTableName: participation
+        constraintName: FKaabqx4mnw8jts8avoq6lqsc2a
+        deferrable: false
+        initiallyDeferred: false
+        onDelete: NO ACTION
+        onUpdate: NO ACTION
+        referencedColumnNames: matricule
+        referencedTableName: joueur
+        validate: true
+- changeSet:
+    id: 1772674650267-13
+    author: fanoa (generated)
+    changes:
+    - addForeignKeyConstraint:
+        baseColumnNames: match_id
+        baseTableName: participation
+        constraintName: FKl3vc9gq7x2gapqn3e11i4of6g
+        deferrable: false
+        initiallyDeferred: false
+        onDelete: NO ACTION
+        onUpdate: NO ACTION
+        referencedColumnNames: id
+        referencedTableName: match_padel
+        validate: true
+- changeSet:
+    id: 1772674650267-14
+    author: fanoa (generated)
+    changes:
+    - addUniqueConstraint:
+        columnNames: match_id, joueur_matricule
+        constraintName: UK2pgg4fq3xvtij52harqfgwpar
+        tableName: participation
+- changeSet:
+    id: 1772674650267-15
+    author: fanoa (generated)
+    changes:
+    - addForeignKeyConstraint:
+        baseColumnNames: participation_id
+        baseTableName: paiement
+        constraintName: FKhooaxxefgm6qcw6cxmk2o712a
+        deferrable: false
+        initiallyDeferred: false
+        onDelete: NO ACTION
+        onUpdate: NO ACTION
+        referencedColumnNames: id
+        referencedTableName: participation
+        validate: true
+- changeSet:
+    id: 1772674650267-16
+    author: fanoa (generated)
+    changes:
+    - addUniqueConstraint:
+        columnNames: date_fermeture
+        constraintName: UKimqh24poy09qileku7vsxypsp
+        tableName: fermeture_globale
+- changeSet:
+    id: 1772674650267-17
+    author: fanoa (generated)
+    changes:
+    - addUniqueConstraint:
+        columnNames: nom
+        constraintName: UKiw99w5edoqjp52ql83t12asuf
+        tableName: site
+- changeSet:
+    id: 1772674650267-18
+    author: fanoa (generated)
+    changes:
+    - addForeignKeyConstraint:
+        baseColumnNames: site_id
+        baseTableName: joueur
+        constraintName: FK54ih8y8enk4ww46p6xp7ns7dt
+        deferrable: false
+        initiallyDeferred: false
+        onDelete: NO ACTION
+        onUpdate: NO ACTION
+        referencedColumnNames: id
+        referencedTableName: site
+        validate: true
+- changeSet:
+    id: 1772674650267-19
+    author: fanoa (generated)
+    changes:
+    - addForeignKeyConstraint:
+        baseColumnNames: terrain_id
+        baseTableName: match_padel
+        constraintName: FK2d8dhmju12x9spk7irot9fqf6
+        deferrable: false
+        initiallyDeferred: false
+        onDelete: NO ACTION
+        onUpdate: NO ACTION
+        referencedColumnNames: id
+        referencedTableName: terrain
+        validate: true
+- changeSet:
+    id: 1772674650267-20
+    author: fanoa (generated)
+    changes:
+    - addForeignKeyConstraint:
+        baseColumnNames: site_id
+        baseTableName: site_jour_fermeture
+        constraintName: FKbhjldvbypordh5du43dy06h6g
+        deferrable: false
+        initiallyDeferred: false
+        onDelete: NO ACTION
+        onUpdate: NO ACTION
+        referencedColumnNames: id
+        referencedTableName: site
+        validate: true
+- changeSet:
+    id: 1772674650267-21
+    author: fanoa (generated)
+    changes:
+    - addForeignKeyConstraint:
+        baseColumnNames: site_id
+        baseTableName: terrain
+        constraintName: FK95rhv9d55dsl6gc4sabx4fimw
+        deferrable: false
+        initiallyDeferred: false
+        onDelete: NO ACTION
+        onUpdate: NO ACTION
+        referencedColumnNames: id
+        referencedTableName: site
+        validate: true
+
