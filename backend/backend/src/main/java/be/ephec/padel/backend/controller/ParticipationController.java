@@ -11,7 +11,6 @@ import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.math.BigDecimal;
 import java.net.URI;
 
 @RestController
@@ -53,13 +52,6 @@ public class ParticipationController {
         return ResponseEntity.created(location).body(ParticipationMapper.toDto(participation));
     }
 
-    @GetMapping("/{matchId}/participants/public/{matricule}/montant")
-    public ResponseEntity<BigDecimal> getMontantAttendu(
-            @PathVariable Long matchId,
-            @PathVariable String matricule) {
-
-        return ResponseEntity.ok(participationService.calculerMontantAttenduPourMatchPublic(matchId, matricule));
-    }
     @GetMapping("/{matchId}/participants/public/montant-attendu")
     public ResponseEntity<MontantAttenduResponse> getMontantAttenduPourMatchPublic(
             @PathVariable Long matchId,

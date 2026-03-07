@@ -1,4 +1,4 @@
-package be.ephec.padel.backend.service.securite;
+package be.ephec.padel.backend.security;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.access.AccessDeniedException;
