@@ -7,7 +7,7 @@ import be.ephec.padel.backend.exception.BusinessException;
 import be.ephec.padel.backend.repository.JoueurRepository;
 import be.ephec.padel.backend.repository.MatchPadelRepository;
 import be.ephec.padel.backend.repository.PaiementRepository;
-import be.ephec.padel.backend.service.securite.ServiceAutorisationAdmin;
+import be.ephec.padel.backend.security.ServiceAutorisationAdmin;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 

@@ -4,23 +4,35 @@ import be.ephec.padel.backend.common.Tarifs;
 import be.ephec.padel.backend.dto.response.MatchDto;
 import be.ephec.padel.backend.exception.BusinessException;
 import be.ephec.padel.backend.exception.NotFoundException;
-import be.ephec.padel.backend.model.entities.*;
+import be.ephec.padel.backend.mapper.MatchMapper;
+import be.ephec.padel.backend.model.entities.Joueur;
+import be.ephec.padel.backend.model.entities.MatchPadel;
+import be.ephec.padel.backend.model.entities.Participation;
+import be.ephec.padel.backend.model.entities.Site;
+import be.ephec.padel.backend.model.entities.Terrain;
 import be.ephec.padel.backend.model.enums.MatchVisibilite;
 import be.ephec.padel.backend.model.enums.TypeJoueur;
-import be.ephec.padel.backend.repository.*;
+import be.ephec.padel.backend.repository.FermetureGlobaleRepository;
+import be.ephec.padel.backend.repository.JoueurRepository;
+import be.ephec.padel.backend.repository.MatchPadelRepository;
+import be.ephec.padel.backend.repository.PaiementRepository;
+import be.ephec.padel.backend.repository.ParticipationRepository;
+import be.ephec.padel.backend.repository.TerrainRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import java.time.DayOfWeek;
-import java.time.LocalTime;
 
 import java.math.BigDecimal;
+import java.time.DayOfWeek;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.List;
 
 @Service
 @Transactional
 public class MatchPadelService {
 
+    // Valeurs MVP temporaires.
+    // À remplacer par les paramètres de réservation par site/année quand l'issue dédiée sera implémentée.
     private static final long DUREE_MATCH_MIN = 90;
     private static final long BUFFER_MIN = 15;
     private static final long SLOT_MIN = DUREE_MATCH_MIN + BUFFER_MIN; // 105
@@ -33,13 +45,15 @@ public class MatchPadelService {
     private final PaiementService paiementService;
     private final PaiementRepository paiementRepository;
     private final FermetureGlobaleRepository fermetureGlobaleRepository;
+
     public MatchPadelService(MatchPadelRepository matchPadelRepository,
                              TerrainRepository terrainRepository,
                              JoueurRepository joueurRepository,
                              SoldeService soldeService,
                              ParticipationRepository participationRepository,
                              PaiementService paiementService,
-                             PaiementRepository paiementRepository, FermetureGlobaleRepository fermetureGlobaleRepository) {
+                             PaiementRepository paiementRepository,
+                             FermetureGlobaleRepository fermetureGlobaleRepository) {
         this.matchPadelRepository = matchPadelRepository;
         this.terrainRepository = terrainRepository;
         this.joueurRepository = joueurRepository;
@@ -63,41 +77,27 @@ public class MatchPadelService {
         BigDecimal montantTotal = Tarifs.PRIX_MATCH;
 
         BigDecimal montantPaye = paiementRepository.sumMontantByMatchId(id);
-        if (montantPaye == null) montantPaye = BigDecimal.ZERO;
+        if (montantPaye == null) {
+            montantPaye = BigDecimal.ZERO;
+        }
 
         BigDecimal resteAPayer = montantTotal.subtract(montantPaye);
-        if (resteAPayer.signum() < 0) resteAPayer = BigDecimal.ZERO;
+        if (resteAPayer.signum() < 0) {
+            resteAPayer = BigDecimal.ZERO;
+        }
 
-        Terrain terrain = m.getTerrain();
-        Long terrainId = (terrain != null) ? terrain.getId() : null;
-        String terrainNom = (terrain != null) ? terrain.getNom() : null;
-        Long siteId = (terrain != null && terrain.getSite() != null) ? terrain.getSite().getId() : null;
-
-        String organisateurMatricule = (m.getOrganisateur() != null) ? m.getOrganisateur().getMatricule() : null;
-
-        int nbParticipants = (m.getParticipations() != null) ? m.getParticipations().size() : 0;
-
-        return new MatchDto(
-                m.getId(),
-                terrainId,
-                terrainNom,
-                siteId,
-                organisateurMatricule,
-                m.getDateDebut(),
-                m.getVisibilite(),
-                nbParticipants,
-                montantTotal,
-                montantPaye,
-                resteAPayer
-        );
+        return MatchMapper.toDtoComplet(m, montantTotal, montantPaye, resteAPayer);
     }
 
     private void verifierFermetureGlobale(LocalDateTime dateDebut) {
-        if (dateDebut == null) throw new BusinessException("Date début obligatoire");
+        if (dateDebut == null) {
+            throw new BusinessException("Date début obligatoire");
+        }
         if (fermetureGlobaleRepository.existsByDate(dateDebut.toLocalDate())) {
             throw new BusinessException("Réservation impossible : fermeture globale (jour férié).");
         }
     }
+
     private void verifierOuvertureSite(Terrain terrain, LocalDateTime dateDebut) {
         if (terrain == null || terrain.getSite() == null) {
             throw new BusinessException("Terrain sans site associé.");
@@ -105,7 +105,6 @@ public class MatchPadelService {
 
         Site site = terrain.getSite();
 
-        // Jour fermé ?
         DayOfWeek jour = dateDebut.getDayOfWeek();
         if (site.getJoursFermeture().contains(jour)) {
             throw new BusinessException("Réservation impossible : site fermé ce jour-là.");
@@ -117,15 +116,13 @@ public class MatchPadelService {
             throw new BusinessException("Horaires d'ouverture non configurés pour ce site.");
         }
 
-        // Horaires invalides
         if (!ouverture.isBefore(fermeture)) {
             throw new BusinessException("Horaires du site invalides (ouverture >= fermeture).");
         }
 
         LocalTime start = dateDebut.toLocalTime();
-        LocalTime end = dateDebut.plusMinutes(SLOT_MIN).toLocalTime(); // 105 min (match + battement)
+        LocalTime end = dateDebut.plusMinutes(SLOT_MIN).toLocalTime();
 
-        // Si le créneau dépasse minuit, on refuse (hors scope)
         if (end.isBefore(start)) {
             throw new BusinessException("Réservation impossible : le créneau dépasse minuit.");
         }
@@ -140,12 +137,18 @@ public class MatchPadelService {
                                  LocalDateTime dateDebut,
                                  MatchVisibilite visibilite) {
 
-        if (terrainId == null) throw new BusinessException("Terrain obligatoire");
+        if (terrainId == null) {
+            throw new BusinessException("Terrain obligatoire");
+        }
         if (organisateurMatricule == null || organisateurMatricule.isBlank()) {
             throw new BusinessException("Organisateur obligatoire");
         }
-        if (dateDebut == null) throw new BusinessException("Date début obligatoire");
-        if (visibilite == null) throw new BusinessException("Visibilité obligatoire");
+        if (dateDebut == null) {
+            throw new BusinessException("Date début obligatoire");
+        }
+        if (visibilite == null) {
+            throw new BusinessException("Visibilité obligatoire");
+        }
 
         LocalDateTime now = LocalDateTime.now();
         if (!dateDebut.isAfter(now)) {
@@ -158,25 +161,20 @@ public class MatchPadelService {
         Joueur organisateur = joueurRepository.findById(organisateurMatricule)
                 .orElseThrow(() -> new NotFoundException("Joueur introuvable"));
 
-        // Règle dette : dette si solde > 0
         if (organisateur.getSolde() != null && organisateur.getSolde().signum() > 0) {
             throw new BusinessException("Réservation impossible : dette en cours (" + organisateur.getSolde() + ").");
         }
 
         verifierDroitReservation(organisateur, terrain, dateDebut, now);
-
         verifierFermetureGlobale(dateDebut);
         verifierOuvertureSite(terrain, dateDebut);
         verifierTerrainDisponible(terrainId, dateDebut);
 
-        // Création match
         MatchPadel match = new MatchPadel(terrain, organisateur, dateDebut, visibilite);
         MatchPadel saved = matchPadelRepository.save(match);
 
-        // organisateur = participant
         Participation pOrg = participationRepository.save(new Participation(saved, organisateur));
 
-        // payé à l’avance : dette puis paiement immédiat
         BigDecimal part = Tarifs.PART_PAR_JOUEUR;
         soldeService.debiter(organisateurMatricule, part);
         paiementService.payerParticipation(pOrg.getId(), part);
@@ -185,8 +183,12 @@ public class MatchPadelService {
     }
 
     private void verifierTerrainDisponible(Long terrainId, LocalDateTime newStart) {
-        if (terrainId == null) throw new BusinessException("Terrain obligatoire");
-        if (newStart == null) throw new BusinessException("Date début obligatoire");
+        if (terrainId == null) {
+            throw new BusinessException("Terrain obligatoire");
+        }
+        if (newStart == null) {
+            throw new BusinessException("Date début obligatoire");
+        }
 
         LocalDateTime from = newStart.minusMinutes(SLOT_MIN);
         LocalDateTime to = newStart.plusMinutes(SLOT_MIN);
@@ -198,7 +200,9 @@ public class MatchPadelService {
 
         for (MatchPadel existing : candidats) {
             LocalDateTime existingStart = existing.getDateDebut();
-            if (existingStart == null) continue;
+            if (existingStart == null) {
+                continue;
+            }
 
             LocalDateTime existingEndBuffer = existingStart.plusMinutes(SLOT_MIN);
 
@@ -210,12 +214,15 @@ public class MatchPadelService {
             }
         }
     }
+
     private void verifierDroitReservation(Joueur orga,
                                           Terrain terrain,
                                           LocalDateTime dateDebut,
                                           LocalDateTime now) {
         TypeJoueur type = orga.getType();
-        if (type == null) throw new BusinessException("Type joueur manquant.");
+        if (type == null) {
+            throw new BusinessException("Type joueur manquant.");
+        }
 
         switch (type) {
             case GLOBAL -> {

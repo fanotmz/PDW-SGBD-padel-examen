@@ -5,7 +5,7 @@ import be.ephec.padel.backend.exception.NotFoundException;
 import be.ephec.padel.backend.model.entities.Joueur;
 import be.ephec.padel.backend.repository.JoueurRepository;
 import be.ephec.padel.backend.repository.SiteRepository;
-import be.ephec.padel.backend.service.securite.ServiceAutorisationAdmin;
+import be.ephec.padel.backend.security.ServiceAutorisationAdmin;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -30,8 +30,6 @@ public class AdminSiteService {
     }
 
     public List<JoueurAdminDto> getJoueursBySite(Long siteId) {
-
-        // Sécurité : ADMIN_GLOBAL ok partout, ADMIN_SITE seulement sur son site
         serviceAutorisationAdmin.verifierAccesAuSite(siteId);
 
         if (!siteRepository.existsById(siteId)) {
@@ -41,12 +39,16 @@ public class AdminSiteService {
         List<Joueur> joueurs = joueurRepository.findBySite_Id(siteId);
 
         return joueurs.stream()
-                .map(j -> new JoueurAdminDto(
-                        j.getMatricule(),
-                        j.getNom(),
-                        j.getType(),
-                        j.getSolde()
-                ))
+                .map(this::toJoueurAdminDto)
                 .toList();
+    }
+
+    private JoueurAdminDto toJoueurAdminDto(Joueur joueur) {
+        return new JoueurAdminDto(
+                joueur.getMatricule(),
+                joueur.getNom(),
+                joueur.getType(),
+                joueur.getSolde()
+        );
     }
 }
