@@ -20,6 +20,12 @@ import be.ephec.padel.backend.repository.ParticipationRepository;
 import be.ephec.padel.backend.repository.TerrainRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import be.ephec.padel.backend.dto.response.PublicMatchSummaryDto;
+import be.ephec.padel.backend.mapper.PublicMatchSummaryMapper;
+import be.ephec.padel.backend.repository.projection.PublicMatchSummaryProjection;
+
+import java.time.LocalDate;
+import java.util.stream.Collectors;
 
 import java.math.BigDecimal;
 import java.time.DayOfWeek;
@@ -255,5 +261,33 @@ public class MatchPadelService {
             }
             default -> throw new BusinessException("Type joueur inconnu.");
         }
+    }
+
+    @Transactional(readOnly = true)
+    public List<PublicMatchSummaryDto> getPublicMatchSummaries(LocalDate from,
+                                                               LocalDate to,
+                                                               Long siteId) {
+        if (from != null && to != null && from.isAfter(to)) {
+            throw new BusinessException("Le paramètre 'from' doit être antérieur ou égal à 'to'.");
+        }
+
+        LocalDateTime fromDateTime = (from != null)
+                ? from.atStartOfDay()
+                : LocalDate.now().atStartOfDay();
+
+        LocalDateTime toDateTime = (to != null)
+                ? to.atTime(LocalTime.MAX)
+                : null;
+
+        List<PublicMatchSummaryProjection> rows = matchPadelRepository.findPublicMatchSummaries(
+                MatchVisibilite.PUBLIC,
+                fromDateTime,
+                toDateTime,
+                siteId
+        );
+
+        return rows.stream()
+                .map(row -> PublicMatchSummaryMapper.toDto(row, Tarifs.PART_PAR_JOUEUR))
+                .collect(Collectors.toList());
     }
 }

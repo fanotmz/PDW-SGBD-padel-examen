@@ -13,8 +13,11 @@ import be.ephec.padel.backend.service.PaiementService;
 import be.ephec.padel.backend.service.SoldeService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import be.ephec.padel.backend.dto.response.PublicMatchSummaryDto;
+import be.ephec.padel.backend.repository.projection.PublicMatchSummaryProjection;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.List;
@@ -518,5 +521,74 @@ class MatchPadelServiceTest {
 
         MatchPadel res = service.creerMatch(1L, "G0001", date, MatchVisibilite.PUBLIC);
         assertSame(savedMatch, res);
+    }
+    @Test
+    void getPublicMatchSummaries_calcule_placesRestantes_et_complet() {
+        PublicMatchSummaryProjection row = mock(PublicMatchSummaryProjection.class);
+
+        when(row.getId()).thenReturn(1L);
+        when(row.getDateDebut()).thenReturn(LocalDateTime.of(2030, 1, 1, 10, 0));
+        when(row.getSiteId()).thenReturn(5L);
+        when(row.getSiteNom()).thenReturn("Site Delta");
+        when(row.getTerrainId()).thenReturn(10L);
+        when(row.getTerrainNom()).thenReturn("Terrain 1");
+        when(row.getOrganisateurMatricule()).thenReturn("G0001");
+        when(row.getNbParticipants()).thenReturn(2L);
+
+        when(matchRepo.findPublicMatchSummaries(
+                eq(MatchVisibilite.PUBLIC),
+                any(LocalDateTime.class),
+                isNull(),
+                isNull()
+        )).thenReturn(List.of(row));
+
+        List<PublicMatchSummaryDto> dtos = service.getPublicMatchSummaries(null, null, null);
+
+        assertEquals(1, dtos.size());
+        PublicMatchSummaryDto dto = dtos.get(0);
+
+        assertEquals(1L, dto.getId());
+        assertEquals("Site Delta", dto.getSiteNom());
+        assertEquals("Terrain 1", dto.getTerrainNom());
+        assertEquals(2, dto.getNbParticipants());
+        assertEquals(2, dto.getPlacesRestantes());
+        assertFalse(dto.isComplet());
+        assertEquals(0, Tarifs.PART_PAR_JOUEUR.compareTo(dto.getMontantParJoueur()));
+    }
+    @Test
+    void getPublicMatchSummaries_match_complet_si_4_participants() {
+        PublicMatchSummaryProjection row = mock(PublicMatchSummaryProjection.class);
+
+        when(row.getId()).thenReturn(1L);
+        when(row.getDateDebut()).thenReturn(LocalDateTime.of(2030, 1, 1, 10, 0));
+        when(row.getSiteId()).thenReturn(5L);
+        when(row.getSiteNom()).thenReturn("Site Delta");
+        when(row.getTerrainId()).thenReturn(10L);
+        when(row.getTerrainNom()).thenReturn("Terrain 1");
+        when(row.getOrganisateurMatricule()).thenReturn("G0001");
+        when(row.getNbParticipants()).thenReturn(4L);
+
+        when(matchRepo.findPublicMatchSummaries(
+                eq(MatchVisibilite.PUBLIC),
+                any(LocalDateTime.class),
+                isNull(),
+                isNull()
+        )).thenReturn(List.of(row));
+
+        PublicMatchSummaryDto dto = service.getPublicMatchSummaries(null, null, null).get(0);
+
+        assertEquals(4, dto.getNbParticipants());
+        assertEquals(0, dto.getPlacesRestantes());
+        assertTrue(dto.isComplet());
+    }
+    @Test
+    void getPublicMatchSummaries_throw_businessException_si_from_apres_to() {
+        LocalDate from = LocalDate.of(2030, 2, 1);
+        LocalDate to = LocalDate.of(2030, 1, 1);
+
+        assertThrows(BusinessException.class,
+                () -> service.getPublicMatchSummaries(from, to, null));
+
+        verify(matchRepo, never()).findPublicMatchSummaries(any(), any(), any(), any());
     }
 }
