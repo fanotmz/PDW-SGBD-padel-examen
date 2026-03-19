@@ -34,14 +34,22 @@ class MatchPadelRepositoryTest extends SqlServerTestContainerConfig {
 
         Joueur orga = joueurRepository.save(new Joueur("ORG1", "Orga", TypeJoueur.GLOBAL));
 
-        MatchPadel m1 = matchPadelRepository.save(new MatchPadel(t1, orga, LocalDateTime.now().plusDays(1), MatchVisibilite.PUBLIC));
-        MatchPadel m2 = matchPadelRepository.save(new MatchPadel(t1, orga, LocalDateTime.now().plusDays(2), MatchVisibilite.PRIVE));
-        matchPadelRepository.save(new MatchPadel(t2, orga, LocalDateTime.now().plusDays(3), MatchVisibilite.PUBLIC));
+        MatchPadel m1 = matchPadelRepository.save(
+                new MatchPadel(t1, orga, LocalDateTime.now().plusDays(1), MatchVisibilite.PUBLIC)
+        );
+        MatchPadel m2 = matchPadelRepository.save(
+                new MatchPadel(t1, orga, LocalDateTime.now().plusDays(2), MatchVisibilite.PRIVE)
+        );
+        matchPadelRepository.save(
+                new MatchPadel(t2, orga, LocalDateTime.now().plusDays(3), MatchVisibilite.PUBLIC)
+        );
 
         List<MatchPadel> matchsT1 = matchPadelRepository.findByTerrainId(t1.getId());
 
         assertThat(matchsT1).hasSize(2);
-        assertThat(matchsT1).extracting(MatchPadel::getId).containsExactlyInAnyOrder(m1.getId(), m2.getId());
+        assertThat(matchsT1)
+                .extracting(MatchPadel::getId)
+                .containsExactlyInAnyOrder(m1.getId(), m2.getId());
     }
 
     @Test
@@ -64,7 +72,9 @@ class MatchPadelRepositoryTest extends SqlServerTestContainerConfig {
         );
 
         assertThat(res).hasSize(2);
-        assertThat(res).extracting(MatchPadel::getId).containsExactlyInAnyOrder(m1.getId(), m2.getId());
+        assertThat(res)
+                .extracting(MatchPadel::getId)
+                .containsExactlyInAnyOrder(m1.getId(), m2.getId());
     }
 
     @Test
@@ -75,16 +85,14 @@ class MatchPadelRepositoryTest extends SqlServerTestContainerConfig {
         Joueur orga = joueurRepository.save(new Joueur("ORG1", "Orga", TypeJoueur.GLOBAL));
         Joueur j1 = joueurRepository.save(new Joueur("J001", "Alice", TypeJoueur.GLOBAL));
 
-        MatchPadel m = matchPadelRepository.save(new MatchPadel(
-                t, orga, LocalDateTime.now().plusDays(1), MatchVisibilite.PUBLIC
-        ));
+        MatchPadel m = matchPadelRepository.save(
+                new MatchPadel(t, orga, LocalDateTime.now().plusDays(1), MatchVisibilite.PUBLIC)
+        );
 
-        // Maintenir les 2 côtés (recommandé)
         Participation part = new Participation(m, j1);
         m.addParticipation(part);
         participationRepository.save(part);
 
-        // Important : forcer écriture DB + vider le contexte pour éviter de relire l'objet "cached"
         em.flush();
         em.clear();
 
@@ -104,5 +112,70 @@ class MatchPadelRepositoryTest extends SqlServerTestContainerConfig {
 
         assertThat(loaded.getParticipations()).hasSize(1);
         assertThat(loaded.getParticipations().get(0).getJoueur().getMatricule()).isEqualTo("J001");
+    }
+
+    @Test
+    void findPublicMatchSummaries_retourne_seulement_les_matchs_publics() {
+        Site s = siteRepository.save(new Site("Site A", "Bruxelles"));
+        Terrain t = terrainRepository.save(new Terrain("T1", s));
+        Joueur orga = joueurRepository.save(new Joueur("ORG1", "Orga", TypeJoueur.GLOBAL));
+
+        MatchPadel publicMatch = matchPadelRepository.save(
+                new MatchPadel(t, orga, LocalDateTime.of(2030, 1, 1, 10, 0), MatchVisibilite.PUBLIC)
+        );
+        matchPadelRepository.save(
+                new MatchPadel(t, orga, LocalDateTime.of(2030, 1, 2, 10, 0), MatchVisibilite.PRIVE)
+        );
+
+        em.flush();
+        em.clear();
+
+        var rows = matchPadelRepository.findPublicMatchSummaries(
+                MatchVisibilite.PUBLIC,
+                null,
+                null,
+                null
+        );
+
+        assertThat(rows).hasSize(1);
+        assertThat(rows.get(0).getId()).isEqualTo(publicMatch.getId());
+        assertThat(rows.get(0).getNbParticipants()).isEqualTo(0L);
+    }
+
+    @Test
+    void findPublicMatchSummaries_compte_correctement_les_participations() {
+        Site s = siteRepository.save(new Site("Site A", "Bruxelles"));
+        Terrain t = terrainRepository.save(new Terrain("T1", s));
+
+        Joueur orga = joueurRepository.save(new Joueur("ORG1", "Orga", TypeJoueur.GLOBAL));
+        Joueur j1 = joueurRepository.save(new Joueur("J001", "Alice", TypeJoueur.GLOBAL));
+        Joueur j2 = joueurRepository.save(new Joueur("J002", "Bob", TypeJoueur.GLOBAL));
+
+        MatchPadel publicMatch = matchPadelRepository.save(
+                new MatchPadel(t, orga, LocalDateTime.of(2030, 1, 1, 10, 0), MatchVisibilite.PUBLIC)
+        );
+
+        Participation p1 = new Participation(publicMatch, j1);
+        Participation p2 = new Participation(publicMatch, j2);
+
+        publicMatch.addParticipation(p1);
+        publicMatch.addParticipation(p2);
+
+        participationRepository.save(p1);
+        participationRepository.save(p2);
+
+        em.flush();
+        em.clear();
+
+        var rows = matchPadelRepository.findPublicMatchSummaries(
+                MatchVisibilite.PUBLIC,
+                null,
+                null,
+                null
+        );
+
+        assertThat(rows).hasSize(1);
+        assertThat(rows.get(0).getId()).isEqualTo(publicMatch.getId());
+        assertThat(rows.get(0).getNbParticipants()).isEqualTo(2L);
     }
 }

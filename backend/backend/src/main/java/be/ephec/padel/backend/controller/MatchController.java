@@ -12,8 +12,13 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import be.ephec.padel.backend.dto.response.PublicMatchSummaryDto;
+
+import java.time.LocalDate;
+import java.util.List;
 
 import java.net.URI;
 
@@ -59,5 +64,26 @@ public class MatchController {
         MatchDto dto = matchPadelService.getMatchDto(created.getId());
         URI location = URI.create("/api/v1/matchs/" + created.getId());
         return ResponseEntity.created(location).body(dto);
+    }
+    @Operation(
+            summary = "Lister les matchs publics",
+            description = "Retourne la liste des matchs PUBLIC avec un résumé utile pour le frontend."
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Liste récupérée"),
+            @ApiResponse(responseCode = "400", description = "Paramètres invalides",
+                    content = @Content(schema = @Schema(implementation = ApiErrorDto.class)))
+    })
+    @GetMapping("/public")
+    public ResponseEntity<List<PublicMatchSummaryDto>> getPublicMatches(
+            @RequestParam(required = false)
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+            LocalDate from,
+            @RequestParam(required = false)
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+            LocalDate to,
+            @RequestParam(required = false) Long siteId) {
+
+        return ResponseEntity.ok(matchPadelService.getPublicMatchSummaries(from, to, siteId));
     }
 }

@@ -6,6 +6,8 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+import be.ephec.padel.backend.model.enums.MatchVisibilite;
+import be.ephec.padel.backend.repository.projection.PublicMatchSummaryProjection;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -96,5 +98,38 @@ public interface MatchPadelRepository extends JpaRepository<MatchPadel, Long> {
           and m.terrain.site.id = :siteId
     """)
     long countByDateDebutBetweenAndSiteId(LocalDateTime from, LocalDateTime to, Long siteId);
+    @Query("""
+    select
+        m.id as id,
+        m.dateDebut as dateDebut,
+        s.id as siteId,
+        s.nom as siteNom,
+        t.id as terrainId,
+        t.nom as terrainNom,
+        o.matricule as organisateurMatricule,
+        count(p.id) as nbParticipants
+    from MatchPadel m
+    join m.terrain t
+    join t.site s
+    join m.organisateur o
+    left join m.participations p
+    where m.visibilite = :visibilite
+      and (:from is null or m.dateDebut >= :from)
+      and (:to is null or m.dateDebut <= :to)
+      and (:siteId is null or s.id = :siteId)
+    group by
+        m.id, m.dateDebut,
+        s.id, s.nom,
+        t.id, t.nom,
+        o.matricule
+    order by m.dateDebut asc
+""")
+    List<PublicMatchSummaryProjection> findPublicMatchSummaries(
+            @Param("visibilite") MatchVisibilite visibilite,
+            @Param("from") LocalDateTime from,
+            @Param("to") LocalDateTime to,
+            @Param("siteId") Long siteId
+    );
+
 }
 
