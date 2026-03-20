@@ -23,7 +23,7 @@ class MatchControllerContract404Test {
     @Test
     @WithMockUser // <-- ajout
     void getMatch_notFound_returns404_withApiErrorFormat() throws Exception {
-        when(matchPadelService.getMatchDto(999L))
+        when(matchPadelService.getMatchDetailDto(999L,null))
                 .thenThrow(new NotFoundException("Match 999 introuvable"));
 
         mockMvc.perform(get("/api/v1/matchs/999"))
