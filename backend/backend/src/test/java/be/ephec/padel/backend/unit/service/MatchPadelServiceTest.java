@@ -1,8 +1,10 @@
 package be.ephec.padel.backend.unit.service;
 
 import be.ephec.padel.backend.common.Tarifs;
+import be.ephec.padel.backend.dto.response.MatchDetailDto;
 import be.ephec.padel.backend.dto.response.MatchDto;
 import be.ephec.padel.backend.exception.BusinessException;
+import be.ephec.padel.backend.exception.ForbiddenException;
 import be.ephec.padel.backend.exception.NotFoundException;
 import be.ephec.padel.backend.model.entities.*;
 import be.ephec.padel.backend.model.enums.MatchVisibilite;
@@ -590,5 +592,158 @@ class MatchPadelServiceTest {
                 () -> service.getPublicMatchSummaries(from, to, null));
 
         verify(matchRepo, never()).findPublicMatchSummaries(any(), any(), any(), any());
+    }
+    @Test
+    void getMatchDetailDto_public_sansMatricule_ok() {
+        MatchPadel match = mock(MatchPadel.class);
+        when(match.getId()).thenReturn(1L);
+        when(match.getVisibilite()).thenReturn(MatchVisibilite.PUBLIC);
+        when(match.getDateDebut()).thenReturn(LocalDateTime.of(2030, 1, 1, 10, 0));
+
+        Terrain terrain = mock(Terrain.class);
+        Site site = mock(Site.class);
+        Joueur orga = mock(Joueur.class);
+
+        when(site.getId()).thenReturn(5L);
+        when(site.getNom()).thenReturn("Site Delta");
+
+        when(terrain.getId()).thenReturn(10L);
+        when(terrain.getNom()).thenReturn("Terrain 1");
+        when(terrain.getSite()).thenReturn(site);
+
+        when(orga.getMatricule()).thenReturn("G0001");
+        when(orga.getNom()).thenReturn("Orga");
+
+        when(match.getTerrain()).thenReturn(terrain);
+        when(match.getOrganisateur()).thenReturn(orga);
+        when(match.getParticipations()).thenReturn(List.of());
+
+        when(matchRepo.findByIdWithDetails(1L)).thenReturn(Optional.of(match));
+        when(paiementRepo.sumMontantByMatchId(1L)).thenReturn(BigDecimal.ZERO);
+
+        MatchDetailDto dto = service.getMatchDetailDto(1L, null);
+
+        assertEquals(1L, dto.getId());
+        assertEquals("Site Delta", dto.getSiteNom());
+        assertEquals("Terrain 1", dto.getTerrainNom());
+        assertEquals("G0001", dto.getOrganisateurMatricule());
+        assertEquals(0, dto.getNbParticipants());
+        assertEquals(4, dto.getPlacesRestantes());
+        assertFalse(dto.isComplet());
+    }
+    @Test
+    void getMatchDetailDto_prive_sansMatricule_refuse() {
+        MatchPadel match = mock(MatchPadel.class);
+        when(match.getVisibilite()).thenReturn(MatchVisibilite.PRIVE);
+
+        when(matchRepo.findByIdWithDetails(1L)).thenReturn(Optional.of(match));
+
+        assertThrows(ForbiddenException.class,
+                () -> service.getMatchDetailDto(1L, null));
+
+        verify(paiementRepo, never()).sumMontantByMatchId(anyLong());
+    }
+    @Test
+    void getMatchDetailDto_prive_organisateur_ok() {
+        MatchPadel match = mock(MatchPadel.class);
+        when(match.getId()).thenReturn(1L);
+        when(match.getVisibilite()).thenReturn(MatchVisibilite.PRIVE);
+        when(match.getDateDebut()).thenReturn(LocalDateTime.of(2030, 1, 1, 10, 0));
+
+        Terrain terrain = mock(Terrain.class);
+        Site site = mock(Site.class);
+        Joueur orga = mock(Joueur.class);
+
+        when(site.getId()).thenReturn(5L);
+        when(site.getNom()).thenReturn("Site Delta");
+
+        when(terrain.getId()).thenReturn(10L);
+        when(terrain.getNom()).thenReturn("Terrain 1");
+        when(terrain.getSite()).thenReturn(site);
+
+        when(orga.getMatricule()).thenReturn("G0001");
+        when(orga.getNom()).thenReturn("Orga");
+
+        when(match.getTerrain()).thenReturn(terrain);
+        when(match.getOrganisateur()).thenReturn(orga);
+        when(match.getParticipations()).thenReturn(List.of());
+
+        when(matchRepo.findByIdWithDetails(1L)).thenReturn(Optional.of(match));
+        when(paiementRepo.sumMontantByMatchId(1L)).thenReturn(BigDecimal.ZERO);
+
+        MatchDetailDto dto = service.getMatchDetailDto(1L, "G0001");
+
+        assertEquals(1L, dto.getId());
+        assertEquals("G0001", dto.getOrganisateurMatricule());
+    }
+    @Test
+    void getMatchDetailDto_prive_participant_ok() {
+        MatchPadel match = mock(MatchPadel.class);
+        when(match.getId()).thenReturn(1L);
+        when(match.getVisibilite()).thenReturn(MatchVisibilite.PRIVE);
+        when(match.getDateDebut()).thenReturn(LocalDateTime.of(2030, 1, 1, 10, 0));
+
+        Terrain terrain = mock(Terrain.class);
+        Site site = mock(Site.class);
+        Joueur orga = mock(Joueur.class);
+        Joueur joueur = mock(Joueur.class);
+        Participation participation = mock(Participation.class);
+
+        when(site.getId()).thenReturn(5L);
+        when(site.getNom()).thenReturn("Site Delta");
+
+        when(terrain.getId()).thenReturn(10L);
+        when(terrain.getNom()).thenReturn("Terrain 1");
+        when(terrain.getSite()).thenReturn(site);
+
+        when(orga.getMatricule()).thenReturn("G0001");
+        when(orga.getNom()).thenReturn("Orga");
+
+        when(joueur.getMatricule()).thenReturn("J0001");
+        when(joueur.getNom()).thenReturn("Alice");
+
+        when(participation.getJoueur()).thenReturn(joueur);
+
+        when(match.getTerrain()).thenReturn(terrain);
+        when(match.getOrganisateur()).thenReturn(orga);
+        when(match.getParticipations()).thenReturn(List.of(participation));
+
+        when(matchRepo.findByIdWithDetails(1L)).thenReturn(Optional.of(match));
+        when(paiementRepo.sumMontantByMatchId(1L)).thenReturn(BigDecimal.ZERO);
+
+        MatchDetailDto dto = service.getMatchDetailDto(1L, "J0001");
+
+        assertEquals(1, dto.getParticipants().size());
+        assertEquals("J0001", dto.getParticipants().get(0).getMatricule());
+    }
+    @Test
+    void getMatchDetailDto_prive_autreJoueur_refuse() {
+        MatchPadel match = mock(MatchPadel.class);
+        Joueur orga = mock(Joueur.class);
+        Joueur joueur = mock(Joueur.class);
+        Participation participation = mock(Participation.class);
+
+        when(match.getVisibilite()).thenReturn(MatchVisibilite.PRIVE);
+
+        when(orga.getMatricule()).thenReturn("G0001");
+        when(match.getOrganisateur()).thenReturn(orga);
+
+        when(joueur.getMatricule()).thenReturn("J0001");
+        when(participation.getJoueur()).thenReturn(joueur);
+        when(match.getParticipations()).thenReturn(List.of(participation));
+
+        when(matchRepo.findByIdWithDetails(1L)).thenReturn(Optional.of(match));
+
+        assertThrows(ForbiddenException.class,
+                () -> service.getMatchDetailDto(1L, "X9999"));
+
+        verify(paiementRepo, never()).sumMontantByMatchId(anyLong());
+    }
+    @Test
+    void getMatchDetailDto_introuvable_notFound() {
+        when(matchRepo.findByIdWithDetails(1L)).thenReturn(Optional.empty());
+
+        assertThrows(NotFoundException.class,
+                () -> service.getMatchDetailDto(1L, null));
     }
 }

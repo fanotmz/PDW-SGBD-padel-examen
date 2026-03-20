@@ -2,9 +2,12 @@ package be.ephec.padel.backend.service;
 
 import be.ephec.padel.backend.common.Tarifs;
 import be.ephec.padel.backend.dto.response.MatchDto;
+import be.ephec.padel.backend.dto.response.MatchDetailDto;
 import be.ephec.padel.backend.exception.BusinessException;
+import be.ephec.padel.backend.exception.ForbiddenException;
 import be.ephec.padel.backend.exception.NotFoundException;
 import be.ephec.padel.backend.mapper.MatchMapper;
+import be.ephec.padel.backend.mapper.MatchDetailMapper;
 import be.ephec.padel.backend.model.entities.Joueur;
 import be.ephec.padel.backend.model.entities.MatchPadel;
 import be.ephec.padel.backend.model.entities.Participation;
@@ -289,5 +292,46 @@ public class MatchPadelService {
         return rows.stream()
                 .map(row -> PublicMatchSummaryMapper.toDto(row, Tarifs.PART_PAR_JOUEUR))
                 .collect(Collectors.toList());
+    }
+    private boolean peutVoirMatchPrive(MatchPadel match, String matricule) {
+        if (matricule == null || matricule.isBlank()) {
+            return false;
+        }
+
+        if (match.getOrganisateur() != null
+                && matricule.equals(match.getOrganisateur().getMatricule())) {
+            return true;
+        }
+
+        if (match.getParticipations() == null) {
+            return false;
+        }
+
+        return match.getParticipations().stream()
+                .map(Participation::getJoueur)
+                .filter(j -> j != null && j.getMatricule() != null)
+                .anyMatch(j -> matricule.equals(j.getMatricule()));
+    }
+    @Transactional(readOnly = true)
+    public MatchDetailDto getMatchDetailDto(Long id, String matricule) {
+        MatchPadel m = getMatch(id);
+
+        if (m.getVisibilite() == MatchVisibilite.PRIVE && !peutVoirMatchPrive(m, matricule)) {
+            throw new ForbiddenException("Accès refusé à ce match privé.");
+        }
+
+        BigDecimal montantTotal = Tarifs.PRIX_MATCH;
+
+        BigDecimal montantPaye = paiementRepository.sumMontantByMatchId(id);
+        if (montantPaye == null) {
+            montantPaye = BigDecimal.ZERO;
+        }
+
+        BigDecimal resteAPayer = montantTotal.subtract(montantPaye);
+        if (resteAPayer.signum() < 0) {
+            resteAPayer = BigDecimal.ZERO;
+        }
+
+        return MatchDetailMapper.toDto(m, montantTotal, montantPaye, resteAPayer);
     }
 }

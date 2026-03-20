@@ -3,6 +3,7 @@ package be.ephec.padel.backend.controller;
 import be.ephec.padel.backend.dto.request.CreateMatchRequest;
 import be.ephec.padel.backend.dto.response.ApiErrorDto;
 import be.ephec.padel.backend.dto.response.MatchDto;
+import be.ephec.padel.backend.dto.response.MatchDetailDto;
 import be.ephec.padel.backend.model.entities.MatchPadel;
 import be.ephec.padel.backend.service.MatchPadelService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -33,15 +34,23 @@ public class MatchController {
         this.matchPadelService = matchPadelService;
     }
 
-    @Operation(summary = "Récupérer un match", description = "Retourne le match (DTO) par son identifiant.")
+    @Operation(
+            summary = "Récupérer le détail d’un match",
+            description = "Retourne le détail d’un match. Un match PUBLIC est visible par tous. "
+                    + "Un match PRIVE est visible uniquement par l’organisateur et les participants."
+    )
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Match trouvé"),
+            @ApiResponse(responseCode = "403", description = "Accès refusé à ce match privé",
+                    content = @Content(schema = @Schema(implementation = ApiErrorDto.class))),
             @ApiResponse(responseCode = "404", description = "Match introuvable",
                     content = @Content(schema = @Schema(implementation = ApiErrorDto.class)))
     })
     @GetMapping("/{id}")
-    public ResponseEntity<MatchDto> getOne(@PathVariable Long id) {
-        return ResponseEntity.ok(matchPadelService.getMatchDto(id));
+    public ResponseEntity<MatchDetailDto> getOne(
+            @PathVariable Long id,
+            @RequestParam(required = false) String matricule) {
+        return ResponseEntity.ok(matchPadelService.getMatchDetailDto(id, matricule));
     }
 
     @Operation(summary = "Créer un match", description = "Crée un match (PUBLIC ou PRIVE) si les règles métier sont respectées.")

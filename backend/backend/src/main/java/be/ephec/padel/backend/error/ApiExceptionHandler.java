@@ -3,6 +3,7 @@ package be.ephec.padel.backend.error;
 import be.ephec.padel.backend.dto.response.ApiErrorDto;
 import be.ephec.padel.backend.exception.BusinessException;
 import be.ephec.padel.backend.exception.NotFoundException;
+import be.ephec.padel.backend.exception.ForbiddenException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.ConstraintViolationException;
 import org.springframework.http.HttpStatus;
@@ -176,6 +177,20 @@ public class ApiExceptionHandler {
         );
 
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
+    }
+    @ExceptionHandler(ForbiddenException.class)
+    public ResponseEntity<ApiErrorDto> handleForbidden(
+            ForbiddenException ex,
+            HttpServletRequest request) {
+
+        ApiErrorDto error = buildError(
+                HttpStatus.FORBIDDEN,
+                ex.getMessage(),
+                request.getRequestURI(),
+                null
+        );
+
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(error);
     }
 
     private ApiErrorDto buildError(

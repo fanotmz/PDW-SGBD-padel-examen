@@ -21,7 +21,7 @@ public class MatchDto {
     // ✅ nouveaux champs
     private BigDecimal montantTotal;   // 60.00
     private BigDecimal montantPaye;    // somme des paiements
-    public BigDecimal resteAPayer;    // montantTotal - montantPaye (min 0)
+    private BigDecimal resteAPayer;    // montantTotal - montantPaye (min 0)
 
     public MatchDto(Long id,
                     Long terrainId,
