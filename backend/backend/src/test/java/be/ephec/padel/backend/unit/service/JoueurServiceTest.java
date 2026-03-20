@@ -1,17 +1,24 @@
 package be.ephec.padel.backend.unit.service;
 
+import be.ephec.padel.backend.dto.enums.MatchTemporalStatusDto;
+import be.ephec.padel.backend.dto.enums.PlayerMatchRoleDto;
+import be.ephec.padel.backend.dto.response.PlayerMatchSummaryDto;
 import be.ephec.padel.backend.exception.BusinessException;
 import be.ephec.padel.backend.exception.NotFoundException;
-import be.ephec.padel.backend.model.entities.Joueur;
-import be.ephec.padel.backend.model.entities.Site;
+import be.ephec.padel.backend.model.entities.*;
+import be.ephec.padel.backend.model.enums.MatchVisibilite;
 import be.ephec.padel.backend.model.enums.TypeJoueur;
 import be.ephec.padel.backend.repository.JoueurRepository;
+import be.ephec.padel.backend.repository.ParticipationRepository;
 import be.ephec.padel.backend.repository.SiteRepository;
 import be.ephec.padel.backend.service.JoueurService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -25,11 +32,58 @@ class JoueurServiceTest {
     private SiteRepository siteRepo;
     private JoueurService service;
 
+    private ParticipationRepository participationRepo;
+
     @BeforeEach
     void setup() {
         joueurRepo = mock(JoueurRepository.class);
         siteRepo = mock(SiteRepository.class);
-        service = new JoueurService(joueurRepo, siteRepo);
+        participationRepo = mock(ParticipationRepository.class);
+        service = new JoueurService(joueurRepo, siteRepo, participationRepo);
+    }
+
+    private Participation mockParticipation(String organisateurMatricule,
+                                            String joueurMatricule,
+                                            LocalDate dateMatch,
+                                            MatchVisibilite visibilite,
+                                            boolean paiementEffectue,
+                                            Long terrainId,
+                                            String terrainNom,
+                                            Long siteId,
+                                            String siteNom) {
+        Participation participation = mock(Participation.class);
+        MatchPadel match = mock(MatchPadel.class);
+        Joueur organisateur = mock(Joueur.class);
+        Joueur joueur = mock(Joueur.class);
+        Terrain terrain = mock(Terrain.class);
+        Site site = mock(Site.class);
+
+        when(participation.getMatch()).thenReturn(match);
+        when(participation.getJoueur()).thenReturn(joueur);
+
+        when(match.getId()).thenReturn(999L);
+        when(match.getDateDebut()).thenReturn(LocalDateTime.of(dateMatch, LocalTime.of(10, 0)));
+        when(match.getVisibilite()).thenReturn(visibilite);
+        when(match.getOrganisateur()).thenReturn(organisateur);
+        when(match.getTerrain()).thenReturn(terrain);
+
+        when(organisateur.getMatricule()).thenReturn(organisateurMatricule);
+        when(joueur.getMatricule()).thenReturn(joueurMatricule);
+
+        when(terrain.getId()).thenReturn(terrainId);
+        when(terrain.getNom()).thenReturn(terrainNom);
+        when(terrain.getSite()).thenReturn(site);
+
+        when(site.getId()).thenReturn(siteId);
+        when(site.getNom()).thenReturn(siteNom);
+
+        if (paiementEffectue) {
+            when(participation.getPaiements()).thenReturn(List.of(mock(Paiement.class)));
+        } else {
+            when(participation.getPaiements()).thenReturn(List.of());
+        }
+
+        return participation;
     }
 
     // ----------------
@@ -238,5 +292,214 @@ class JoueurServiceTest {
         when(joueurRepo.findById("G0001")).thenReturn(Optional.of(j));
 
         assertDoesNotThrow(() -> service.verifierPasDeDette("G0001"));
+    }
+// ----------------
+// getPlayerMatches
+// ----------------
+
+    @Test
+    void getPlayerMatches_joueurIntrouvable_notFound() {
+        when(joueurRepo.findById("G0001")).thenReturn(Optional.empty());
+
+        assertThrows(NotFoundException.class, () -> service.getPlayerMatches("G0001"));
+
+        verify(joueurRepo).findById("G0001");
+        verifyNoInteractions(participationRepo);
+    }
+
+    @Test
+    void getPlayerMatches_joueurExistant_sansParticipation_retourneListeVide() {
+        Joueur joueur = mock(Joueur.class);
+        when(joueurRepo.findById("G0001")).thenReturn(Optional.of(joueur));
+        when(participationRepo.findByJoueur_MatriculeOrderByMatch_DateDebutAsc("G0001"))
+                .thenReturn(List.of());
+
+        List<PlayerMatchSummaryDto> result = service.getPlayerMatches("G0001");
+
+        assertNotNull(result);
+        assertTrue(result.isEmpty());
+
+        verify(joueurRepo).findById("G0001");
+        verify(participationRepo).findByJoueur_MatriculeOrderByMatch_DateDebutAsc("G0001");
+    }
+
+    @Test
+    void getPlayerMatches_matchFutur_participant_nonPaye() {
+        Joueur joueur = mock(Joueur.class);
+        when(joueurRepo.findById("G0001")).thenReturn(Optional.of(joueur));
+
+        Participation participation = mockParticipation(
+                "G9999",                // organisateur
+                "G0001",                // joueur courant
+                LocalDate.now().plusDays(5),
+                MatchVisibilite.PUBLIC,
+                false,                  // paiement
+                10L,
+                "Terrain 1",
+                1L,
+                "Site Delta"
+        );
+
+        when(participationRepo.findByJoueur_MatriculeOrderByMatch_DateDebutAsc("G0001"))
+                .thenReturn(List.of(participation));
+
+        List<PlayerMatchSummaryDto> result = service.getPlayerMatches("G0001");
+
+        assertEquals(1, result.size());
+
+        PlayerMatchSummaryDto dto = result.get(0);
+        assertEquals(PlayerMatchRoleDto.PARTICIPANT, dto.roleJoueur());
+        assertEquals(MatchTemporalStatusDto.FUTUR, dto.statutTemporel());
+        assertEquals(5, dto.joursAvantMatch());
+        assertFalse(dto.paiementJoueurEffectue());
+        assertEquals(MatchVisibilite.PUBLIC, dto.visibilite());
+        assertEquals(10L, dto.terrainId());
+        assertEquals("Terrain 1", dto.terrainNom());
+        assertEquals(1L, dto.siteId());
+        assertEquals("Site Delta", dto.siteNom());
+    }
+
+    @Test
+    void getPlayerMatches_matchFutur_organisateur_paye() {
+        Joueur joueur = mock(Joueur.class);
+        when(joueurRepo.findById("G0001")).thenReturn(Optional.of(joueur));
+
+        Participation participation = mockParticipation(
+                "G0001",                // organisateur = joueur courant
+                "G0001",
+                LocalDate.now().plusDays(3),
+                MatchVisibilite.PRIVE,
+                true,
+                20L,
+                "Terrain Central",
+                2L,
+                "Site Omega"
+        );
+
+        when(participationRepo.findByJoueur_MatriculeOrderByMatch_DateDebutAsc("G0001"))
+                .thenReturn(List.of(participation));
+
+        List<PlayerMatchSummaryDto> result = service.getPlayerMatches("G0001");
+
+        assertEquals(1, result.size());
+
+        PlayerMatchSummaryDto dto = result.get(0);
+        assertEquals(PlayerMatchRoleDto.ORGANISATEUR, dto.roleJoueur());
+        assertEquals(MatchTemporalStatusDto.FUTUR, dto.statutTemporel());
+        assertEquals(3, dto.joursAvantMatch());
+        assertTrue(dto.paiementJoueurEffectue());
+        assertEquals(MatchVisibilite.PRIVE, dto.visibilite());
+        assertEquals(20L, dto.terrainId());
+        assertEquals("Terrain Central", dto.terrainNom());
+        assertEquals(2L, dto.siteId());
+        assertEquals("Site Omega", dto.siteNom());
+    }
+
+    @Test
+    void getPlayerMatches_matchAujourdHui_retourneStatutAujourdHui_et_joursNull() {
+        Joueur joueur = mock(Joueur.class);
+        when(joueurRepo.findById("G0001")).thenReturn(Optional.of(joueur));
+
+        Participation participation = mockParticipation(
+                "G9999",
+                "G0001",
+                LocalDate.now(),
+                MatchVisibilite.PUBLIC,
+                true,
+                30L,
+                "Terrain 3",
+                3L,
+                "Site Today"
+        );
+
+        when(participationRepo.findByJoueur_MatriculeOrderByMatch_DateDebutAsc("G0001"))
+                .thenReturn(List.of(participation));
+
+        List<PlayerMatchSummaryDto> result = service.getPlayerMatches("G0001");
+
+        assertEquals(1, result.size());
+
+        PlayerMatchSummaryDto dto = result.get(0);
+        assertEquals(MatchTemporalStatusDto.AUJOURD_HUI, dto.statutTemporel());
+        assertNull(dto.joursAvantMatch());
+        assertTrue(dto.paiementJoueurEffectue());
+    }
+
+    @Test
+    void getPlayerMatches_matchPasse_retourneStatutPasse_et_joursNull() {
+        Joueur joueur = mock(Joueur.class);
+        when(joueurRepo.findById("G0001")).thenReturn(Optional.of(joueur));
+
+        Participation participation = mockParticipation(
+                "G9999",
+                "G0001",
+                LocalDate.now().minusDays(2),
+                MatchVisibilite.PRIVE,
+                false,
+                40L,
+                "Terrain 4",
+                4L,
+                "Site Past"
+        );
+
+        when(participationRepo.findByJoueur_MatriculeOrderByMatch_DateDebutAsc("G0001"))
+                .thenReturn(List.of(participation));
+
+        List<PlayerMatchSummaryDto> result = service.getPlayerMatches("G0001");
+
+        assertEquals(1, result.size());
+
+        PlayerMatchSummaryDto dto = result.get(0);
+        assertEquals(MatchTemporalStatusDto.PASSE, dto.statutTemporel());
+        assertNull(dto.joursAvantMatch());
+        assertFalse(dto.paiementJoueurEffectue());
+        assertEquals(MatchVisibilite.PRIVE, dto.visibilite());
+    }
+
+    @Test
+    void getPlayerMatches_plusieursParticipations_conserveOrdreDuRepository() {
+        Joueur joueur = mock(Joueur.class);
+        when(joueurRepo.findById("G0001")).thenReturn(Optional.of(joueur));
+
+        Participation first = mockParticipation(
+                "G9999",
+                "G0001",
+                LocalDate.now().plusDays(1),
+                MatchVisibilite.PUBLIC,
+                false,
+                11L,
+                "Terrain A",
+                101L,
+                "Site A"
+        );
+
+        Participation second = mockParticipation(
+                "G0001",
+                "G0001",
+                LocalDate.now().plusDays(4),
+                MatchVisibilite.PRIVE,
+                true,
+                22L,
+                "Terrain B",
+                202L,
+                "Site B"
+        );
+
+        when(participationRepo.findByJoueur_MatriculeOrderByMatch_DateDebutAsc("G0001"))
+                .thenReturn(List.of(first, second));
+
+        List<PlayerMatchSummaryDto> result = service.getPlayerMatches("G0001");
+
+        assertEquals(2, result.size());
+
+        assertEquals(11L, result.get(0).terrainId());
+        assertEquals("Terrain A", result.get(0).terrainNom());
+        assertEquals(PlayerMatchRoleDto.PARTICIPANT, result.get(0).roleJoueur());
+        assertFalse(result.get(0).paiementJoueurEffectue());
+
+        assertEquals(22L, result.get(1).terrainId());
+        assertEquals("Terrain B", result.get(1).terrainNom());
+        assertEquals(PlayerMatchRoleDto.ORGANISATEUR, result.get(1).roleJoueur());
+        assertTrue(result.get(1).paiementJoueurEffectue());
     }
 }

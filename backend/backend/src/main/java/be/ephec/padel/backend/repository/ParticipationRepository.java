@@ -9,6 +9,7 @@ import java.util.List;
 public interface ParticipationRepository extends JpaRepository<Participation, Long> {
     List<Participation> findByMatch_Id(Long matchId);
     List<Participation> findByJoueur_Matricule(String matricule);
+    List<Participation> findByJoueur_MatriculeOrderByMatch_DateDebutAsc(String matricule);
     boolean existsByMatch_IdAndJoueur_Matricule(Long matchId, String joueurMatricule);
 
     Optional<Participation> findByMatch_IdAndJoueur_Matricule(Long matchId, String matricule);

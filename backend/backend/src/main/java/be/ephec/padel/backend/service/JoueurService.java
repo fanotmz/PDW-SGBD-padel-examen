@@ -1,16 +1,24 @@
 package be.ephec.padel.backend.service;
 
+import be.ephec.padel.backend.dto.enums.MatchTemporalStatusDto;
+import be.ephec.padel.backend.dto.enums.PlayerMatchRoleDto;
+import be.ephec.padel.backend.dto.response.PlayerMatchSummaryDto;
 import be.ephec.padel.backend.exception.BusinessException;
 import be.ephec.padel.backend.exception.NotFoundException;
 import be.ephec.padel.backend.model.entities.Joueur;
+import be.ephec.padel.backend.model.entities.MatchPadel;
+import be.ephec.padel.backend.model.entities.Participation;
 import be.ephec.padel.backend.model.entities.Site;
 import be.ephec.padel.backend.model.enums.TypeJoueur;
 import be.ephec.padel.backend.repository.JoueurRepository;
+import be.ephec.padel.backend.repository.ParticipationRepository;
 import be.ephec.padel.backend.repository.SiteRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 
 @Service
@@ -19,10 +27,12 @@ public class JoueurService {
 
     private final JoueurRepository joueurRepository;
     private final SiteRepository siteRepository;
+    private final ParticipationRepository participationRepository;
 
-    public JoueurService(JoueurRepository joueurRepository, SiteRepository siteRepository) {
+    public JoueurService(JoueurRepository joueurRepository, SiteRepository siteRepository, ParticipationRepository participationRepository) {
         this.joueurRepository = joueurRepository;
         this.siteRepository = siteRepository;
+        this.participationRepository = participationRepository;
     }
 
     public Joueur creerJoueur(String matricule, String nom, TypeJoueur type, Long siteId) {
@@ -86,5 +96,56 @@ public class JoueurService {
         if (!matricule.matches(pattern)) {
             throw new BusinessException("Matricule invalide pour le type " + type + " : " + matricule);
         }
+    }
+    private PlayerMatchSummaryDto toPlayerMatchSummaryDto(Participation participation,
+                                                          String matricule,
+                                                          LocalDate today) {
+        MatchPadel match = participation.getMatch();
+        LocalDate dateMatch = match.getDateDebut().toLocalDate();
+
+        PlayerMatchRoleDto roleJoueur =
+                match.getOrganisateur().getMatricule().equals(matricule)
+                        ? PlayerMatchRoleDto.ORGANISATEUR
+                        : PlayerMatchRoleDto.PARTICIPANT;
+
+        MatchTemporalStatusDto statutTemporel;
+        Integer joursAvantMatch = null;
+
+        if (dateMatch.isBefore(today)) {
+            statutTemporel = MatchTemporalStatusDto.PASSE;
+        } else if (dateMatch.isEqual(today)) {
+            statutTemporel = MatchTemporalStatusDto.AUJOURD_HUI;
+        } else {
+            statutTemporel = MatchTemporalStatusDto.FUTUR;
+            joursAvantMatch = (int) ChronoUnit.DAYS.between(today, dateMatch);
+        }
+
+        boolean paiementJoueurEffectue = !participation.getPaiements().isEmpty();
+
+        return new PlayerMatchSummaryDto(
+                match.getId(),
+                match.getDateDebut(),
+                match.getTerrain().getSite().getId(),
+                match.getTerrain().getSite().getNom(),
+                match.getTerrain().getId(),
+                match.getTerrain().getNom(),
+                match.getVisibilite(),
+                roleJoueur,
+                statutTemporel,
+                joursAvantMatch,
+                paiementJoueurEffectue
+        );
+    }
+    public List<PlayerMatchSummaryDto> getPlayerMatches(String matricule) {
+        getJoueur(matricule);
+
+        List<Participation> participations =
+                participationRepository.findByJoueur_MatriculeOrderByMatch_DateDebutAsc(matricule);
+
+        LocalDate today = LocalDate.now();
+
+        return participations.stream()
+                .map(participation -> toPlayerMatchSummaryDto(participation, matricule, today))
+                .toList();
     }
 }
