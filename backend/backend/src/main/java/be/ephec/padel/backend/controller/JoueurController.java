@@ -3,6 +3,7 @@ package be.ephec.padel.backend.controller;
 import be.ephec.padel.backend.dto.request.JoueurCreateRequest;
 import be.ephec.padel.backend.dto.response.DetteDto;
 import be.ephec.padel.backend.dto.response.JoueurDto;
+import be.ephec.padel.backend.dto.response.PlayerMatchSummaryDto;
 import be.ephec.padel.backend.mapper.JoueurMapper;
 import be.ephec.padel.backend.model.entities.Joueur;
 import be.ephec.padel.backend.service.JoueurService;
@@ -43,6 +44,11 @@ public class JoueurController {
     public ResponseEntity<DetteDto> hasDette(@PathVariable String matricule) {
         boolean dette = joueurService.aDette(matricule);
         return ResponseEntity.ok(new DetteDto(dette));
+    }
+
+    @GetMapping("/{matricule}/matchs")
+    public ResponseEntity<List<PlayerMatchSummaryDto>> getPlayerMatches(@PathVariable String matricule) {
+        return ResponseEntity.ok(joueurService.getPlayerMatches(matricule));
     }
 
     @SecurityRequirement(name = "basicAuth")
