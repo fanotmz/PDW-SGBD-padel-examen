@@ -2,6 +2,7 @@ package be.ephec.padel.backend.service;
 
 import be.ephec.padel.backend.dto.enums.MatchTemporalStatusDto;
 import be.ephec.padel.backend.dto.enums.PlayerMatchRoleDto;
+import be.ephec.padel.backend.dto.response.OrganizerMatchSummaryDto;
 import be.ephec.padel.backend.dto.response.PlayerMatchSummaryDto;
 import be.ephec.padel.backend.exception.BusinessException;
 import be.ephec.padel.backend.exception.NotFoundException;
@@ -9,8 +10,10 @@ import be.ephec.padel.backend.model.entities.Joueur;
 import be.ephec.padel.backend.model.entities.MatchPadel;
 import be.ephec.padel.backend.model.entities.Participation;
 import be.ephec.padel.backend.model.entities.Site;
+import be.ephec.padel.backend.model.enums.MatchVisibilite;
 import be.ephec.padel.backend.model.enums.TypeJoueur;
 import be.ephec.padel.backend.repository.JoueurRepository;
+import be.ephec.padel.backend.repository.MatchPadelRepository;
 import be.ephec.padel.backend.repository.ParticipationRepository;
 import be.ephec.padel.backend.repository.SiteRepository;
 import org.springframework.stereotype.Service;
@@ -25,14 +28,21 @@ import java.util.List;
 @Transactional
 public class JoueurService {
 
+    private static final int CAPACITE_MATCH = 4;
+
     private final JoueurRepository joueurRepository;
     private final SiteRepository siteRepository;
     private final ParticipationRepository participationRepository;
+    private final MatchPadelRepository matchPadelRepository;
 
-    public JoueurService(JoueurRepository joueurRepository, SiteRepository siteRepository, ParticipationRepository participationRepository) {
+    public JoueurService(JoueurRepository joueurRepository,
+                         SiteRepository siteRepository,
+                         ParticipationRepository participationRepository,
+                         MatchPadelRepository matchPadelRepository) {
         this.joueurRepository = joueurRepository;
         this.siteRepository = siteRepository;
         this.participationRepository = participationRepository;
+        this.matchPadelRepository = matchPadelRepository;
     }
 
     public Joueur creerJoueur(String matricule, String nom, TypeJoueur type, Long siteId) {
@@ -53,7 +63,6 @@ public class JoueurService {
             site = siteRepository.findById(siteId)
                     .orElseThrow(() -> new NotFoundException("Site introuvable"));
         } else {
-            // Correction : éviter GLOBAL/LIBRE rattachés par erreur à un site
             if (siteId != null) {
                 throw new BusinessException("Seul un joueur SITE peut avoir un site.");
             }
@@ -97,6 +106,7 @@ public class JoueurService {
             throw new BusinessException("Matricule invalide pour le type " + type + " : " + matricule);
         }
     }
+
     private PlayerMatchSummaryDto toPlayerMatchSummaryDto(Participation participation,
                                                           String matricule,
                                                           LocalDate today) {
@@ -136,6 +146,7 @@ public class JoueurService {
                 paiementJoueurEffectue
         );
     }
+
     public List<PlayerMatchSummaryDto> getPlayerMatches(String matricule) {
         getJoueur(matricule);
 
@@ -146,6 +157,61 @@ public class JoueurService {
 
         return participations.stream()
                 .map(participation -> toPlayerMatchSummaryDto(participation, matricule, today))
+                .toList();
+    }
+
+    private OrganizerMatchSummaryDto toOrganizerMatchSummaryDto(MatchPadel match, LocalDate today) {
+        LocalDate dateMatch = match.getDateDebut().toLocalDate();
+
+        MatchTemporalStatusDto statutTemporel;
+        Integer joursAvantMatch = null;
+
+        if (dateMatch.isBefore(today)) {
+            statutTemporel = MatchTemporalStatusDto.PASSE;
+        } else if (dateMatch.isEqual(today)) {
+            statutTemporel = MatchTemporalStatusDto.AUJOURD_HUI;
+        } else {
+            statutTemporel = MatchTemporalStatusDto.FUTUR;
+            joursAvantMatch = (int) ChronoUnit.DAYS.between(today, dateMatch);
+        }
+
+        int nbParticipants = match.getParticipations().size();
+        int placesRestantes = Math.max(0, CAPACITE_MATCH - nbParticipants);
+        boolean complet = nbParticipants >= CAPACITE_MATCH;
+
+        boolean risquePenaliteJ1 =
+                match.getVisibilite() == MatchVisibilite.PRIVE
+                        && !complet
+                        && statutTemporel == MatchTemporalStatusDto.FUTUR
+                        && joursAvantMatch != null
+                        && joursAvantMatch <= 1;
+
+        return new OrganizerMatchSummaryDto(
+                match.getId(),
+                match.getDateDebut(),
+                match.getTerrain().getSite().getId(),
+                match.getTerrain().getSite().getNom(),
+                match.getTerrain().getId(),
+                match.getTerrain().getNom(),
+                match.getVisibilite(),
+                nbParticipants,
+                placesRestantes,
+                complet,
+                statutTemporel,
+                joursAvantMatch,
+                risquePenaliteJ1
+        );
+    }
+    public List<OrganizerMatchSummaryDto> getOrganizedMatches(String matricule) {
+        getJoueur(matricule);
+
+        List<MatchPadel> matchs =
+                matchPadelRepository.findOrganizedMatchesWithDetailsByMatricule(matricule);
+
+        LocalDate today = LocalDate.now();
+
+        return matchs.stream()
+                .map(match -> toOrganizerMatchSummaryDto(match, today))
                 .toList();
     }
 }
