@@ -5,6 +5,7 @@ import be.ephec.padel.backend.controller.JoueurController;
 import be.ephec.padel.backend.dto.enums.MatchTemporalStatusDto;
 import be.ephec.padel.backend.dto.enums.PlayerMatchRoleDto;
 import be.ephec.padel.backend.dto.response.PlayerMatchSummaryDto;
+import be.ephec.padel.backend.dto.response.OrganizerMatchSummaryDto;
 import be.ephec.padel.backend.error.ApiExceptionHandler;
 import be.ephec.padel.backend.exception.NotFoundException;
 import be.ephec.padel.backend.model.entities.Joueur;
@@ -217,6 +218,67 @@ class JoueurControllerTest {
                 .thenThrow(new NotFoundException("Joueur introuvable"));
 
         mvc.perform(get("/api/v1/joueurs/G9999/matchs")
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isNotFound());
+    }
+    @Test
+    void getOrganizedMatches_retourne200_etListeVide() throws Exception {
+        when(joueurService.getOrganizedMatches("G0001")).thenReturn(List.of());
+
+        mvc.perform(get("/api/v1/joueurs/G0001/matchs/organises")
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$").isArray())
+                .andExpect(jsonPath("$.length()").value(0));
+    }
+
+    @Test
+    void getOrganizedMatches_retourne200_etListeDeMatchs() throws Exception {
+        OrganizerMatchSummaryDto dto = new OrganizerMatchSummaryDto(
+                1L,
+                LocalDateTime.of(2030, 1, 10, 10, 0),
+                100L,
+                "Site Delta",
+                200L,
+                "Terrain 1",
+                MatchVisibilite.PRIVE,
+                2,
+                2,
+                false,
+                MatchTemporalStatusDto.FUTUR,
+                1,
+                true
+        );
+
+        when(joueurService.getOrganizedMatches("G0001")).thenReturn(List.of(dto));
+
+        mvc.perform(get("/api/v1/joueurs/G0001/matchs/organises")
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$").isArray())
+                .andExpect(jsonPath("$.length()").value(1))
+                .andExpect(jsonPath("$[0].id").value(1))
+                .andExpect(jsonPath("$[0].siteId").value(100))
+                .andExpect(jsonPath("$[0].siteNom").value("Site Delta"))
+                .andExpect(jsonPath("$[0].terrainId").value(200))
+                .andExpect(jsonPath("$[0].terrainNom").value("Terrain 1"))
+                .andExpect(jsonPath("$[0].visibilite").value("PRIVE"))
+                .andExpect(jsonPath("$[0].nbParticipants").value(2))
+                .andExpect(jsonPath("$[0].placesRestantes").value(2))
+                .andExpect(jsonPath("$[0].complet").value(false))
+                .andExpect(jsonPath("$[0].statutTemporel").value("FUTUR"))
+                .andExpect(jsonPath("$[0].joursAvantMatch").value(1))
+                .andExpect(jsonPath("$[0].risquePenaliteJ1").value(true));
+    }
+
+    @Test
+    void getOrganizedMatches_joueurIntrouvable_retourne404() throws Exception {
+        when(joueurService.getOrganizedMatches("G9999"))
+                .thenThrow(new NotFoundException("Joueur introuvable"));
+
+        mvc.perform(get("/api/v1/joueurs/G9999/matchs/organises")
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isNotFound());
     }

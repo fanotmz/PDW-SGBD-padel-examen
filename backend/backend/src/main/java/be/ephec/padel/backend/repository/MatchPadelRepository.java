@@ -17,7 +17,9 @@ public interface MatchPadelRepository extends JpaRepository<MatchPadel, Long> {
 
     @Query("select m from MatchPadel m where m.terrain.id = :terrainId")
     List<MatchPadel> findByTerrainId(@Param("terrainId") Long terrainId);
+
     List<MatchPadel> findByDateDebutBetween(LocalDateTime start, LocalDateTime end);
+
     @Query("""
         select m
         from MatchPadel m
@@ -36,6 +38,7 @@ public interface MatchPadelRepository extends JpaRepository<MatchPadel, Long> {
     boolean existsByTerrainIdAndDateDebutBetween(@Param("terrainId") Long terrainId,
                                                  @Param("start") LocalDateTime start,
                                                  @Param("end") LocalDateTime end);
+
     @Query("""
         select distinct m
         from MatchPadel m
@@ -81,13 +84,13 @@ public interface MatchPadelRepository extends JpaRepository<MatchPadel, Long> {
 """)
     List<MatchPadel> findAtraiterDebutMatchAvecDetails(@Param("from") LocalDateTime from,
                                                        @Param("to") LocalDateTime to);
+
     @Query("""
     select count(m)
     from MatchPadel m
     where m.dateDebut >= :from
       and m.dateDebut < :to
 """)
-
     long countByDateDebutBetween(LocalDateTime from, LocalDateTime to);
 
     @Query("""
@@ -98,6 +101,7 @@ public interface MatchPadelRepository extends JpaRepository<MatchPadel, Long> {
           and m.terrain.site.id = :siteId
     """)
     long countByDateDebutBetweenAndSiteId(LocalDateTime from, LocalDateTime to, Long siteId);
+
     @Query("""
     select
         m.id as id,
@@ -130,6 +134,16 @@ public interface MatchPadelRepository extends JpaRepository<MatchPadel, Long> {
             @Param("to") LocalDateTime to,
             @Param("siteId") Long siteId
     );
-
+    @Query("""
+    select distinct m
+    from MatchPadel m
+    join fetch m.terrain t
+    join fetch t.site
+    join fetch m.organisateur o
+    left join fetch m.participations p
+    where o.matricule = :matricule
+    order by m.dateDebut asc
+""")
+    List<MatchPadel> findOrganizedMatchesWithDetailsByMatricule(@Param("matricule") String matricule);
 }
 
