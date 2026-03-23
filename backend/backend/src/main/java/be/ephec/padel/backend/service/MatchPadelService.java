@@ -21,6 +21,7 @@ import be.ephec.padel.backend.repository.MatchPadelRepository;
 import be.ephec.padel.backend.repository.PaiementRepository;
 import be.ephec.padel.backend.repository.ParticipationRepository;
 import be.ephec.padel.backend.repository.TerrainRepository;
+import be.ephec.padel.backend.service.FermetureSiteService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import be.ephec.padel.backend.dto.response.PublicMatchSummaryDto;
@@ -52,6 +53,7 @@ public class MatchPadelService {
     private final SoldeService soldeService;
     private final ParticipationRepository participationRepository;
     private final PaiementService paiementService;
+    private final FermetureSiteService fermetureSiteService;
     private final PaiementRepository paiementRepository;
     private final FermetureGlobaleRepository fermetureGlobaleRepository;
 
@@ -60,7 +62,7 @@ public class MatchPadelService {
                              JoueurRepository joueurRepository,
                              SoldeService soldeService,
                              ParticipationRepository participationRepository,
-                             PaiementService paiementService,
+                             PaiementService paiementService, FermetureSiteService fermetureSiteService,
                              PaiementRepository paiementRepository,
                              FermetureGlobaleRepository fermetureGlobaleRepository) {
         this.matchPadelRepository = matchPadelRepository;
@@ -71,6 +73,7 @@ public class MatchPadelService {
         this.paiementService = paiementService;
         this.paiementRepository = paiementRepository;
         this.fermetureGlobaleRepository = fermetureGlobaleRepository;
+        this.fermetureSiteService = fermetureSiteService;
     }
 
     @Transactional(readOnly = true)
@@ -177,6 +180,7 @@ public class MatchPadelService {
         verifierDroitReservation(organisateur, terrain, dateDebut, now);
         verifierFermetureGlobale(dateDebut);
         verifierOuvertureSite(terrain, dateDebut);
+        verifierFermetureSite(terrain, dateDebut);
         verifierTerrainDisponible(terrainId, dateDebut);
 
         MatchPadel match = new MatchPadel(terrain, organisateur, dateDebut, visibilite);
@@ -263,6 +267,21 @@ public class MatchPadelService {
                 }
             }
             default -> throw new BusinessException("Type joueur inconnu.");
+        }
+    }
+    private void verifierFermetureSite(Terrain terrain, LocalDateTime dateDebut) {
+        if (terrain == null || terrain.getSite() == null || terrain.getSite().getId() == null) {
+            throw new BusinessException("Terrain sans site associé.");
+        }
+        if (dateDebut == null) {
+            throw new BusinessException("Date début obligatoire");
+        }
+
+        Long siteId = terrain.getSite().getId();
+        LocalDate date = dateDebut.toLocalDate();
+
+        if (fermetureSiteService.isDateFermeePourSite(siteId, date)) {
+            throw new BusinessException("Réservation impossible : site fermé à cette date.");
         }
     }
 
