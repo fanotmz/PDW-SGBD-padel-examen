@@ -1,0 +1,61 @@
+databaseChangeLog:
+  - changeSet:
+      id: 002-1-create-fermeture-site
+      author: fanoa
+      changes:
+        - createTable:
+            tableName: fermeture_site
+            columns:
+              - column:
+                  name: id
+                  type: bigint
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    primaryKeyName: pk_fermeture_site
+                    nullable: false
+              - column:
+                  name: site_id
+                  type: bigint
+                  constraints:
+                    nullable: false
+              - column:
+                  name: date_fermeture
+                  type: date
+              - column:
+                  name: date_debut
+                  type: date
+              - column:
+                  name: date_fin
+                  type: date
+              - column:
+                  name: motif
+                  type: varchar(255)
+
+  - changeSet:
+      id: 002-2-fk-fermeture-site-site
+      author: fanoa
+      changes:
+        - addForeignKeyConstraint:
+            baseTableName: fermeture_site
+            baseColumnNames: site_id
+            referencedTableName: site
+            referencedColumnNames: id
+            constraintName: fk_fermeture_site_site
+
+  - changeSet:
+      id: 002-3-index-fermeture-site
+      author: fanoa
+      changes:
+        - createIndex:
+            tableName: fermeture_site
+            indexName: idx_fermeture_site_site
+            columns:
+              - column:
+                  name: site_id
+        - createIndex:
+            tableName: fermeture_site
+            indexName: idx_fermeture_site_date
+            columns:
+              - column:
+                  name: date_fermeture
