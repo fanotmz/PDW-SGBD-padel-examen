@@ -1,0 +1,47 @@
+databaseChangeLog:
+  - changeSet:
+      id: 003-create-horaire-site
+      author: fanoa
+      changes:
+        - createTable:
+            tableName: horaire_site
+            columns:
+              - column:
+                  name: id
+                  type: BIGINT
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    primaryKeyName: pk_horaire_site
+              - column:
+                  name: site_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+              - column:
+                  name: annee
+                  type: INT
+                  constraints:
+                    nullable: false
+              - column:
+                  name: heure_ouverture
+                  type: TIME
+                  constraints:
+                    nullable: false
+              - column:
+                  name: heure_fermeture
+                  type: TIME
+                  constraints:
+                    nullable: false
+
+        - addForeignKeyConstraint:
+            baseTableName: horaire_site
+            baseColumnNames: site_id
+            referencedTableName: site
+            referencedColumnNames: id
+            constraintName: fk_horaire_site_site
+
+        - addUniqueConstraint:
+            tableName: horaire_site
+            columnNames: site_id, annee
+            constraintName: uk_horaire_site_site_annee

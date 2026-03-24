@@ -15,8 +15,6 @@ public final class SiteMapper {
                 site.getId(),
                 site.getNom(),
                 site.getVille(),
-                site.getHeureOuverture(),
-                site.getHeureFermeture(),
                 site.getJoursFermeture()
         );
     }

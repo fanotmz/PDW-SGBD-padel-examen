@@ -7,11 +7,7 @@ import be.ephec.padel.backend.dto.response.PublicMatchSummaryDto;
 import be.ephec.padel.backend.exception.BusinessException;
 import be.ephec.padel.backend.exception.ForbiddenException;
 import be.ephec.padel.backend.exception.NotFoundException;
-import be.ephec.padel.backend.model.entities.Joueur;
-import be.ephec.padel.backend.model.entities.MatchPadel;
-import be.ephec.padel.backend.model.entities.Participation;
-import be.ephec.padel.backend.model.entities.Site;
-import be.ephec.padel.backend.model.entities.Terrain;
+import be.ephec.padel.backend.model.entities.*;
 import be.ephec.padel.backend.model.enums.MatchVisibilite;
 import be.ephec.padel.backend.model.enums.TypeJoueur;
 import be.ephec.padel.backend.repository.FermetureGlobaleRepository;
@@ -21,10 +17,7 @@ import be.ephec.padel.backend.repository.PaiementRepository;
 import be.ephec.padel.backend.repository.ParticipationRepository;
 import be.ephec.padel.backend.repository.TerrainRepository;
 import be.ephec.padel.backend.repository.projection.PublicMatchSummaryProjection;
-import be.ephec.padel.backend.service.FermetureSiteService;
-import be.ephec.padel.backend.service.MatchPadelService;
-import be.ephec.padel.backend.service.PaiementService;
-import be.ephec.padel.backend.service.SoldeService;
+import be.ephec.padel.backend.service.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -51,6 +44,7 @@ class MatchPadelServiceTest {
     private PaiementRepository paiementRepo;
     private FermetureGlobaleRepository fermetureGlobaleRepo;
     private FermetureSiteService fermetureSiteService;
+    private HoraireSiteService horaireSiteService;
 
     private MatchPadelService service;
 
@@ -65,6 +59,7 @@ class MatchPadelServiceTest {
         paiementRepo = mock(PaiementRepository.class);
         fermetureGlobaleRepo = mock(FermetureGlobaleRepository.class);
         fermetureSiteService = mock(FermetureSiteService.class);
+        horaireSiteService = mock(HoraireSiteService.class);
 
         service = new MatchPadelService(
                         matchRepo,
@@ -73,10 +68,11 @@ class MatchPadelServiceTest {
                         soldeService,
                         participationRepo,
                         paiementService,
+                horaireSiteService,
                 fermetureSiteService,
                 paiementRepo,
                 fermetureGlobaleRepo
-                );
+        );
     }
 
     // ----------------
@@ -94,9 +90,14 @@ class MatchPadelServiceTest {
         when(t.getSite()).thenReturn(site);
 
         when(site.getId()).thenReturn(1L);
-        when(site.getHeureOuverture()).thenReturn(LocalTime.of(8, 0));
-        when(site.getHeureFermeture()).thenReturn(LocalTime.of(22, 0));
         when(site.getJoursFermeture()).thenReturn(Set.of());
+
+        HoraireSite horaire = mock(HoraireSite.class);
+        when(horaire.getHeureOuverture()).thenReturn(LocalTime.of(8, 0));
+        when(horaire.getHeureFermeture()).thenReturn(LocalTime.of(22, 0));
+
+        when(horaireSiteService.getApplicable(eq(1L), any(LocalDateTime.class)))
+                .thenReturn(horaire);
     }
 
     private Joueur stubOrgaGlobalSansDette(String matricule) {
@@ -485,9 +486,13 @@ class MatchPadelServiceTest {
         when(t.getSite()).thenReturn(site);
 
         LocalDateTime date = dateValide();
-        when(site.getHeureOuverture()).thenReturn(LocalTime.of(8, 0));
-        when(site.getHeureFermeture()).thenReturn(LocalTime.of(22, 0));
         when(site.getJoursFermeture()).thenReturn(Set.of(date.getDayOfWeek()));
+
+        HoraireSite horaire = mock(HoraireSite.class);
+        when(horaire.getHeureOuverture()).thenReturn(LocalTime.of(8, 0));
+        when(horaire.getHeureFermeture()).thenReturn(LocalTime.of(22, 0));
+        when(horaireSiteService.getApplicable(eq(1L), any(LocalDateTime.class)))
+                .thenReturn(horaire);
 
         stubOrgaGlobalSansDette("G0001");
         when(fermetureGlobaleRepo.existsByDate(date.toLocalDate())).thenReturn(false);
@@ -509,9 +514,12 @@ class MatchPadelServiceTest {
                 .plusDays(2)
                 .withHour(21).withMinute(30).withSecond(0).withNano(0);
 
-        when(site.getHeureOuverture()).thenReturn(LocalTime.of(8, 0));
-        when(site.getHeureFermeture()).thenReturn(LocalTime.of(22, 0));
         when(site.getJoursFermeture()).thenReturn(Set.of());
+
+        HoraireSite horaire = mock(HoraireSite.class);
+        when(horaire.getHeureOuverture()).thenReturn(LocalTime.of(8, 0));
+        when(horaire.getHeureFermeture()).thenReturn(LocalTime.of(22, 0));
+        when(horaireSiteService.getApplicable(eq(1L), eq(date))).thenReturn(horaire);
 
         stubOrgaGlobalSansDette("G0001");
         when(fermetureGlobaleRepo.existsByDate(date.toLocalDate())).thenReturn(false);
@@ -787,9 +795,12 @@ class MatchPadelServiceTest {
 
         LocalDateTime date = dateValide();
 
-        when(site.getHeureOuverture()).thenReturn(LocalTime.of(8, 0));
-        when(site.getHeureFermeture()).thenReturn(LocalTime.of(22, 0));
         when(site.getJoursFermeture()).thenReturn(Set.of());
+
+        HoraireSite horaire = mock(HoraireSite.class);
+        when(horaire.getHeureOuverture()).thenReturn(LocalTime.of(8, 0));
+        when(horaire.getHeureFermeture()).thenReturn(LocalTime.of(22, 0));
+        when(horaireSiteService.getApplicable(eq(99L), eq(date))).thenReturn(horaire);
 
         stubOrgaGlobalSansDette("G0001");
         when(fermetureGlobaleRepo.existsByDate(date.toLocalDate())).thenReturn(false);

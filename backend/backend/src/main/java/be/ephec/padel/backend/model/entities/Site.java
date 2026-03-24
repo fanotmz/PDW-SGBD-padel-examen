@@ -3,7 +3,6 @@ package be.ephec.padel.backend.model.entities;
 import jakarta.persistence.*;
 
 import java.time.DayOfWeek;
-import java.time.LocalTime;
 import java.util.*;
 
 @Entity
@@ -28,11 +27,6 @@ public class Site {
 // SQL Server n’autorise pas l’ajout d’une colonne NOT NULL sans DEFAULT sur une table non vide.
 // À remplacer par une vraie migration (Flyway/Liquibase) :
 // 1) ajouter colonne nullable, 2) backfill des valeurs, 3) passer NOT NULL (+ éventuellement DEFAULT).
-    @Column(name = "heure_ouverture", nullable = true)
-    private LocalTime heureOuverture;
-
-    @Column(name = "heure_fermeture", nullable = true)
-    private LocalTime heureFermeture;
 
     @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(
@@ -59,12 +53,6 @@ public class Site {
         this.nom = nom;
         this.ville = ville;
     }
-    public Site(String nom, String ville, LocalTime heureOuverture, LocalTime heureFermeture) {
-        this.nom = nom;
-        this.ville = ville;
-        this.heureOuverture = heureOuverture;
-        this.heureFermeture = heureFermeture;
-    }
 
     // ---- Getters ----
 
@@ -84,14 +72,6 @@ public class Site {
         return terrains;
     }
 
-    public LocalTime getHeureOuverture() {
-        return heureOuverture;
-    }
-
-    public LocalTime getHeureFermeture() {
-        return heureFermeture;
-    }
-
     public Set<DayOfWeek> getJoursFermeture() {
         return joursFermeture;
     }
@@ -106,13 +86,6 @@ public class Site {
         this.ville = ville;
     }
 
-    public void setHeureOuverture(LocalTime heureOuverture) {
-        this.heureOuverture = heureOuverture;
-    }
-
-    public void setHeureFermeture(LocalTime heureFermeture) {
-        this.heureFermeture = heureFermeture;
-    }
 
     public void setJoursFermeture(Set<DayOfWeek> joursFermeture) {
         this.joursFermeture.clear();

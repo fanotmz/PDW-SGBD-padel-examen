@@ -20,7 +20,6 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
 
-import java.time.LocalTime;
 import java.util.Set;
 
 import static org.hamcrest.Matchers.containsString;
@@ -70,12 +69,10 @@ class FermetureSiteAdminControllerTest extends SqlServerTestContainerConfig {
         } catch (Exception ignored) {
         }
 
-        site = new Site("Site Admin Test", "Bruxelles", LocalTime.of(8, 0), LocalTime.of(22, 0));
+        site = new Site("Site Admin Test", "Bruxelles");
         site.setJoursFermeture(Set.of());
         site = siteRepository.save(site);
     }
-
-    // ===== Sécurité =====
 
     @Test
     void public_ne_peut_pas_lister_401() throws Exception {
@@ -109,8 +106,6 @@ class FermetureSiteAdminControllerTest extends SqlServerTestContainerConfig {
                                 """))
                 .andExpect(status().isUnauthorized());
     }
-
-    // ===== CRUD =====
 
     @Test
     @WithMockUser(roles = "ADMIN_GLOBAL")
@@ -300,8 +295,6 @@ class FermetureSiteAdminControllerTest extends SqlServerTestContainerConfig {
                 .andExpect(jsonPath("$.length()").value(0));
     }
 
-    // ===== Validation métier =====
-
     @Test
     @WithMockUser(roles = "ADMIN_GLOBAL")
     void post_date_refuse_si_date_absente() throws Exception {
@@ -387,7 +380,7 @@ class FermetureSiteAdminControllerTest extends SqlServerTestContainerConfig {
     @Test
     @WithMockUser(roles = "ADMIN_SITE", username = "adminSite1")
     void admin_site_hors_perimetre_refuse_403() throws Exception {
-        Site autreSite = new Site("Autre site", "Liège", LocalTime.of(8, 0), LocalTime.of(22, 0));
+        Site autreSite = new Site("Autre site", "Liège");
         autreSite.setJoursFermeture(Set.of());
         autreSite = siteRepository.save(autreSite);
 
@@ -401,6 +394,7 @@ class FermetureSiteAdminControllerTest extends SqlServerTestContainerConfig {
                                 """))
                 .andExpect(status().isForbidden());
     }
+
     @Test
     @WithMockUser(roles = "ADMIN_GLOBAL")
     void post_periode_refuse_doublon_exact() throws Exception {
@@ -428,6 +422,7 @@ class FermetureSiteAdminControllerTest extends SqlServerTestContainerConfig {
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.message").value(containsString("existe déjà pour cette période")));
     }
+
     @Test
     @WithMockUser(roles = "ADMIN_GLOBAL")
     void post_date_refuse_si_date_couverte_par_periode() throws Exception {
@@ -454,6 +449,7 @@ class FermetureSiteAdminControllerTest extends SqlServerTestContainerConfig {
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.message").value(containsString("déjà couverte par une période")));
     }
+
     @Test
     @WithMockUser(roles = "ADMIN_GLOBAL")
     void post_periode_refuse_si_chevauche_une_autre_periode() throws Exception {
@@ -481,6 +477,7 @@ class FermetureSiteAdminControllerTest extends SqlServerTestContainerConfig {
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.message").value(containsString("chevauche une autre fermeture")));
     }
+
     @Test
     @WithMockUser(roles = "ADMIN_GLOBAL")
     void post_periode_refuse_si_contient_date_unique_existante() throws Exception {
