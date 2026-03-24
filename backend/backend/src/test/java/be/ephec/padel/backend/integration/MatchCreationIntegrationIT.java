@@ -2,12 +2,14 @@ package be.ephec.padel.backend.integration;
 
 import be.ephec.padel.backend.model.entities.FermetureGlobale;
 import be.ephec.padel.backend.model.entities.FermetureSite;
+import be.ephec.padel.backend.model.entities.HoraireSite;
 import be.ephec.padel.backend.model.entities.Joueur;
 import be.ephec.padel.backend.model.entities.Site;
 import be.ephec.padel.backend.model.entities.Terrain;
 import be.ephec.padel.backend.model.enums.TypeJoueur;
 import be.ephec.padel.backend.repository.FermetureGlobaleRepository;
 import be.ephec.padel.backend.repository.FermetureSiteRepository;
+import be.ephec.padel.backend.repository.HoraireSiteRepository;
 import be.ephec.padel.backend.repository.JoueurRepository;
 import be.ephec.padel.backend.repository.MatchPadelRepository;
 import be.ephec.padel.backend.repository.MouvementSoldeRepository;
@@ -44,6 +46,7 @@ class MatchCreationIntegrationIT extends SqlServerTestContainerConfig {
 
     @Autowired SiteRepository siteRepository;
     @Autowired FermetureSiteRepository fermetureSiteRepository;
+    @Autowired HoraireSiteRepository horaireSiteRepository;
     @Autowired TerrainRepository terrainRepository;
     @Autowired JoueurRepository joueurRepository;
     @Autowired FermetureGlobaleRepository fermetureGlobaleRepository;
@@ -59,24 +62,31 @@ class MatchCreationIntegrationIT extends SqlServerTestContainerConfig {
 
     @BeforeEach
     void cleanAndSeed() {
-        // Nettoyage : toujours supprimer les enfants avant les parents
         paiementRepository.deleteAll();
         participationRepository.deleteAll();
         matchPadelRepository.deleteAll();
         mouvementSoldeRepository.deleteAll();
         fermetureSiteRepository.deleteAll();
+        horaireSiteRepository.deleteAll();
         terrainRepository.deleteAll();
         fermetureGlobaleRepository.deleteAll();
         joueurRepository.deleteAll();
         siteRepository.deleteAll();
 
-        // Seed minimal
-        site = new Site("Site IT", "Bruxelles", LocalTime.of(8, 0), LocalTime.of(22, 0));
+        site = new Site("Site IT", "Bruxelles");
         site.setJoursFermeture(Set.of());
         site = siteRepository.save(site);
 
         terrain = new Terrain("Terrain IT", site);
         terrain = terrainRepository.save(terrain);
+
+        HoraireSite horaire = new HoraireSite(
+                site,
+                LocalDate.now().getYear(),
+                LocalTime.of(8, 0),
+                LocalTime.of(22, 0)
+        );
+        horaireSiteRepository.save(horaire);
 
         orga = new Joueur("G0001", "Orga Test", TypeJoueur.GLOBAL);
         orga.setSolde(BigDecimal.ZERO);

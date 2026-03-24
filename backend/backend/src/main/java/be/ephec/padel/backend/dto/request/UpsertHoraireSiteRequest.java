@@ -1,17 +1,10 @@
 package be.ephec.padel.backend.dto.request;
 
-import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 
 import java.time.LocalTime;
 
-public class CreateSiteRequest {
-
-    @NotBlank
-    private String nom;
-
-    @NotBlank
-    private String ville;
+public class UpsertHoraireSiteRequest {
 
     @NotNull
     private Integer annee;
@@ -22,15 +15,7 @@ public class CreateSiteRequest {
     @NotNull
     private LocalTime heureFermeture;
 
-    public CreateSiteRequest() {
-    }
-
-    public String getNom() {
-        return nom;
-    }
-
-    public String getVille() {
-        return ville;
+    public UpsertHoraireSiteRequest() {
     }
 
     public Integer getAnnee() {
@@ -43,14 +28,6 @@ public class CreateSiteRequest {
 
     public LocalTime getHeureFermeture() {
         return heureFermeture;
-    }
-
-    public void setNom(String nom) {
-        this.nom = nom;
-    }
-
-    public void setVille(String ville) {
-        this.ville = ville;
     }
 
     public void setAnnee(Integer annee) {

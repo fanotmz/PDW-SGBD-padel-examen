@@ -3,3 +3,8 @@ databaseChangeLog:
       file: db/changelog/001-init-schema.yaml
   - include:
       file: db/changelog/002-fermeture-site.yaml
+  - include:
+      file: db/changelog/003-horaire-site.yaml
+  - include:
+      file: db/changelog/004-drop-site-horaires.yaml
+

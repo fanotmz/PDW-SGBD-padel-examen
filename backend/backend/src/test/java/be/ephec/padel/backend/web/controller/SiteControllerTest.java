@@ -16,9 +16,14 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
+import java.time.LocalTime;
+
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest(controllers = SiteController.class)
@@ -83,19 +88,21 @@ class SiteControllerTest {
                 .andExpect(jsonPath("$.message").value("Site introuvable"));
     }
 
-    // ===== Issue 62 : public refusé sur WRITE =====
-
     @Test
     void public_ne_peut_pas_creer_site_401() throws Exception {
         mvc.perform(post("/api/v1/sites")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
-                                { "nom": "Nouveau Site", "ville": "Charleroi" }
+                                {
+                                  "nom": "Nouveau Site",
+                                  "ville": "Charleroi",
+                                  "annee": 2026,
+                                  "heureOuverture": "09:00:00",
+                                  "heureFermeture": "21:00:00"
+                                }
                                 """))
                 .andExpect(status().isUnauthorized());
     }
-
-    // ===== Admin global : WRITE autorisé =====
 
     @Test
     @WithMockUser(roles = "ADMIN_GLOBAL")
@@ -105,14 +112,23 @@ class SiteControllerTest {
         when(created.getNom()).thenReturn("Nouveau Site");
         when(created.getVille()).thenReturn("Charleroi");
 
-        when(siteService.creerSite(anyString(), anyString())).thenReturn(created);
+        when(siteService.creerSite(
+                anyString(),
+                anyString(),
+                anyInt(),
+                any(LocalTime.class),
+                any(LocalTime.class)
+        )).thenReturn(created);
 
         mvc.perform(post("/api/v1/sites")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {
                                   "nom": "Nouveau Site",
-                                  "ville": "Charleroi"
+                                  "ville": "Charleroi",
+                                  "annee": 2026,
+                                  "heureOuverture": "09:00:00",
+                                  "heureFermeture": "21:00:00"
                                 }
                                 """))
                 .andExpect(status().isCreated())
@@ -131,7 +147,10 @@ class SiteControllerTest {
                         .content("""
                                 {
                                   "nom": "",
-                                  "ville": "Mons"
+                                  "ville": "Mons",
+                                  "annee": 2026,
+                                  "heureOuverture": "09:00:00",
+                                  "heureFermeture": "21:00:00"
                                 }
                                 """))
                 .andExpect(status().isBadRequest())
@@ -142,15 +161,23 @@ class SiteControllerTest {
     @Test
     @WithMockUser(roles = "ADMIN_GLOBAL")
     void create_business_400_nom_deja_utilise() throws Exception {
-        when(siteService.creerSite("Dup", "Bruxelles"))
-                .thenThrow(new BusinessException("Nom de site déjà utilisé"));
+        when(siteService.creerSite(
+                "Dup",
+                "Bruxelles",
+                2026,
+                LocalTime.of(9, 0),
+                LocalTime.of(21, 0)
+        )).thenThrow(new BusinessException("Nom de site déjà utilisé"));
 
         mvc.perform(post("/api/v1/sites")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {
                                   "nom": "Dup",
-                                  "ville": "Bruxelles"
+                                  "ville": "Bruxelles",
+                                  "annee": 2026,
+                                  "heureOuverture": "09:00:00",
+                                  "heureFermeture": "21:00:00"
                                 }
                                 """))
                 .andExpect(status().isBadRequest())

@@ -1,0 +1,11 @@
+databaseChangeLog:
+  - changeSet:
+      id: 004-drop-site-horaires
+      author: fanoa
+      changes:
+        - dropColumn:
+            tableName: site
+            columnName: heure_ouverture
+        - dropColumn:
+            tableName: site
+            columnName: heure_fermeture

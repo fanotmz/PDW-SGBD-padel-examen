@@ -1,11 +1,7 @@
 package be.ephec.padel.backend.integration;
 
 import be.ephec.padel.backend.exception.BusinessException;
-import be.ephec.padel.backend.model.entities.Joueur;
-import be.ephec.padel.backend.model.entities.MatchPadel;
-import be.ephec.padel.backend.model.entities.Participation;
-import be.ephec.padel.backend.model.entities.Site;
-import be.ephec.padel.backend.model.entities.Terrain;
+import be.ephec.padel.backend.model.entities.*;
 import be.ephec.padel.backend.model.enums.MatchVisibilite;
 import be.ephec.padel.backend.model.enums.TypeJoueur;
 import be.ephec.padel.backend.repository.*;
@@ -52,12 +48,19 @@ class ParticipationPremierPayePremierServiIT extends SqlServerTestContainerConfi
         joueurRepository.deleteAll();
         siteRepository.deleteAll();
 
-        Site site = new Site("Site", "Ville", LocalTime.of(8, 0), LocalTime.of(22, 0));
+        Site site = new Site("Site", "Ville");
+
         site.setJoursFermeture(Set.of());
         site = siteRepository.save(site);
 
         Terrain terrain = new Terrain("T1", site);
         terrain = terrainRepository.save(terrain);
+        HoraireSite horaire = new HoraireSite(
+                site,
+                2026,
+                LocalTime.of(8,0),
+                LocalTime.of(22,0)
+        );
 
         Joueur orga = new Joueur("G0001", "Orga", TypeJoueur.GLOBAL);
         orga = joueurRepository.save(orga);

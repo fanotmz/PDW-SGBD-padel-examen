@@ -8,11 +8,7 @@ import be.ephec.padel.backend.exception.ForbiddenException;
 import be.ephec.padel.backend.exception.NotFoundException;
 import be.ephec.padel.backend.mapper.MatchMapper;
 import be.ephec.padel.backend.mapper.MatchDetailMapper;
-import be.ephec.padel.backend.model.entities.Joueur;
-import be.ephec.padel.backend.model.entities.MatchPadel;
-import be.ephec.padel.backend.model.entities.Participation;
-import be.ephec.padel.backend.model.entities.Site;
-import be.ephec.padel.backend.model.entities.Terrain;
+import be.ephec.padel.backend.model.entities.*;
 import be.ephec.padel.backend.model.enums.MatchVisibilite;
 import be.ephec.padel.backend.model.enums.TypeJoueur;
 import be.ephec.padel.backend.repository.FermetureGlobaleRepository;
@@ -53,6 +49,7 @@ public class MatchPadelService {
     private final SoldeService soldeService;
     private final ParticipationRepository participationRepository;
     private final PaiementService paiementService;
+    private final HoraireSiteService horaireSiteService;
     private final FermetureSiteService fermetureSiteService;
     private final PaiementRepository paiementRepository;
     private final FermetureGlobaleRepository fermetureGlobaleRepository;
@@ -62,7 +59,7 @@ public class MatchPadelService {
                              JoueurRepository joueurRepository,
                              SoldeService soldeService,
                              ParticipationRepository participationRepository,
-                             PaiementService paiementService, FermetureSiteService fermetureSiteService,
+                             PaiementService paiementService, HoraireSiteService horaireSiteService, FermetureSiteService fermetureSiteService,
                              PaiementRepository paiementRepository,
                              FermetureGlobaleRepository fermetureGlobaleRepository) {
         this.matchPadelRepository = matchPadelRepository;
@@ -71,6 +68,7 @@ public class MatchPadelService {
         this.soldeService = soldeService;
         this.participationRepository = participationRepository;
         this.paiementService = paiementService;
+        this.horaireSiteService = horaireSiteService;
         this.paiementRepository = paiementRepository;
         this.fermetureGlobaleRepository = fermetureGlobaleRepository;
         this.fermetureSiteService = fermetureSiteService;
@@ -122,15 +120,10 @@ public class MatchPadelService {
             throw new BusinessException("Réservation impossible : site fermé ce jour-là.");
         }
 
-        LocalTime ouverture = site.getHeureOuverture();
-        LocalTime fermeture = site.getHeureFermeture();
-        if (ouverture == null || fermeture == null) {
-            throw new BusinessException("Horaires d'ouverture non configurés pour ce site.");
-        }
+        HoraireSite horaire = horaireSiteService.getApplicable(site.getId(), dateDebut);
 
-        if (!ouverture.isBefore(fermeture)) {
-            throw new BusinessException("Horaires du site invalides (ouverture >= fermeture).");
-        }
+        LocalTime ouverture = horaire.getHeureOuverture();
+        LocalTime fermeture = horaire.getHeureFermeture();
 
         LocalTime start = dateDebut.toLocalTime();
         LocalTime end = dateDebut.plusMinutes(SLOT_MIN).toLocalTime();

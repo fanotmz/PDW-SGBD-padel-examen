@@ -1,19 +1,18 @@
 package be.ephec.padel.backend.unit.service;
 
-import be.ephec.padel.backend.dto.request.UpdateSiteHorairesRequest;
 import be.ephec.padel.backend.exception.BusinessException;
 import be.ephec.padel.backend.exception.NotFoundException;
+import be.ephec.padel.backend.model.entities.HoraireSite;
 import be.ephec.padel.backend.model.entities.Site;
+import be.ephec.padel.backend.repository.HoraireSiteRepository;
 import be.ephec.padel.backend.repository.SiteRepository;
 import be.ephec.padel.backend.service.SiteService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import java.time.DayOfWeek;
 import java.time.LocalTime;
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -22,12 +21,14 @@ import static org.mockito.Mockito.*;
 class SiteServiceTest {
 
     private SiteRepository siteRepo;
+    private HoraireSiteRepository horaireSiteRepo;
     private SiteService service;
 
     @BeforeEach
     void setup() {
         siteRepo = mock(SiteRepository.class);
-        service = new SiteService(siteRepo);
+        horaireSiteRepo = mock(HoraireSiteRepository.class);
+        service = new SiteService(siteRepo, horaireSiteRepo);
     }
 
     // --------
@@ -76,34 +77,77 @@ class SiteServiceTest {
     // --------
     @Test
     void creerSite_nomNullOuBlank_refuse() {
-        assertThrows(BusinessException.class, () -> service.creerSite(null, "Bruxelles"));
-        assertThrows(BusinessException.class, () -> service.creerSite("   ", "Bruxelles"));
-        verifyNoInteractions(siteRepo);
+        assertThrows(BusinessException.class,
+                () -> service.creerSite(null, "Bruxelles", 2026, LocalTime.of(9, 0), LocalTime.of(21, 0)));
+        assertThrows(BusinessException.class,
+                () -> service.creerSite("   ", "Bruxelles", 2026, LocalTime.of(9, 0), LocalTime.of(21, 0)));
+
+        verifyNoInteractions(siteRepo, horaireSiteRepo);
     }
 
     @Test
     void creerSite_villeNullOuBlank_refuse() {
-        assertThrows(BusinessException.class, () -> service.creerSite("Site A", null));
-        assertThrows(BusinessException.class, () -> service.creerSite("Site A", "   "));
-        verifyNoInteractions(siteRepo);
+        assertThrows(BusinessException.class,
+                () -> service.creerSite("Site A", null, 2026, LocalTime.of(9, 0), LocalTime.of(21, 0)));
+        assertThrows(BusinessException.class,
+                () -> service.creerSite("Site A", "   ", 2026, LocalTime.of(9, 0), LocalTime.of(21, 0)));
+
+        verifyNoInteractions(siteRepo, horaireSiteRepo);
+    }
+
+    @Test
+    void creerSite_anneeNull_refuse() {
+        assertThrows(BusinessException.class,
+                () -> service.creerSite("Site A", "Bruxelles", null, LocalTime.of(9, 0), LocalTime.of(21, 0)));
+
+        verifyNoInteractions(siteRepo, horaireSiteRepo);
+    }
+
+    @Test
+    void creerSite_horairesNull_refuse() {
+        assertThrows(BusinessException.class,
+                () -> service.creerSite("Site A", "Bruxelles", 2026, null, LocalTime.of(21, 0)));
+        assertThrows(BusinessException.class,
+                () -> service.creerSite("Site A", "Bruxelles", 2026, LocalTime.of(9, 0), null));
+
+        verifyNoInteractions(siteRepo, horaireSiteRepo);
+    }
+
+    @Test
+    void creerSite_horairesInvalides_refuse() {
+        assertThrows(BusinessException.class,
+                () -> service.creerSite("Site A", "Bruxelles", 2026, LocalTime.of(21, 0), LocalTime.of(21, 0)));
+        assertThrows(BusinessException.class,
+                () -> service.creerSite("Site A", "Bruxelles", 2026, LocalTime.of(22, 0), LocalTime.of(21, 0)));
+
+        verifyNoInteractions(horaireSiteRepo);
     }
 
     @Test
     void creerSite_nomDejaUtilise_refuse() {
         when(siteRepo.existsByNom("Site A")).thenReturn(true);
 
-        assertThrows(BusinessException.class, () -> service.creerSite("Site A", "Bruxelles"));
+        assertThrows(BusinessException.class,
+                () -> service.creerSite("Site A", "Bruxelles", 2026, LocalTime.of(9, 0), LocalTime.of(21, 0)));
 
         verify(siteRepo).existsByNom("Site A");
         verify(siteRepo, never()).save(any(Site.class));
+        verifyNoInteractions(horaireSiteRepo);
     }
 
     @Test
-    void creerSite_ok_save() {
+    void creerSite_ok_save_site_et_horaire() {
         when(siteRepo.existsByNom("Site A")).thenReturn(false);
         when(siteRepo.save(any(Site.class))).thenAnswer(inv -> inv.getArgument(0));
+        when(horaireSiteRepo.save(any(HoraireSite.class))).thenAnswer(inv -> inv.getArgument(0));
 
-        Site res = service.creerSite("Site A", "Bruxelles");
+        Site res = service.creerSite(
+                "Site A",
+                "Bruxelles",
+                2026,
+                LocalTime.of(9, 0),
+                LocalTime.of(21, 0)
+        );
 
         assertNotNull(res);
         assertEquals("Site A", res.getNom());
@@ -111,69 +155,6 @@ class SiteServiceTest {
 
         verify(siteRepo).existsByNom("Site A");
         verify(siteRepo).save(any(Site.class));
-    }
-
-    @Test
-    void updateHoraires_ok_met_a_jour_ouverture_fermeture_et_jours() {
-        // arrange
-        Site site = new Site("Site A", "Bruxelles");
-        when(siteRepo.findById(1L)).thenReturn(Optional.of(site));
-
-        UpdateSiteHorairesRequest req = new UpdateSiteHorairesRequest();
-        req.setHeureOuverture(LocalTime.of(8, 0));
-        req.setHeureFermeture(LocalTime.of(22, 0));
-        req.setJoursFermeture(Set.of(DayOfWeek.SUNDAY));
-
-        // act
-        Site updated = service.updateHoraires(1L, req);
-
-        // assert
-        assertSame(site, updated);
-        assertEquals(LocalTime.of(8, 0), updated.getHeureOuverture());
-        assertEquals(LocalTime.of(22, 0), updated.getHeureFermeture());
-        assertTrue(updated.getJoursFermeture().contains(DayOfWeek.SUNDAY));
-
-        verify(siteRepo).findById(1L);
-        verifyNoMoreInteractions(siteRepo);
-    }
-
-    @Test
-    void updateHoraires_refuse_si_ouverture_apres_ou_egale_fermeture() {
-        // arrange
-        Site site = new Site("Site A", "Bruxelles");
-        when(siteRepo.findById(1L)).thenReturn(Optional.of(site));
-
-        UpdateSiteHorairesRequest req = new UpdateSiteHorairesRequest();
-        req.setHeureOuverture(LocalTime.of(22, 0));
-        req.setHeureFermeture(LocalTime.of(22, 0)); // égal -> KO
-        req.setJoursFermeture(Set.of(DayOfWeek.MONDAY));
-
-        // act + assert
-        BusinessException ex = assertThrows(BusinessException.class,
-                () -> service.updateHoraires(1L, req));
-
-        assertTrue(ex.getMessage().toLowerCase().contains("ouverture"));
-
-        // le site ne doit pas être modifié
-        assertNull(site.getHeureOuverture());
-        assertNull(site.getHeureFermeture());
-        assertTrue(site.getJoursFermeture() == null || site.getJoursFermeture().isEmpty());
-
-        verify(siteRepo).findById(1L);
-        verifyNoMoreInteractions(siteRepo);
-    }
-
-    // (optionnel mais utile)
-    @Test
-    void updateHoraires_site_introuvable_notFound() {
-        when(siteRepo.findById(99L)).thenReturn(Optional.empty());
-
-        UpdateSiteHorairesRequest req = new UpdateSiteHorairesRequest();
-        req.setHeureOuverture(LocalTime.of(8, 0));
-        req.setHeureFermeture(LocalTime.of(22, 0));
-
-        assertThrows(NotFoundException.class, () -> service.updateHoraires(99L, req));
-        verify(siteRepo).findById(99L);
-        verifyNoMoreInteractions(siteRepo);
+        verify(horaireSiteRepo).save(any(HoraireSite.class));
     }
 }
