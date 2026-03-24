@@ -14,7 +14,9 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.Clock;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.List;
 
 @Service
@@ -90,7 +92,8 @@ public class TraitementJ1Service {
             match.setVisibilite(MatchVisibilite.PUBLIC);
 
             Joueur orga = match.getOrganisateur();
-            orga.setPenaliteJusqua(now.plusWeeks(1));
+            LocalDate finSeptiemeJour = now.toLocalDate().plusDays(7);
+            orga.setPenaliteJusqua(finSeptiemeJour.atTime(LocalTime.MAX));
         }
     }
 }

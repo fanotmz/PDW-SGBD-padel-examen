@@ -95,8 +95,10 @@ class TraitementJ1ServiceTest {
         // devient PUBLIC
         assertThat(match.getVisibilite()).isEqualTo(MatchVisibilite.PUBLIC);
 
-        // pénalité 1 semaine
-        assertThat(orga.getPenaliteJusqua()).isEqualTo(now.plusWeeks(1));
+        // pénalité jusqu'à la fin du 7e jour
+        assertThat(orga.getPenaliteJusqua()).isEqualTo(
+                now.toLocalDate().plusDays(7).atTime(LocalTime.MAX)
+        );
 
         // ✅ IMPORTANT : pas de paiement "solde organisateur" ici,
         // car le match n'était pas PUBLIC avant le traitement J-1.
