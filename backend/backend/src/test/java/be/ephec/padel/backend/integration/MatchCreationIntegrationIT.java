@@ -163,6 +163,21 @@ class MatchCreationIntegrationIT extends SqlServerTestContainerConfig {
     }
 
     @Test
+    void postMatch_refuse_si_penalite_active() throws Exception {
+        orga.setPenaliteJusqua(LocalDateTime.now().plusDays(7).with(LocalTime.MAX));
+        orga = joueurRepository.save(orga);
+
+        LocalDateTime date = nextDay(DayOfWeek.THURSDAY, 10, 0);
+
+        mvc.perform(post("/api/v1/matchs")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(jsonCreateMatch(date)))
+                .andExpect(status().isBadRequest())
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.message").value(containsString("penalite active")));
+    }
+
+    @Test
     void postMatch_refuse_si_fermeture_site_exceptionnelle_date_unique() throws Exception {
         LocalDateTime date = nextDay(DayOfWeek.TUESDAY, 10, 0);
 
