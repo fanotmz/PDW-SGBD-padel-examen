@@ -212,6 +212,159 @@ class MatchPadelRepositoryTest extends SqlServerTestContainerConfig {
     }
 
     @Test
+    void findPublicMatchSummaries_filtre_par_site_quand_siteId_est_renseigne() {
+        Site siteA = siteRepository.save(new Site("Site A", "Bruxelles"));
+        Site siteB = siteRepository.save(new Site("Site B", "Namur"));
+        Terrain terrainA = terrainRepository.save(new Terrain("T1", siteA));
+        Terrain terrainB = terrainRepository.save(new Terrain("T2", siteB));
+        Joueur orga = joueurRepository.save(new Joueur("ORG1", "Orga", TypeJoueur.GLOBAL));
+
+        MatchPadel matchSiteA = matchPadelRepository.save(
+                new MatchPadel(terrainA, orga, LocalDateTime.of(2030, 1, 2, 10, 0), MatchVisibilite.PUBLIC)
+        );
+        matchPadelRepository.save(
+                new MatchPadel(terrainB, orga, LocalDateTime.of(2030, 1, 2, 11, 0), MatchVisibilite.PUBLIC)
+        );
+
+        em.flush();
+        em.clear();
+
+        var rows = matchPadelRepository.findPublicMatchSummaries(
+                MatchVisibilite.PUBLIC,
+                null,
+                null,
+                siteA.getId()
+        );
+
+        assertThat(rows).hasSize(1);
+        assertThat(rows.get(0).getId()).isEqualTo(matchSiteA.getId());
+        assertThat(rows.get(0).getSiteId()).isEqualTo(siteA.getId());
+    }
+
+    @Test
+    void findPublicMatchSummaries_filtre_avec_from_seul() {
+        Site s = siteRepository.save(new Site("Site A", "Bruxelles"));
+        Terrain t = terrainRepository.save(new Terrain("T1", s));
+        Joueur orga = joueurRepository.save(new Joueur("ORG1", "Orga", TypeJoueur.GLOBAL));
+
+        LocalDateTime from = LocalDateTime.of(2030, 1, 2, 10, 0);
+        matchPadelRepository.save(
+                new MatchPadel(t, orga, from.minusMinutes(1), MatchVisibilite.PUBLIC)
+        );
+        MatchPadel matchAtFrom = matchPadelRepository.save(
+                new MatchPadel(t, orga, from, MatchVisibilite.PUBLIC)
+        );
+
+        em.flush();
+        em.clear();
+
+        var rows = matchPadelRepository.findPublicMatchSummaries(
+                MatchVisibilite.PUBLIC,
+                from,
+                null,
+                null
+        );
+
+        assertThat(rows).hasSize(1);
+        assertThat(rows.get(0).getId()).isEqualTo(matchAtFrom.getId());
+    }
+
+    @Test
+    void findPublicMatchSummaries_filtre_avec_to_seul() {
+        Site s = siteRepository.save(new Site("Site A", "Bruxelles"));
+        Terrain t = terrainRepository.save(new Terrain("T1", s));
+        Joueur orga = joueurRepository.save(new Joueur("ORG1", "Orga", TypeJoueur.GLOBAL));
+
+        LocalDateTime to = LocalDateTime.of(2030, 1, 2, 10, 0);
+        MatchPadel matchBeforeTo = matchPadelRepository.save(
+                new MatchPadel(t, orga, to.minusMinutes(1), MatchVisibilite.PUBLIC)
+        );
+        matchPadelRepository.save(
+                new MatchPadel(t, orga, to.plusMinutes(1), MatchVisibilite.PUBLIC)
+        );
+
+        em.flush();
+        em.clear();
+
+        var rows = matchPadelRepository.findPublicMatchSummaries(
+                MatchVisibilite.PUBLIC,
+                null,
+                to,
+                null
+        );
+
+        assertThat(rows).hasSize(1);
+        assertThat(rows.get(0).getId()).isEqualTo(matchBeforeTo.getId());
+    }
+
+    @Test
+    void findPublicMatchSummaries_inclut_la_borne_exacte_to() {
+        Site s = siteRepository.save(new Site("Site A", "Bruxelles"));
+        Terrain t = terrainRepository.save(new Terrain("T1", s));
+        Joueur orga = joueurRepository.save(new Joueur("ORG1", "Orga", TypeJoueur.GLOBAL));
+
+        LocalDateTime to = LocalDateTime.of(2030, 1, 2, 10, 0);
+        MatchPadel matchAtTo = matchPadelRepository.save(
+                new MatchPadel(t, orga, to, MatchVisibilite.PUBLIC)
+        );
+        matchPadelRepository.save(
+                new MatchPadel(t, orga, to.plusSeconds(1), MatchVisibilite.PUBLIC)
+        );
+
+        em.flush();
+        em.clear();
+
+        var rows = matchPadelRepository.findPublicMatchSummaries(
+                MatchVisibilite.PUBLIC,
+                null,
+                to,
+                null
+        );
+
+        assertThat(rows).hasSize(1);
+        assertThat(rows.get(0).getId()).isEqualTo(matchAtTo.getId());
+    }
+
+    @Test
+    void findPublicMatchSummaries_filtre_par_from_to_et_siteId() {
+        Site siteA = siteRepository.save(new Site("Site A", "Bruxelles"));
+        Site siteB = siteRepository.save(new Site("Site B", "Namur"));
+        Terrain terrainA = terrainRepository.save(new Terrain("T1", siteA));
+        Terrain terrainB = terrainRepository.save(new Terrain("T2", siteB));
+        Joueur orga = joueurRepository.save(new Joueur("ORG1", "Orga", TypeJoueur.GLOBAL));
+
+        LocalDateTime from = LocalDateTime.of(2030, 1, 2, 0, 0);
+        LocalDateTime to = LocalDateTime.of(2030, 1, 2, 23, 59, 59);
+
+        matchPadelRepository.save(
+                new MatchPadel(terrainA, orga, from.minusMinutes(1), MatchVisibilite.PUBLIC)
+        );
+        MatchPadel inScope = matchPadelRepository.save(
+                new MatchPadel(terrainA, orga, LocalDateTime.of(2030, 1, 2, 10, 0), MatchVisibilite.PUBLIC)
+        );
+        matchPadelRepository.save(
+                new MatchPadel(terrainA, orga, to.plusSeconds(1), MatchVisibilite.PUBLIC)
+        );
+        matchPadelRepository.save(
+                new MatchPadel(terrainB, orga, LocalDateTime.of(2030, 1, 2, 11, 0), MatchVisibilite.PUBLIC)
+        );
+
+        em.flush();
+        em.clear();
+
+        var rows = matchPadelRepository.findPublicMatchSummaries(
+                MatchVisibilite.PUBLIC,
+                from,
+                to,
+                siteA.getId()
+        );
+
+        assertThat(rows).hasSize(1);
+        assertThat(rows.get(0).getId()).isEqualTo(inScope.getId());
+        assertThat(rows.get(0).getSiteId()).isEqualTo(siteA.getId());
+    }
+
+    @Test
     void countByDateDebutBetween_exclut_les_matchs_annules() {
         Site s = siteRepository.save(new Site("Site A", "Bruxelles"));
         Terrain t = terrainRepository.save(new Terrain("T1", s));
