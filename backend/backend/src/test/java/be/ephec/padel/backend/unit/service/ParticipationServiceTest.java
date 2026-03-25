@@ -6,6 +6,7 @@ import be.ephec.padel.backend.exception.NotFoundException;
 import be.ephec.padel.backend.model.entities.Joueur;
 import be.ephec.padel.backend.model.entities.MatchPadel;
 import be.ephec.padel.backend.model.entities.Participation;
+import be.ephec.padel.backend.model.enums.MatchStatut;
 import be.ephec.padel.backend.model.enums.MatchVisibilite;
 import be.ephec.padel.backend.model.enums.TypeJoueur;
 import be.ephec.padel.backend.repository.JoueurRepository;
@@ -75,6 +76,20 @@ class ParticipationServiceTest {
     }
 
     @Test
+    void calculerMontantAttendu_matchAnnule_refuse() {
+        MatchPadel match = new MatchPadel();
+        match.setVisibilite(MatchVisibilite.PUBLIC);
+        match.setStatut(MatchStatut.ANNULE);
+
+        when(matchRepo.findById(1L)).thenReturn(Optional.of(match));
+
+        assertThrows(BusinessException.class,
+                () -> service.calculerMontantAttenduPourMatchPublic(1L, "G1"));
+
+        verifyNoInteractions(joueurRepo);
+    }
+
+    @Test
     void calculerMontantAttendu_public_sansDette_retourne15() {
         MatchPadel match = new MatchPadel();
         match.setVisibilite(MatchVisibilite.PUBLIC);
@@ -124,6 +139,20 @@ class ParticipationServiceTest {
     void rejoindreEtPayerMatchPublic_matchPrive_refuse() {
         MatchPadel match = new MatchPadel();
         match.setVisibilite(MatchVisibilite.PRIVE);
+
+        when(matchRepo.findByIdForUpdateWithParticipations(1L)).thenReturn(Optional.of(match));
+
+        assertThrows(BusinessException.class,
+                () -> service.rejoindreEtPayerMatchPublic(1L, "G1"));
+
+        verifyNoInteractions(joueurRepo, participationRepo, soldeService, paiementService);
+    }
+
+    @Test
+    void rejoindreEtPayerMatchPublic_matchAnnule_refuse() {
+        MatchPadel match = new MatchPadel();
+        match.setVisibilite(MatchVisibilite.PUBLIC);
+        match.setStatut(MatchStatut.ANNULE);
 
         when(matchRepo.findByIdForUpdateWithParticipations(1L)).thenReturn(Optional.of(match));
 
@@ -260,6 +289,20 @@ class ParticipationServiceTest {
     void ajouterJoueurParOrganisateur_matchPublic_refuse() {
         MatchPadel match = new MatchPadel();
         match.setVisibilite(MatchVisibilite.PUBLIC);
+
+        when(matchRepo.findById(1L)).thenReturn(Optional.of(match));
+
+        assertThrows(BusinessException.class,
+                () -> service.ajouterJoueurParOrganisateur(1L, "G1", "G2"));
+
+        verifyNoInteractions(joueurRepo, participationRepo, soldeService, paiementService);
+    }
+
+    @Test
+    void ajouterJoueurParOrganisateur_matchAnnule_refuse() {
+        MatchPadel match = new MatchPadel();
+        match.setVisibilite(MatchVisibilite.PRIVE);
+        match.setStatut(MatchStatut.ANNULE);
 
         when(matchRepo.findById(1L)).thenReturn(Optional.of(match));
 

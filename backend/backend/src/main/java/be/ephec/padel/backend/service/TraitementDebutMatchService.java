@@ -2,6 +2,9 @@ package be.ephec.padel.backend.service;
 
 import be.ephec.padel.backend.common.Tarifs;
 import be.ephec.padel.backend.model.entities.MatchPadel;
+import be.ephec.padel.backend.model.entities.Participation;
+import be.ephec.padel.backend.model.enums.MatchStatut;
+import be.ephec.padel.backend.model.enums.TypePaiement;
 import be.ephec.padel.backend.repository.MatchPadelRepository;
 import be.ephec.padel.backend.repository.PaiementRepository;
 import org.springframework.stereotype.Service;
@@ -18,6 +21,7 @@ import java.util.List;
 public class TraitementDebutMatchService {
 
     private static final BigDecimal PRIX_MATCH = Tarifs.PRIX_MATCH;
+    private static final BigDecimal PART_JOUEUR = Tarifs.PART_PAR_JOUEUR;
 
     private final MatchPadelRepository matchPadelRepository;
     private final PaiementRepository paiementRepository;
@@ -41,23 +45,44 @@ public class TraitementDebutMatchService {
         LocalDateTime to = now.plusSeconds(1);
 
         List<MatchPadel> matchs = matchPadelRepository.findAtraiterDebutMatchAvecDetails(from, to);
+        int traites = 0;
 
         for (MatchPadel match : matchs) {
+            if (match.getStatut() != MatchStatut.PLANIFIE) {
+                continue;
+            }
             appliquerSoldeSiIncomplet(match);
             match.setSoldeTraiteLe(now);
             matchPadelRepository.save(match);
+            traites++;
         }
 
-        return matchs.size();
+        return traites;
     }
 
     private void appliquerSoldeSiIncomplet(MatchPadel match) {
         // Si déjà complet => solde = 0 (normalement total payé = 60)
         // Si incomplet => solde = 60 - total payé, débité à l'organisateur (dette)
-        BigDecimal totalPayeMatch = paiementRepository.sumMontantByMatchId(match.getId());
-        if (totalPayeMatch == null) totalPayeMatch = BigDecimal.ZERO;
+        BigDecimal totalPayeMatch = BigDecimal.ZERO.setScale(2, RoundingMode.HALF_UP);
+        for (Participation participation : match.getParticipations()) {
+            if (participation == null || participation.getId() == null) {
+                continue;
+            }
 
-        totalPayeMatch = totalPayeMatch.setScale(2, RoundingMode.HALF_UP);
+            BigDecimal encaisseParticipation = paiementRepository.sumMontantByParticipationIdAndType(
+                    participation.getId(),
+                    TypePaiement.ENCAISSEMENT
+            );
+            if (encaisseParticipation == null) {
+                encaisseParticipation = BigDecimal.ZERO;
+            }
+
+            totalPayeMatch = totalPayeMatch.add(
+                    encaisseParticipation
+                            .setScale(2, RoundingMode.HALF_UP)
+                            .min(PART_JOUEUR)
+            );
+        }
 
         BigDecimal solde = PRIX_MATCH.subtract(totalPayeMatch).setScale(2, RoundingMode.HALF_UP);
 

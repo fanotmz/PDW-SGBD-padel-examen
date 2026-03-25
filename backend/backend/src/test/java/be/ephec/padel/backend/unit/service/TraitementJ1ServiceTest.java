@@ -4,6 +4,7 @@ import be.ephec.padel.backend.common.Tarifs;
 import be.ephec.padel.backend.model.entities.Joueur;
 import be.ephec.padel.backend.model.entities.MatchPadel;
 import be.ephec.padel.backend.model.entities.Participation;
+import be.ephec.padel.backend.model.enums.MatchStatut;
 import be.ephec.padel.backend.model.enums.MatchVisibilite;
 import be.ephec.padel.backend.model.enums.TypeJoueur;
 import be.ephec.padel.backend.repository.MatchPadelRepository;
@@ -162,6 +163,27 @@ class TraitementJ1ServiceTest {
 
         // flag idempotent
         assertThat(match.getJ1TraiteLe()).isEqualTo(now);
+    }
+
+    @Test
+    void match_annule_ignore_meme_si_retourne_par_le_repository() {
+        LocalDateTime now = LocalDateTime.now(clock);
+
+        MatchPadel match = new MatchPadel(null, null, now.plusHours(24).plusMinutes(1), MatchVisibilite.PRIVE);
+        setId(match, 30L);
+        match.setStatut(MatchStatut.ANNULE);
+
+        when(matchPadelRepository.findAtraiterJ1AvecDetails(any(), any()))
+                .thenReturn(List.of(match));
+
+        int treated = service.traiterJ1FenetreMinutes(5);
+
+        assertThat(treated).isZero();
+        assertThat(match.getJ1TraiteLe()).isNull();
+
+        verifyNoInteractions(soldeService);
+        verify(matchPadelRepository, never()).save(any(MatchPadel.class));
+        verifyNoInteractions(paiementRepository);
     }
 
     // ---- helpers (IDs JPA) ----

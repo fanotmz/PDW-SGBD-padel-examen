@@ -44,6 +44,7 @@ public final class MatchMapper {
                 organisateurMatricule,
                 match.getDateDebut(),
                 match.getVisibilite(),
+                match.getStatut(),
                 nbParticipants,
                 montantTotal,
                 montantPaye,

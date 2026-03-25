@@ -6,6 +6,7 @@ import be.ephec.padel.backend.exception.NotFoundException;
 import be.ephec.padel.backend.model.entities.Joueur;
 import be.ephec.padel.backend.model.entities.MatchPadel;
 import be.ephec.padel.backend.model.entities.Participation;
+import be.ephec.padel.backend.model.enums.MatchStatut;
 import be.ephec.padel.backend.model.enums.MatchVisibilite;
 import be.ephec.padel.backend.repository.JoueurRepository;
 import be.ephec.padel.backend.repository.MatchPadelRepository;
@@ -50,6 +51,7 @@ public class ParticipationService {
 
         MatchPadel match = matchPadelRepository.findByIdForUpdateWithParticipations(matchId)
                 .orElseThrow(() -> new NotFoundException("Match introuvable"));
+        verifierMatchNonAnnule(match);
 
         if (match.getVisibilite() != MatchVisibilite.PUBLIC) {
             throw new BusinessException("Match privé : seule l'organisation peut ajouter des joueurs.");
@@ -86,6 +88,7 @@ public class ParticipationService {
 
         MatchPadel match = matchPadelRepository.findById(matchId)
                 .orElseThrow(() -> new NotFoundException("Match introuvable"));
+        verifierMatchNonAnnule(match);
 
         if (match.getVisibilite() != MatchVisibilite.PUBLIC) {
             throw new BusinessException("Match privé : ce calcul n'est valable que pour un match public.");
@@ -101,6 +104,7 @@ public class ParticipationService {
                                                       String organisateurMatricule,
                                                       String joueurMatriculeAAjouter) {
         MatchPadel match = getMatchOrThrow(matchId);
+        verifierMatchNonAnnule(match);
 
         if (match.getVisibilite() == MatchVisibilite.PUBLIC) {
             throw new BusinessException("Match public : l'organisateur ne peut pas ajouter des joueurs.");
@@ -127,6 +131,12 @@ public class ParticipationService {
     private MatchPadel getMatchOrThrow(Long matchId) {
         return matchPadelRepository.findById(matchId)
                 .orElseThrow(() -> new NotFoundException("Match introuvable"));
+    }
+
+    private void verifierMatchNonAnnule(MatchPadel match) {
+        if (match.getStatut() == MatchStatut.ANNULE) {
+            throw new BusinessException("Match annulé : aucune nouvelle participation n'est possible.");
+        }
     }
 
     private Joueur getJoueurOrThrow(String matricule) {

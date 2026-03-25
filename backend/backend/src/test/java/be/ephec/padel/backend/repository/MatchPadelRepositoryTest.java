@@ -1,6 +1,7 @@
 package be.ephec.padel.backend.repository;
 
 import be.ephec.padel.backend.model.entities.*;
+import be.ephec.padel.backend.model.enums.MatchStatut;
 import be.ephec.padel.backend.model.enums.MatchVisibilite;
 import be.ephec.padel.backend.model.enums.TypeJoueur;
 import be.ephec.padel.backend.support.SqlServerTestContainerConfig;
@@ -177,5 +178,152 @@ class MatchPadelRepositoryTest extends SqlServerTestContainerConfig {
         assertThat(rows).hasSize(1);
         assertThat(rows.get(0).getId()).isEqualTo(publicMatch.getId());
         assertThat(rows.get(0).getNbParticipants()).isEqualTo(2L);
+    }
+
+    @Test
+    void findPublicMatchSummaries_exclut_les_matchs_annules() {
+        Site s = siteRepository.save(new Site("Site A", "Bruxelles"));
+        Terrain t = terrainRepository.save(new Terrain("T1", s));
+        Joueur orga = joueurRepository.save(new Joueur("ORG1", "Orga", TypeJoueur.GLOBAL));
+
+        MatchPadel plannedMatch = new MatchPadel(
+                t, orga, LocalDateTime.of(2030, 1, 1, 10, 0), MatchVisibilite.PUBLIC
+        );
+        MatchPadel cancelledMatch = new MatchPadel(
+                t, orga, LocalDateTime.of(2030, 1, 2, 10, 0), MatchVisibilite.PUBLIC
+        );
+        cancelledMatch.setStatut(MatchStatut.ANNULE);
+
+        matchPadelRepository.save(plannedMatch);
+        matchPadelRepository.save(cancelledMatch);
+
+        em.flush();
+        em.clear();
+
+        var rows = matchPadelRepository.findPublicMatchSummaries(
+                MatchVisibilite.PUBLIC,
+                null,
+                null,
+                null
+        );
+
+        assertThat(rows).hasSize(1);
+        assertThat(rows.get(0).getId()).isEqualTo(plannedMatch.getId());
+    }
+
+    @Test
+    void countByDateDebutBetween_exclut_les_matchs_annules() {
+        Site s = siteRepository.save(new Site("Site A", "Bruxelles"));
+        Terrain t = terrainRepository.save(new Terrain("T1", s));
+        Joueur orga = joueurRepository.save(new Joueur("ORG1", "Orga", TypeJoueur.GLOBAL));
+
+        matchPadelRepository.save(new MatchPadel(
+                t, orga, LocalDateTime.of(2030, 1, 1, 10, 0), MatchVisibilite.PUBLIC
+        ));
+
+        MatchPadel cancelledMatch = new MatchPadel(
+                t, orga, LocalDateTime.of(2030, 1, 2, 10, 0), MatchVisibilite.PUBLIC
+        );
+        cancelledMatch.setStatut(MatchStatut.ANNULE);
+        matchPadelRepository.save(cancelledMatch);
+
+        long count = matchPadelRepository.countByDateDebutBetween(
+                LocalDateTime.of(2030, 1, 1, 0, 0),
+                LocalDateTime.of(2030, 1, 3, 0, 0)
+        );
+
+        assertThat(count).isEqualTo(1L);
+    }
+
+    @Test
+    void findAtraiterJ1AvecDetails_exclut_les_matchs_annules() {
+        Site s = siteRepository.save(new Site("Site A", "Bruxelles"));
+        Terrain t = terrainRepository.save(new Terrain("T1", s));
+        Joueur orga = joueurRepository.save(new Joueur("ORG1", "Orga", TypeJoueur.GLOBAL));
+
+        MatchPadel plannedMatch = new MatchPadel(
+                t, orga, LocalDateTime.of(2030, 1, 2, 10, 0), MatchVisibilite.PUBLIC
+        );
+        MatchPadel cancelledMatch = new MatchPadel(
+                t, orga, LocalDateTime.of(2030, 1, 2, 11, 0), MatchVisibilite.PUBLIC
+        );
+        cancelledMatch.setStatut(MatchStatut.ANNULE);
+
+        matchPadelRepository.save(plannedMatch);
+        matchPadelRepository.save(cancelledMatch);
+
+        List<MatchPadel> rows = matchPadelRepository.findAtraiterJ1AvecDetails(
+                LocalDateTime.of(2030, 1, 2, 0, 0),
+                LocalDateTime.of(2030, 1, 3, 0, 0)
+        );
+
+        assertThat(rows).extracting(MatchPadel::getId).containsExactly(plannedMatch.getId());
+    }
+
+    @Test
+    void findAtraiterDebutMatchAvecDetails_exclut_les_matchs_annules() {
+        Site s = siteRepository.save(new Site("Site A", "Bruxelles"));
+        Terrain t = terrainRepository.save(new Terrain("T1", s));
+        Joueur orga = joueurRepository.save(new Joueur("ORG1", "Orga", TypeJoueur.GLOBAL));
+
+        MatchPadel plannedMatch = new MatchPadel(
+                t, orga, LocalDateTime.of(2030, 1, 2, 10, 0), MatchVisibilite.PUBLIC
+        );
+        MatchPadel cancelledMatch = new MatchPadel(
+                t, orga, LocalDateTime.of(2030, 1, 2, 11, 0), MatchVisibilite.PUBLIC
+        );
+        cancelledMatch.setStatut(MatchStatut.ANNULE);
+
+        matchPadelRepository.save(plannedMatch);
+        matchPadelRepository.save(cancelledMatch);
+
+        List<MatchPadel> rows = matchPadelRepository.findAtraiterDebutMatchAvecDetails(
+                LocalDateTime.of(2030, 1, 2, 0, 0),
+                LocalDateTime.of(2030, 1, 3, 0, 0)
+        );
+
+        assertThat(rows).extracting(MatchPadel::getId).containsExactly(plannedMatch.getId());
+    }
+
+    @Test
+    void findPlannedFutureMatchesBySiteIdAndDateDebutBetween_retourne_seulement_les_matchs_planifies_futurs_du_site() {
+        Site siteA = siteRepository.save(new Site("Site A", "Bruxelles"));
+        Site siteB = siteRepository.save(new Site("Site B", "Namur"));
+        Terrain terrainA = terrainRepository.save(new Terrain("T1", siteA));
+        Terrain terrainB = terrainRepository.save(new Terrain("T2", siteB));
+        Joueur orga = joueurRepository.save(new Joueur("ORG1", "Orga", TypeJoueur.GLOBAL));
+
+        LocalDateTime now = LocalDateTime.of(2030, 1, 1, 9, 0);
+        LocalDateTime from = LocalDateTime.of(2030, 1, 1, 0, 0);
+        LocalDateTime to = LocalDateTime.of(2030, 1, 3, 0, 0);
+
+        MatchPadel inScope = new MatchPadel(
+                terrainA, orga, LocalDateTime.of(2030, 1, 1, 10, 0), MatchVisibilite.PUBLIC
+        );
+        MatchPadel startedOrPast = new MatchPadel(
+                terrainA, orga, LocalDateTime.of(2030, 1, 1, 8, 0), MatchVisibilite.PUBLIC
+        );
+        MatchPadel cancelled = new MatchPadel(
+                terrainA, orga, LocalDateTime.of(2030, 1, 2, 10, 0), MatchVisibilite.PUBLIC
+        );
+        cancelled.setStatut(MatchStatut.ANNULE);
+        MatchPadel otherSite = new MatchPadel(
+                terrainB, orga, LocalDateTime.of(2030, 1, 1, 11, 0), MatchVisibilite.PUBLIC
+        );
+
+        matchPadelRepository.save(inScope);
+        matchPadelRepository.save(startedOrPast);
+        matchPadelRepository.save(cancelled);
+        matchPadelRepository.save(otherSite);
+
+        List<MatchPadel> rows = matchPadelRepository.findPlannedFutureMatchesBySiteIdAndDateDebutBetween(
+                siteA.getId(),
+                MatchStatut.PLANIFIE,
+                now,
+                from,
+                to
+        );
+
+        assertThat(rows).extracting(MatchPadel::getId).containsExactly(inScope.getId());
     }
 }

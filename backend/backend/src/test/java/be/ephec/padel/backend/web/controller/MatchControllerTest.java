@@ -11,6 +11,7 @@ import be.ephec.padel.backend.exception.BusinessException;
 import be.ephec.padel.backend.exception.ForbiddenException;
 import be.ephec.padel.backend.exception.NotFoundException;
 import be.ephec.padel.backend.model.entities.MatchPadel;
+import be.ephec.padel.backend.model.enums.MatchStatut;
 import be.ephec.padel.backend.model.enums.MatchVisibilite;
 import be.ephec.padel.backend.service.MatchPadelService;
 import org.junit.jupiter.api.Test;
@@ -60,6 +61,7 @@ class MatchControllerTest {
                 "G0001",
                 LocalDateTime.now().plusDays(1),
                 MatchVisibilite.PUBLIC,
+                MatchStatut.PLANIFIE,
                 2,
                 new BigDecimal("60.00"),
                 new BigDecimal("15.00"),
@@ -95,12 +97,14 @@ class MatchControllerTest {
                 "G0001",
                 "Organisateur",
                 visibilite,
+                MatchStatut.PLANIFIE,
                 2,
                 2,
                 false,
                 new BigDecimal("60.00"),
                 new BigDecimal("15.00"),
                 new BigDecimal("45.00"),
+                BigDecimal.ZERO,
                 List.of(
                         new ParticipantDto("G0001", "Organisateur"),
                         new ParticipantDto("J0001", "Alice")

@@ -16,7 +16,9 @@ import be.ephec.padel.backend.model.entities.MatchPadel;
 import be.ephec.padel.backend.model.entities.Participation;
 import be.ephec.padel.backend.model.entities.Site;
 import be.ephec.padel.backend.model.entities.Terrain;
+import be.ephec.padel.backend.model.enums.MatchStatut;
 import be.ephec.padel.backend.model.enums.MatchVisibilite;
+import be.ephec.padel.backend.model.enums.TypePaiement;
 import be.ephec.padel.backend.model.enums.TypeJoueur;
 import be.ephec.padel.backend.repository.FermetureGlobaleRepository;
 import be.ephec.padel.backend.repository.JoueurRepository;
@@ -29,6 +31,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.Clock;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
@@ -44,6 +47,7 @@ public class MatchPadelService {
     private static final long DUREE_MATCH_MIN = 90;
     private static final long BUFFER_MIN = 15;
     private static final long SLOT_MIN = DUREE_MATCH_MIN + BUFFER_MIN; // 105
+    private static final BigDecimal PART_JOUEUR = Tarifs.PART_PAR_JOUEUR;
 
     private final MatchPadelRepository matchPadelRepository;
     private final TerrainRepository terrainRepository;
@@ -92,15 +96,8 @@ public class MatchPadelService {
         MatchPadel match = getMatch(id);
 
         BigDecimal montantTotal = Tarifs.PRIX_MATCH;
-        BigDecimal montantPaye = paiementRepository.sumMontantByMatchId(id);
-        if (montantPaye == null) {
-            montantPaye = BigDecimal.ZERO;
-        }
-
-        BigDecimal resteAPayer = montantTotal.subtract(montantPaye);
-        if (resteAPayer.signum() < 0) {
-            resteAPayer = BigDecimal.ZERO;
-        }
+        BigDecimal montantPaye = getMontantEncaisseParMatch(match);
+        BigDecimal resteAPayer = calculerResteAPayer(match, montantTotal, montantPaye);
 
         return MatchMapper.toDtoComplet(match, montantTotal, montantPaye, resteAPayer);
     }
@@ -347,16 +344,80 @@ public class MatchPadelService {
         }
 
         BigDecimal montantTotal = Tarifs.PRIX_MATCH;
-        BigDecimal montantPaye = paiementRepository.sumMontantByMatchId(id);
-        if (montantPaye == null) {
-            montantPaye = BigDecimal.ZERO;
+        BigDecimal montantPaye = getMontantEncaisseParMatch(match);
+        BigDecimal montantRembourse = getMontantRembourseParMatch(match);
+        BigDecimal resteAPayer = calculerResteAPayer(match, montantTotal, montantPaye);
+
+        return MatchDetailMapper.toDto(match, montantTotal, montantPaye, resteAPayer, montantRembourse);
+    }
+
+    private BigDecimal getMontantEncaisseParMatch(MatchPadel match) {
+        BigDecimal montantPaye = BigDecimal.ZERO.setScale(2, RoundingMode.HALF_UP);
+        if (match.getParticipations() == null) {
+            return montantPaye;
+        }
+
+        for (Participation participation : match.getParticipations()) {
+            montantPaye = montantPaye.add(getMontantEncaisseAffecteParticipation(participation));
+        }
+
+        return montantPaye;
+    }
+
+    private BigDecimal getMontantRembourseParMatch(MatchPadel match) {
+        BigDecimal totalRembourse = BigDecimal.ZERO.setScale(2, RoundingMode.HALF_UP);
+        if (match.getParticipations() == null) {
+            return totalRembourse;
+        }
+
+        for (Participation participation : match.getParticipations()) {
+            totalRembourse = totalRembourse.add(getMontantRembourseAffecteParticipation(participation));
+        }
+
+        return totalRembourse;
+    }
+
+    private BigDecimal getMontantEncaisseAffecteParticipation(Participation participation) {
+        if (participation == null || participation.getId() == null) {
+            return BigDecimal.ZERO.setScale(2, RoundingMode.HALF_UP);
+        }
+
+        BigDecimal encaisseParticipation = nullSafeAmount(
+                paiementRepository.sumMontantByParticipationIdAndType(participation.getId(), TypePaiement.ENCAISSEMENT)
+        );
+
+        return encaisseParticipation.min(PART_JOUEUR).setScale(2, RoundingMode.HALF_UP);
+    }
+
+    private BigDecimal getMontantRembourseAffecteParticipation(Participation participation) {
+        if (participation == null || participation.getId() == null) {
+            return BigDecimal.ZERO.setScale(2, RoundingMode.HALF_UP);
+        }
+
+        BigDecimal encaisseAffecteParticipation = getMontantEncaisseAffecteParticipation(participation);
+        BigDecimal rembourseParticipation = nullSafeAmount(
+                paiementRepository.sumMontantByParticipationIdAndType(participation.getId(), TypePaiement.REMBOURSEMENT)
+        ).abs();
+
+        return rembourseParticipation.min(encaisseAffecteParticipation).setScale(2, RoundingMode.HALF_UP);
+    }
+
+    private BigDecimal nullSafeAmount(BigDecimal montant) {
+        if (montant == null) {
+            return BigDecimal.ZERO.setScale(2, RoundingMode.HALF_UP);
+        }
+        return montant.setScale(2, RoundingMode.HALF_UP);
+    }
+
+    private BigDecimal calculerResteAPayer(MatchPadel match, BigDecimal montantTotal, BigDecimal montantPaye) {
+        if (match.getStatut() == MatchStatut.ANNULE) {
+            return BigDecimal.ZERO;
         }
 
         BigDecimal resteAPayer = montantTotal.subtract(montantPaye);
         if (resteAPayer.signum() < 0) {
             resteAPayer = BigDecimal.ZERO;
         }
-
-        return MatchDetailMapper.toDto(match, montantTotal, montantPaye, resteAPayer);
+        return resteAPayer;
     }
 }

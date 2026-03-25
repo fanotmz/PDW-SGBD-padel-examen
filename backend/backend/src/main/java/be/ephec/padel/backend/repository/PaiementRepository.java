@@ -1,6 +1,7 @@
 package be.ephec.padel.backend.repository;
 
 import be.ephec.padel.backend.model.entities.Paiement;
+import be.ephec.padel.backend.model.enums.TypePaiement;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -27,11 +28,31 @@ public interface PaiementRepository extends JpaRepository<Paiement, Long> {
     @Query("""
         select coalesce(sum(p.montant), 0)
         from Paiement p
+        where p.participation.id = :participationId
+          and p.type = :typePaiement
+    """)
+    BigDecimal sumMontantByParticipationIdAndType(@Param("participationId") Long participationId,
+                                                  @Param("typePaiement") TypePaiement typePaiement);
+
+    @Query("""
+        select coalesce(sum(p.montant), 0)
+        from Paiement p
         join p.participation pa
         join pa.match m
         where m.id = :matchId
     """)
     BigDecimal sumMontantByMatchId(@Param("matchId") Long matchId);
+
+    @Query("""
+        select coalesce(sum(p.montant), 0)
+        from Paiement p
+        join p.participation pa
+        join pa.match m
+        where m.id = :matchId
+          and p.type = :typePaiement
+    """)
+    BigDecimal sumMontantByMatchIdAndType(@Param("matchId") Long matchId,
+                                          @Param("typePaiement") TypePaiement typePaiement);
 
     @Query("""
         select coalesce(sum(p.montant), 0)

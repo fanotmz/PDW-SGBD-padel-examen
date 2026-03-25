@@ -7,6 +7,7 @@ import be.ephec.padel.backend.dto.response.OrganizerMatchSummaryDto;
 import be.ephec.padel.backend.exception.BusinessException;
 import be.ephec.padel.backend.exception.NotFoundException;
 import be.ephec.padel.backend.model.entities.*;
+import be.ephec.padel.backend.model.enums.MatchStatut;
 import be.ephec.padel.backend.model.enums.MatchVisibilite;
 import be.ephec.padel.backend.model.enums.TypeJoueur;
 import be.ephec.padel.backend.repository.JoueurRepository;
@@ -67,6 +68,7 @@ class JoueurServiceTest {
         when(match.getId()).thenReturn(999L);
         when(match.getDateDebut()).thenReturn(LocalDateTime.of(dateMatch, LocalTime.of(10, 0)));
         when(match.getVisibilite()).thenReturn(visibilite);
+        when(match.getStatut()).thenReturn(MatchStatut.PLANIFIE);
         when(match.getOrganisateur()).thenReturn(organisateur);
         when(match.getTerrain()).thenReturn(terrain);
 
@@ -104,6 +106,7 @@ class JoueurServiceTest {
         when(match.getId()).thenReturn(matchId);
         when(match.getDateDebut()).thenReturn(LocalDateTime.of(dateMatch, LocalTime.of(10, 0)));
         when(match.getVisibilite()).thenReturn(visibilite);
+        when(match.getStatut()).thenReturn(MatchStatut.PLANIFIE);
         when(match.getTerrain()).thenReturn(terrain);
         when(match.getOrganisateur()).thenReturn(organisateur);
 
@@ -381,6 +384,7 @@ class JoueurServiceTest {
         assertEquals(1, result.size());
 
         PlayerMatchSummaryDto dto = result.get(0);
+        assertEquals(MatchStatut.PLANIFIE, dto.statut());
         assertEquals(PlayerMatchRoleDto.PARTICIPANT, dto.roleJoueur());
         assertEquals(MatchTemporalStatusDto.FUTUR, dto.statutTemporel());
         assertEquals(5, dto.joursAvantMatch());
@@ -417,6 +421,7 @@ class JoueurServiceTest {
         assertEquals(1, result.size());
 
         PlayerMatchSummaryDto dto = result.get(0);
+        assertEquals(MatchStatut.PLANIFIE, dto.statut());
         assertEquals(PlayerMatchRoleDto.ORGANISATEUR, dto.roleJoueur());
         assertEquals(MatchTemporalStatusDto.FUTUR, dto.statutTemporel());
         assertEquals(3, dto.joursAvantMatch());
@@ -426,6 +431,33 @@ class JoueurServiceTest {
         assertEquals("Terrain Central", dto.terrainNom());
         assertEquals(2L, dto.siteId());
         assertEquals("Site Omega", dto.siteNom());
+    }
+
+    @Test
+    void getPlayerMatches_matchAnnule_exposeLeStatut() {
+        Joueur joueur = mock(Joueur.class);
+        when(joueurRepo.findById("G0001")).thenReturn(Optional.of(joueur));
+
+        Participation participation = mockParticipation(
+                "G9999",
+                "G0001",
+                LocalDate.now().plusDays(3),
+                MatchVisibilite.PUBLIC,
+                true,
+                21L,
+                "Terrain Cancelled",
+                3L,
+                "Site Cancelled"
+        );
+        when(participation.getMatch().getStatut()).thenReturn(MatchStatut.ANNULE);
+
+        when(participationRepo.findByJoueur_MatriculeOrderByMatch_DateDebutAsc("G0001"))
+                .thenReturn(List.of(participation));
+
+        List<PlayerMatchSummaryDto> result = service.getPlayerMatches("G0001");
+
+        assertEquals(1, result.size());
+        assertEquals(MatchStatut.ANNULE, result.get(0).statut());
     }
 
     @Test
@@ -589,6 +621,7 @@ class JoueurServiceTest {
         assertEquals(1, result.size());
 
         OrganizerMatchSummaryDto dto = result.get(0);
+        assertEquals(MatchStatut.PLANIFIE, dto.statut());
         assertEquals(1L, dto.id());
         assertEquals(10L, dto.terrainId());
         assertEquals("Terrain 1", dto.terrainNom());
@@ -601,6 +634,33 @@ class JoueurServiceTest {
         assertEquals(MatchTemporalStatusDto.FUTUR, dto.statutTemporel());
         assertEquals(1, dto.joursAvantMatch());
         assertTrue(dto.risquePenaliteJ1());
+    }
+
+    @Test
+    void getOrganizedMatches_matchAnnule_risquePenaliteFalse() {
+        Joueur joueur = mock(Joueur.class);
+        when(joueurRepo.findById("G0001")).thenReturn(Optional.of(joueur));
+
+        MatchPadel match = mockOrganizedMatch(
+                LocalDate.now().plusDays(1),
+                MatchVisibilite.PRIVE,
+                2,
+                11L,
+                110L,
+                "Terrain Cancelled",
+                1110L,
+                "Site Cancelled"
+        );
+        when(match.getStatut()).thenReturn(MatchStatut.ANNULE);
+
+        when(matchPadelRepo.findOrganizedMatchesWithDetailsByMatricule("G0001"))
+                .thenReturn(List.of(match));
+
+        List<OrganizerMatchSummaryDto> result = service.getOrganizedMatches("G0001");
+
+        assertEquals(1, result.size());
+        assertEquals(MatchStatut.ANNULE, result.get(0).statut());
+        assertFalse(result.get(0).risquePenaliteJ1());
     }
 
     @Test
@@ -625,6 +685,7 @@ class JoueurServiceTest {
         List<OrganizerMatchSummaryDto> result = service.getOrganizedMatches("G0001");
 
         OrganizerMatchSummaryDto dto = result.get(0);
+        assertEquals(MatchStatut.PLANIFIE, dto.statut());
         assertEquals(MatchVisibilite.PUBLIC, dto.visibilite());
         assertEquals(2, dto.nbParticipants());
         assertEquals(2, dto.placesRestantes());
