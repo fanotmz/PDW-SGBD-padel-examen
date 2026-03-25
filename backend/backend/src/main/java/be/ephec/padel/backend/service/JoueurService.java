@@ -10,6 +10,7 @@ import be.ephec.padel.backend.model.entities.Joueur;
 import be.ephec.padel.backend.model.entities.MatchPadel;
 import be.ephec.padel.backend.model.entities.Participation;
 import be.ephec.padel.backend.model.entities.Site;
+import be.ephec.padel.backend.model.enums.MatchStatut;
 import be.ephec.padel.backend.model.enums.MatchVisibilite;
 import be.ephec.padel.backend.model.enums.TypeJoueur;
 import be.ephec.padel.backend.repository.JoueurRepository;
@@ -140,6 +141,7 @@ public class JoueurService {
                 match.getTerrain().getId(),
                 match.getTerrain().getNom(),
                 match.getVisibilite(),
+                match.getStatut(),
                 roleJoueur,
                 statutTemporel,
                 joursAvantMatch,
@@ -180,7 +182,8 @@ public class JoueurService {
         boolean complet = nbParticipants >= CAPACITE_MATCH;
 
         boolean risquePenaliteJ1 =
-                match.getVisibilite() == MatchVisibilite.PRIVE
+                match.getStatut() != MatchStatut.ANNULE
+                        && match.getVisibilite() == MatchVisibilite.PRIVE
                         && !complet
                         && statutTemporel == MatchTemporalStatusDto.FUTUR
                         && joursAvantMatch != null
@@ -194,6 +197,7 @@ public class JoueurService {
                 match.getTerrain().getId(),
                 match.getTerrain().getNom(),
                 match.getVisibilite(),
+                match.getStatut(),
                 nbParticipants,
                 placesRestantes,
                 complet,

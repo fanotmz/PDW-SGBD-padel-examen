@@ -1,0 +1,31 @@
+databaseChangeLog:
+  - changeSet:
+      id: 005-1-add-match-statut-column
+      author: fanoa
+      changes:
+        - addColumn:
+            tableName: match_padel
+            columns:
+              - column:
+                  name: statut
+                  type: varchar(20)
+
+  - changeSet:
+      id: 005-2-backfill-match-statut
+      author: fanoa
+      changes:
+        - update:
+            tableName: match_padel
+            columns:
+              - column:
+                  name: statut
+                  value: PLANIFIE
+
+  - changeSet:
+      id: 005-3-set-match-statut-not-null
+      author: fanoa
+      changes:
+        - addNotNullConstraint:
+            tableName: match_padel
+            columnName: statut
+            columnDataType: varchar(20)

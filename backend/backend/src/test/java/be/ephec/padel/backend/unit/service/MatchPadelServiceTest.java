@@ -8,7 +8,9 @@ import be.ephec.padel.backend.exception.BusinessException;
 import be.ephec.padel.backend.exception.ForbiddenException;
 import be.ephec.padel.backend.exception.NotFoundException;
 import be.ephec.padel.backend.model.entities.*;
+import be.ephec.padel.backend.model.enums.MatchStatut;
 import be.ephec.padel.backend.model.enums.MatchVisibilite;
+import be.ephec.padel.backend.model.enums.TypePaiement;
 import be.ephec.padel.backend.model.enums.TypeJoueur;
 import be.ephec.padel.backend.repository.FermetureGlobaleRepository;
 import be.ephec.padel.backend.repository.JoueurRepository;
@@ -133,6 +135,7 @@ class MatchPadelServiceTest {
         when(m.getId()).thenReturn(1L);
         when(m.getDateDebut()).thenReturn(dateValide());
         when(m.getVisibilite()).thenReturn(MatchVisibilite.PUBLIC);
+        when(m.getStatut()).thenReturn(MatchStatut.PLANIFIE);
 
         Terrain t = mock(Terrain.class);
         when(t.getId()).thenReturn(10L);
@@ -146,10 +149,17 @@ class MatchPadelServiceTest {
         when(orga.getMatricule()).thenReturn("G0001");
         when(m.getOrganisateur()).thenReturn(orga);
 
-        when(m.getParticipations()).thenReturn(List.of(mock(Participation.class), mock(Participation.class)));
+        Participation p1 = mock(Participation.class);
+        Participation p2 = mock(Participation.class);
+        when(p1.getId()).thenReturn(11L);
+        when(p2.getId()).thenReturn(12L);
+        when(m.getParticipations()).thenReturn(List.of(p1, p2));
         when(matchRepo.findByIdWithDetails(1L)).thenReturn(Optional.of(m));
 
-        when(paiementRepo.sumMontantByMatchId(1L)).thenReturn(new BigDecimal("20.00"));
+        when(paiementRepo.sumMontantByParticipationIdAndType(11L, TypePaiement.ENCAISSEMENT))
+                .thenReturn(new BigDecimal("15.00"));
+        when(paiementRepo.sumMontantByParticipationIdAndType(12L, TypePaiement.ENCAISSEMENT))
+                .thenReturn(new BigDecimal("5.00"));
 
         MatchDto dto = service.getMatchDto(1L);
 
@@ -158,6 +168,7 @@ class MatchPadelServiceTest {
         assertEquals("T1", dto.getTerrainNom());
         assertEquals(5L, dto.getSiteId());
         assertEquals("G0001", dto.getOrganisateurMatricule());
+        assertEquals(MatchStatut.PLANIFIE, dto.getStatut());
         assertEquals(2, dto.getNbParticipants());
 
         assertEquals(Tarifs.PRIX_MATCH, dto.getMontantTotal());
@@ -171,14 +182,14 @@ class MatchPadelServiceTest {
         when(m.getId()).thenReturn(1L);
         when(m.getDateDebut()).thenReturn(dateValide());
         when(m.getVisibilite()).thenReturn(MatchVisibilite.PUBLIC);
+        when(m.getStatut()).thenReturn(MatchStatut.PLANIFIE);
         when(m.getParticipations()).thenReturn(List.of());
 
         when(matchRepo.findByIdWithDetails(1L)).thenReturn(Optional.of(m));
-        when(paiementRepo.sumMontantByMatchId(1L)).thenReturn(null);
 
         MatchDto dto = service.getMatchDto(1L);
 
-        assertEquals(BigDecimal.ZERO, dto.getMontantPaye());
+        assertEquals(0, BigDecimal.ZERO.compareTo(dto.getMontantPaye()));
         assertEquals(Tarifs.PRIX_MATCH, dto.getResteAPayer());
     }
 
@@ -188,14 +199,67 @@ class MatchPadelServiceTest {
         when(m.getId()).thenReturn(1L);
         when(m.getDateDebut()).thenReturn(dateValide());
         when(m.getVisibilite()).thenReturn(MatchVisibilite.PUBLIC);
-        when(m.getParticipations()).thenReturn(List.of());
+        when(m.getStatut()).thenReturn(MatchStatut.PLANIFIE);
+        Participation p1 = mock(Participation.class);
+        when(p1.getId()).thenReturn(21L);
+        when(m.getParticipations()).thenReturn(List.of(p1));
 
         when(matchRepo.findByIdWithDetails(1L)).thenReturn(Optional.of(m));
-        when(paiementRepo.sumMontantByMatchId(1L)).thenReturn(Tarifs.PRIX_MATCH.add(new BigDecimal("1.00")));
+        when(paiementRepo.sumMontantByParticipationIdAndType(21L, TypePaiement.ENCAISSEMENT))
+                .thenReturn(new BigDecimal("25.00"));
 
         MatchDto dto = service.getMatchDto(1L);
 
+        assertEquals(new BigDecimal("15.00"), dto.getMontantPaye());
+        assertEquals(new BigDecimal("45.00"), dto.getResteAPayer());
+    }
+
+    @Test
+    void getMatchDto_matchAnnule_resteAPayerZero_et_statutVisible() {
+        MatchPadel m = mock(MatchPadel.class);
+        when(m.getId()).thenReturn(1L);
+        when(m.getDateDebut()).thenReturn(dateValide());
+        when(m.getVisibilite()).thenReturn(MatchVisibilite.PUBLIC);
+        when(m.getStatut()).thenReturn(MatchStatut.ANNULE);
+        Participation p1 = mock(Participation.class);
+        when(p1.getId()).thenReturn(31L);
+        when(m.getParticipations()).thenReturn(List.of(p1));
+
+        when(matchRepo.findByIdWithDetails(1L)).thenReturn(Optional.of(m));
+        when(paiementRepo.sumMontantByParticipationIdAndType(31L, TypePaiement.ENCAISSEMENT))
+                .thenReturn(new BigDecimal("25.00"));
+
+        MatchDto dto = service.getMatchDto(1L);
+
+        assertEquals(MatchStatut.ANNULE, dto.getStatut());
+        assertEquals(new BigDecimal("15.00"), dto.getMontantPaye());
         assertEquals(BigDecimal.ZERO, dto.getResteAPayer());
+    }
+
+    @Test
+    void getMatchDto_paiementAvecRattrapageDette_estPlafonneA15ParParticipation() {
+        MatchPadel m = mock(MatchPadel.class);
+        when(m.getId()).thenReturn(1L);
+        when(m.getDateDebut()).thenReturn(dateValide());
+        when(m.getVisibilite()).thenReturn(MatchVisibilite.PUBLIC);
+        when(m.getStatut()).thenReturn(MatchStatut.PLANIFIE);
+
+        Participation p1 = mock(Participation.class);
+        Participation p2 = mock(Participation.class);
+        when(p1.getId()).thenReturn(41L);
+        when(p2.getId()).thenReturn(42L);
+        when(m.getParticipations()).thenReturn(List.of(p1, p2));
+
+        when(matchRepo.findByIdWithDetails(1L)).thenReturn(Optional.of(m));
+        when(paiementRepo.sumMontantByParticipationIdAndType(41L, TypePaiement.ENCAISSEMENT))
+                .thenReturn(new BigDecimal("25.00"));
+        when(paiementRepo.sumMontantByParticipationIdAndType(42L, TypePaiement.ENCAISSEMENT))
+                .thenReturn(new BigDecimal("10.00"));
+
+        MatchDto dto = service.getMatchDto(1L);
+
+        assertEquals(new BigDecimal("25.00"), dto.getMontantPaye());
+        assertEquals(new BigDecimal("35.00"), dto.getResteAPayer());
     }
 
     // ----------------
@@ -684,6 +748,7 @@ class MatchPadelServiceTest {
         MatchPadel match = mock(MatchPadel.class);
         when(match.getId()).thenReturn(1L);
         when(match.getVisibilite()).thenReturn(MatchVisibilite.PUBLIC);
+        when(match.getStatut()).thenReturn(MatchStatut.PLANIFIE);
         when(match.getDateDebut()).thenReturn(LocalDateTime.of(2030, 1, 1, 10, 0));
 
         Terrain terrain = mock(Terrain.class);
@@ -705,7 +770,6 @@ class MatchPadelServiceTest {
         when(match.getParticipations()).thenReturn(List.of());
 
         when(matchRepo.findByIdWithDetails(1L)).thenReturn(Optional.of(match));
-        when(paiementRepo.sumMontantByMatchId(1L)).thenReturn(BigDecimal.ZERO);
 
         MatchDetailDto dto = service.getMatchDetailDto(1L, null);
 
@@ -713,9 +777,11 @@ class MatchPadelServiceTest {
         assertEquals("Site Delta", dto.getSiteNom());
         assertEquals("Terrain 1", dto.getTerrainNom());
         assertEquals("G0001", dto.getOrganisateurMatricule());
+        assertEquals(MatchStatut.PLANIFIE, dto.getStatut());
         assertEquals(0, dto.getNbParticipants());
         assertEquals(4, dto.getPlacesRestantes());
         assertFalse(dto.isComplet());
+        assertEquals(0, BigDecimal.ZERO.compareTo(dto.getMontantRembourse()));
     }
 
     @Test
@@ -728,7 +794,7 @@ class MatchPadelServiceTest {
         assertThrows(ForbiddenException.class,
                 () -> service.getMatchDetailDto(1L, null));
 
-        verify(paiementRepo, never()).sumMontantByMatchId(anyLong());
+        verify(paiementRepo, never()).sumMontantByParticipationIdAndType(anyLong(), any());
     }
 
     @Test
@@ -736,6 +802,7 @@ class MatchPadelServiceTest {
         MatchPadel match = mock(MatchPadel.class);
         when(match.getId()).thenReturn(1L);
         when(match.getVisibilite()).thenReturn(MatchVisibilite.PRIVE);
+        when(match.getStatut()).thenReturn(MatchStatut.PLANIFIE);
         when(match.getDateDebut()).thenReturn(LocalDateTime.of(2030, 1, 1, 10, 0));
 
         Terrain terrain = mock(Terrain.class);
@@ -757,7 +824,6 @@ class MatchPadelServiceTest {
         when(match.getParticipations()).thenReturn(List.of());
 
         when(matchRepo.findByIdWithDetails(1L)).thenReturn(Optional.of(match));
-        when(paiementRepo.sumMontantByMatchId(1L)).thenReturn(BigDecimal.ZERO);
 
         MatchDetailDto dto = service.getMatchDetailDto(1L, "G0001");
 
@@ -770,6 +836,7 @@ class MatchPadelServiceTest {
         MatchPadel match = mock(MatchPadel.class);
         when(match.getId()).thenReturn(1L);
         when(match.getVisibilite()).thenReturn(MatchVisibilite.PRIVE);
+        when(match.getStatut()).thenReturn(MatchStatut.PLANIFIE);
         when(match.getDateDebut()).thenReturn(LocalDateTime.of(2030, 1, 1, 10, 0));
 
         Terrain terrain = mock(Terrain.class);
@@ -792,13 +859,15 @@ class MatchPadelServiceTest {
         when(joueur.getNom()).thenReturn("Alice");
 
         when(participation.getJoueur()).thenReturn(joueur);
+        when(participation.getId()).thenReturn(51L);
 
         when(match.getTerrain()).thenReturn(terrain);
         when(match.getOrganisateur()).thenReturn(orga);
         when(match.getParticipations()).thenReturn(List.of(participation));
 
         when(matchRepo.findByIdWithDetails(1L)).thenReturn(Optional.of(match));
-        when(paiementRepo.sumMontantByMatchId(1L)).thenReturn(BigDecimal.ZERO);
+        when(paiementRepo.sumMontantByParticipationIdAndType(51L, TypePaiement.ENCAISSEMENT)).thenReturn(BigDecimal.ZERO);
+        when(paiementRepo.sumMontantByParticipationIdAndType(51L, TypePaiement.REMBOURSEMENT)).thenReturn(BigDecimal.ZERO);
 
         MatchDetailDto dto = service.getMatchDetailDto(1L, "J0001");
 
@@ -827,7 +896,51 @@ class MatchPadelServiceTest {
         assertThrows(ForbiddenException.class,
                 () -> service.getMatchDetailDto(1L, "X9999"));
 
-        verify(paiementRepo, never()).sumMontantByMatchId(anyLong());
+        verify(paiementRepo, never()).sumMontantByParticipationIdAndType(anyLong(), any());
+    }
+
+    @Test
+    void getMatchDetailDto_matchAnnule_exposeStatut_et_montantRembourse() {
+        MatchPadel match = mock(MatchPadel.class);
+        when(match.getId()).thenReturn(1L);
+        when(match.getVisibilite()).thenReturn(MatchVisibilite.PUBLIC);
+        when(match.getStatut()).thenReturn(MatchStatut.ANNULE);
+        when(match.getDateDebut()).thenReturn(LocalDateTime.of(2030, 1, 1, 10, 0));
+
+        Terrain terrain = mock(Terrain.class);
+        Site site = mock(Site.class);
+        Joueur orga = mock(Joueur.class);
+
+        when(site.getId()).thenReturn(5L);
+        when(site.getNom()).thenReturn("Site Delta");
+        when(terrain.getId()).thenReturn(10L);
+        when(terrain.getNom()).thenReturn("Terrain 1");
+        when(terrain.getSite()).thenReturn(site);
+        when(orga.getMatricule()).thenReturn("G0001");
+        when(orga.getNom()).thenReturn("Orga");
+
+        when(match.getTerrain()).thenReturn(terrain);
+        when(match.getOrganisateur()).thenReturn(orga);
+        Participation participation = mock(Participation.class);
+        Joueur joueur = mock(Joueur.class);
+        when(participation.getId()).thenReturn(61L);
+        when(joueur.getMatricule()).thenReturn("J0002");
+        when(joueur.getNom()).thenReturn("Bob");
+        when(participation.getJoueur()).thenReturn(joueur);
+        when(match.getParticipations()).thenReturn(List.of(participation));
+
+        when(matchRepo.findByIdWithDetails(1L)).thenReturn(Optional.of(match));
+        when(paiementRepo.sumMontantByParticipationIdAndType(61L, TypePaiement.ENCAISSEMENT))
+                .thenReturn(new BigDecimal("25.00"));
+        when(paiementRepo.sumMontantByParticipationIdAndType(61L, TypePaiement.REMBOURSEMENT))
+                .thenReturn(new BigDecimal("-20.00"));
+
+        MatchDetailDto dto = service.getMatchDetailDto(1L, null);
+
+        assertEquals(MatchStatut.ANNULE, dto.getStatut());
+        assertEquals(new BigDecimal("15.00"), dto.getMontantPaye());
+        assertEquals(new BigDecimal("15.00"), dto.getMontantRembourse());
+        assertEquals(BigDecimal.ZERO, dto.getResteAPayer());
     }
 
     @Test

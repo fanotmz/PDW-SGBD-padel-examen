@@ -1,5 +1,6 @@
 package be.ephec.padel.backend.dto.response;
 
+import be.ephec.padel.backend.model.enums.MatchStatut;
 import be.ephec.padel.backend.model.enums.MatchVisibilite;
 
 import java.math.BigDecimal;
@@ -15,6 +16,7 @@ public class MatchDto {
     private String organisateurMatricule;
     private LocalDateTime dateDebut;
     private MatchVisibilite visibilite;
+    private MatchStatut statut;
 
     private int nbParticipants;
 
@@ -30,6 +32,7 @@ public class MatchDto {
                     String organisateurMatricule,
                     LocalDateTime dateDebut,
                     MatchVisibilite visibilite,
+                    MatchStatut statut,
                     int nbParticipants,
                     BigDecimal montantTotal,
                     BigDecimal montantPaye,
@@ -42,6 +45,7 @@ public class MatchDto {
         this.organisateurMatricule = organisateurMatricule;
         this.dateDebut = dateDebut;
         this.visibilite = visibilite;
+        this.statut = statut;
         this.nbParticipants = nbParticipants;
 
         this.montantTotal = montantTotal;
@@ -56,6 +60,7 @@ public class MatchDto {
     public String getOrganisateurMatricule() { return organisateurMatricule; }
     public LocalDateTime getDateDebut() { return dateDebut; }
     public MatchVisibilite getVisibilite() { return visibilite; }
+    public MatchStatut getStatut() { return statut; }
     public int getNbParticipants() { return nbParticipants; }
 
     public BigDecimal getMontantTotal() { return montantTotal; }

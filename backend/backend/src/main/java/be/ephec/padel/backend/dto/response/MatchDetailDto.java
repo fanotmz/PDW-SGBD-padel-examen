@@ -1,5 +1,6 @@
 package be.ephec.padel.backend.dto.response;
 
+import be.ephec.padel.backend.model.enums.MatchStatut;
 import be.ephec.padel.backend.model.enums.MatchVisibilite;
 
 import java.math.BigDecimal;
@@ -24,6 +25,7 @@ public class MatchDetailDto {
     private String organisateurNom;
 
     private MatchVisibilite visibilite;
+    private MatchStatut statut;
 
     private int nbParticipants;
     private int placesRestantes;
@@ -32,6 +34,7 @@ public class MatchDetailDto {
     private BigDecimal montantTotal;
     private BigDecimal montantPaye;
     private BigDecimal resteAPayer;
+    private BigDecimal montantRembourse;
 
     private List<ParticipantDto> participants;
 
@@ -45,12 +48,14 @@ public class MatchDetailDto {
                           String organisateurMatricule,
                           String organisateurNom,
                           MatchVisibilite visibilite,
+                          MatchStatut statut,
                           int nbParticipants,
                           int placesRestantes,
                           boolean complet,
                           BigDecimal montantTotal,
                           BigDecimal montantPaye,
                           BigDecimal resteAPayer,
+                          BigDecimal montantRembourse,
                           List<ParticipantDto> participants) {
         this.id = id;
         this.dateDebut = dateDebut;
@@ -62,12 +67,14 @@ public class MatchDetailDto {
         this.organisateurMatricule = organisateurMatricule;
         this.organisateurNom = organisateurNom;
         this.visibilite = visibilite;
+        this.statut = statut;
         this.nbParticipants = nbParticipants;
         this.placesRestantes = placesRestantes;
         this.complet = complet;
         this.montantTotal = montantTotal;
         this.montantPaye = montantPaye;
         this.resteAPayer = resteAPayer;
+        this.montantRembourse = montantRembourse;
         this.participants = participants;
     }
 
@@ -111,6 +118,10 @@ public class MatchDetailDto {
         return visibilite;
     }
 
+    public MatchStatut getStatut() {
+        return statut;
+    }
+
     public int getNbParticipants() {
         return nbParticipants;
     }
@@ -133,6 +144,10 @@ public class MatchDetailDto {
 
     public BigDecimal getResteAPayer() {
         return resteAPayer;
+    }
+
+    public BigDecimal getMontantRembourse() {
+        return montantRembourse;
     }
 
     public List<ParticipantDto> getParticipants() {

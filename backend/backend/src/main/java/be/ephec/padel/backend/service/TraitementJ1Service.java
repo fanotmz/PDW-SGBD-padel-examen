@@ -4,6 +4,7 @@ import be.ephec.padel.backend.common.Tarifs;
 import be.ephec.padel.backend.model.entities.Joueur;
 import be.ephec.padel.backend.model.entities.MatchPadel;
 import be.ephec.padel.backend.model.entities.Participation;
+import be.ephec.padel.backend.model.enums.MatchStatut;
 import be.ephec.padel.backend.model.enums.MatchVisibilite;
 import be.ephec.padel.backend.repository.MatchPadelRepository;
 import be.ephec.padel.backend.repository.PaiementRepository;
@@ -51,14 +52,19 @@ public class TraitementJ1Service {
         LocalDateTime to = from.plusMinutes(windowMinutes);
 
         List<MatchPadel> matchs = matchPadelRepository.findAtraiterJ1AvecDetails(from, to);
+        int traites = 0;
 
         for (MatchPadel match : matchs) {
+            if (match.getStatut() != MatchStatut.PLANIFIE) {
+                continue;
+            }
             appliquerReglesJ1(match, now);
             match.setJ1TraiteLe(now);
             matchPadelRepository.save(match);
+            traites++;
         }
 
-        return matchs.size();
+        return traites;
     }
 
     private void appliquerReglesJ1(MatchPadel match, LocalDateTime now) {

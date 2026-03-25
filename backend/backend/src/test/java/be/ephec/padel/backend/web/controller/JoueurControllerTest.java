@@ -9,6 +9,7 @@ import be.ephec.padel.backend.dto.response.OrganizerMatchSummaryDto;
 import be.ephec.padel.backend.error.ApiExceptionHandler;
 import be.ephec.padel.backend.exception.NotFoundException;
 import be.ephec.padel.backend.model.entities.Joueur;
+import be.ephec.padel.backend.model.enums.MatchStatut;
 import be.ephec.padel.backend.model.enums.MatchVisibilite;
 import be.ephec.padel.backend.model.enums.TypeJoueur;
 import be.ephec.padel.backend.service.JoueurService;
@@ -187,6 +188,7 @@ class JoueurControllerTest {
                 200L,
                 "Terrain 1",
                 MatchVisibilite.PUBLIC,
+                MatchStatut.PLANIFIE,
                 PlayerMatchRoleDto.PARTICIPANT,
                 MatchTemporalStatusDto.FUTUR,
                 5,
@@ -243,6 +245,7 @@ class JoueurControllerTest {
                 200L,
                 "Terrain 1",
                 MatchVisibilite.PRIVE,
+                MatchStatut.PLANIFIE,
                 2,
                 2,
                 false,

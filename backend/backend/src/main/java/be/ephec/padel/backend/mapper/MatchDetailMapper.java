@@ -18,7 +18,8 @@ public final class MatchDetailMapper {
     public static MatchDetailDto toDto(MatchPadel m,
                                        BigDecimal montantTotal,
                                        BigDecimal montantPaye,
-                                       BigDecimal resteAPayer) {
+                                       BigDecimal resteAPayer,
+                                       BigDecimal montantRembourse) {
 
         int nbParticipants = (m.getParticipations() != null) ? m.getParticipations().size() : 0;
         int placesRestantes = Math.max(0, CAPACITE_MATCH - nbParticipants);
@@ -41,12 +42,14 @@ public final class MatchDetailMapper {
                 m.getOrganisateur().getMatricule(),
                 m.getOrganisateur().getNom(),
                 m.getVisibilite(),
+                m.getStatut(),
                 nbParticipants,
                 placesRestantes,
                 complet,
                 montantTotal,
                 montantPaye,
                 resteAPayer,
+                montantRembourse,
                 participants
         );
     }

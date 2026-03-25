@@ -7,4 +7,8 @@ databaseChangeLog:
       file: db/changelog/003-horaire-site.yaml
   - include:
       file: db/changelog/004-drop-site-horaires.yaml
+  - include:
+      file: db/changelog/005-match-statut.yaml
+  - include:
+      file: db/changelog/006-type-paiement.yaml
 

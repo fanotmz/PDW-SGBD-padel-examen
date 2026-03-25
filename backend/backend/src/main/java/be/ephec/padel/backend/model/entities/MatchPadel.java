@@ -1,5 +1,6 @@
 package be.ephec.padel.backend.model.entities;
 
+import be.ephec.padel.backend.model.enums.MatchStatut;
 import be.ephec.padel.backend.model.enums.MatchVisibilite;
 import jakarta.persistence.*;
 
@@ -34,6 +35,10 @@ public class MatchPadel {
     @Column(nullable = false)
     private MatchVisibilite visibilite;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "statut", nullable = false)
+    private MatchStatut statut = MatchStatut.PLANIFIE;
+
     @Column(name = "solde_traite_le")
     private LocalDateTime soldeTraiteLe;
 
@@ -54,6 +59,7 @@ public class MatchPadel {
         this.organisateur = organisateur;
         this.dateDebut = dateDebut;
         this.visibilite = visibilite;
+        this.statut = MatchStatut.PLANIFIE;
     }
 
     public Long getId() {
@@ -74,6 +80,10 @@ public class MatchPadel {
 
     public MatchVisibilite getVisibilite() {
         return visibilite;
+    }
+
+    public MatchStatut getStatut() {
+        return statut;
     }
 
     public List<Participation> getParticipations() {
@@ -101,6 +111,10 @@ public class MatchPadel {
 
     public void setVisibilite(MatchVisibilite visibilite) {
         this.visibilite = visibilite;
+    }
+
+    public void setStatut(MatchStatut statut) {
+        this.statut = statut;
     }
 
     public LocalDateTime getSoldeTraiteLe() {

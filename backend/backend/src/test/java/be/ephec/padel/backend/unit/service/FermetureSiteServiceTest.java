@@ -11,6 +11,7 @@ import be.ephec.padel.backend.model.entities.FermetureSite;
 import be.ephec.padel.backend.model.entities.Site;
 import be.ephec.padel.backend.repository.FermetureSiteRepository;
 import be.ephec.padel.backend.repository.SiteRepository;
+import be.ephec.padel.backend.service.AnnulationMatchService;
 import be.ephec.padel.backend.security.ServiceAutorisationAdmin;
 import be.ephec.padel.backend.service.FermetureSiteService;
 import org.junit.jupiter.api.BeforeEach;
@@ -29,6 +30,7 @@ class FermetureSiteServiceTest {
     private FermetureSiteRepository fermetureSiteRepository;
     private SiteRepository siteRepository;
     private ServiceAutorisationAdmin serviceAutorisationAdmin;
+    private AnnulationMatchService annulationMatchService;
     private FermetureSiteService service;
 
     @BeforeEach
@@ -36,11 +38,13 @@ class FermetureSiteServiceTest {
         fermetureSiteRepository = mock(FermetureSiteRepository.class);
         siteRepository = mock(SiteRepository.class);
         serviceAutorisationAdmin = mock(ServiceAutorisationAdmin.class);
+        annulationMatchService = mock(AnnulationMatchService.class);
 
         service = new FermetureSiteService(
                 fermetureSiteRepository,
                 siteRepository,
-                serviceAutorisationAdmin
+                serviceAutorisationAdmin,
+                annulationMatchService
         );
 
         doNothing().when(serviceAutorisationAdmin).verifierAccesAuSite(anyLong());
@@ -284,6 +288,11 @@ class FermetureSiteServiceTest {
         verify(siteRepository).findById(1L);
         verify(fermetureSiteRepository).existsBySiteIdAndDate(1L, LocalDate.of(2030, 1, 15));
         verify(fermetureSiteRepository).save(any(FermetureSite.class));
+        verify(annulationMatchService).annulerMatchsFutursPlanifiesSite(
+                1L,
+                LocalDate.of(2030, 1, 15).atStartOfDay(),
+                LocalDate.of(2030, 1, 16).atStartOfDay()
+        );
     }
 
     // --------
@@ -371,6 +380,11 @@ class FermetureSiteServiceTest {
         verify(serviceAutorisationAdmin).verifierAccesAuSite(1L);
         verify(siteRepository).findById(1L);
         verify(fermetureSiteRepository).save(any(FermetureSite.class));
+        verify(annulationMatchService).annulerMatchsFutursPlanifiesSite(
+                1L,
+                LocalDate.of(2030, 2, 10).atStartOfDay(),
+                LocalDate.of(2030, 2, 16).atStartOfDay()
+        );
     }
 
     // --------
@@ -456,6 +470,11 @@ class FermetureSiteServiceTest {
 
         verify(serviceAutorisationAdmin).verifierAccesAuSite(1L);
         verify(fermetureSiteRepository).save(fermeture);
+        verify(annulationMatchService).annulerMatchsFutursPlanifiesSite(
+                1L,
+                LocalDate.of(2030, 1, 20).atStartOfDay(),
+                LocalDate.of(2030, 1, 21).atStartOfDay()
+        );
     }
 
     // --------
@@ -556,6 +575,11 @@ class FermetureSiteServiceTest {
 
         verify(serviceAutorisationAdmin).verifierAccesAuSite(1L);
         verify(fermetureSiteRepository).save(fermeture);
+        verify(annulationMatchService).annulerMatchsFutursPlanifiesSite(
+                1L,
+                LocalDate.of(2030, 2, 10).atStartOfDay(),
+                LocalDate.of(2030, 2, 16).atStartOfDay()
+        );
     }
 
     // --------
@@ -588,6 +612,7 @@ class FermetureSiteServiceTest {
         verify(siteRepository).findById(1L);
         verify(fermetureSiteRepository).findByIdAndSiteId(10L, 1L);
         verify(fermetureSiteRepository).delete(fermeture);
+        verifyNoInteractions(annulationMatchService);
     }
 
     // --------

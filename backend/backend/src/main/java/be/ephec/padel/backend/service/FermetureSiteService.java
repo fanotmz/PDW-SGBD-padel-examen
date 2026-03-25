@@ -24,13 +24,16 @@ public class FermetureSiteService {
     private final FermetureSiteRepository fermetureSiteRepository;
     private final SiteRepository siteRepository;
     private final ServiceAutorisationAdmin serviceAutorisationAdmin;
+    private final AnnulationMatchService annulationMatchService;
 
     public FermetureSiteService(FermetureSiteRepository fermetureSiteRepository,
                                 SiteRepository siteRepository,
-                                ServiceAutorisationAdmin serviceAutorisationAdmin) {
+                                ServiceAutorisationAdmin serviceAutorisationAdmin,
+                                AnnulationMatchService annulationMatchService) {
         this.fermetureSiteRepository = fermetureSiteRepository;
         this.siteRepository = siteRepository;
         this.serviceAutorisationAdmin = serviceAutorisationAdmin;
+        this.annulationMatchService = annulationMatchService;
     }
 
     @Transactional(readOnly = true)
@@ -76,7 +79,9 @@ public class FermetureSiteService {
         fermeture.setDateFin(null);
         fermeture.setMotif(req.getMotif());
 
-        return fermetureSiteRepository.save(fermeture);
+        FermetureSite saved = fermetureSiteRepository.save(fermeture);
+        annulerMatchsImpactesPourDate(siteId, req.getDate());
+        return saved;
     }
 
     public FermetureSite creerPeriode(Long siteId, CreateFermetureSitePeriodeRequest req) {
@@ -107,7 +112,9 @@ public class FermetureSiteService {
         fermeture.setDateFin(req.getDateFin());
         fermeture.setMotif(req.getMotif());
 
-        return fermetureSiteRepository.save(fermeture);
+        FermetureSite saved = fermetureSiteRepository.save(fermeture);
+        annulerMatchsImpactesPourPeriode(siteId, req.getDateDebut(), req.getDateFin());
+        return saved;
     }
 
     public FermetureSite updateDate(Long siteId, Long fermetureId, UpdateFermetureSiteDateRequest req) {
@@ -133,7 +140,9 @@ public class FermetureSiteService {
         fermeture.setDateFin(null);
         fermeture.setMotif(req.getMotif());
 
-        return fermetureSiteRepository.save(fermeture);
+        FermetureSite saved = fermetureSiteRepository.save(fermeture);
+        annulerMatchsImpactesPourDate(siteId, req.getDate());
+        return saved;
     }
 
     public FermetureSite updatePeriode(Long siteId, Long fermetureId, UpdateFermetureSitePeriodeRequest req) {
@@ -158,7 +167,9 @@ public class FermetureSiteService {
         fermeture.setDateFin(req.getDateFin());
         fermeture.setMotif(req.getMotif());
 
-        return fermetureSiteRepository.save(fermeture);
+        FermetureSite saved = fermetureSiteRepository.save(fermeture);
+        annulerMatchsImpactesPourPeriode(siteId, req.getDateDebut(), req.getDateFin());
+        return saved;
     }
 
     public void delete(Long siteId, Long fermetureId) {
@@ -255,5 +266,21 @@ public class FermetureSiteService {
                 }
             }
         }
+    }
+
+    private void annulerMatchsImpactesPourDate(Long siteId, LocalDate date) {
+        annulationMatchService.annulerMatchsFutursPlanifiesSite(
+                siteId,
+                date.atStartOfDay(),
+                date.plusDays(1).atStartOfDay()
+        );
+    }
+
+    private void annulerMatchsImpactesPourPeriode(Long siteId, LocalDate dateDebut, LocalDate dateFin) {
+        annulationMatchService.annulerMatchsFutursPlanifiesSite(
+                siteId,
+                dateDebut.atStartOfDay(),
+                dateFin.plusDays(1).atStartOfDay()
+        );
     }
 }
