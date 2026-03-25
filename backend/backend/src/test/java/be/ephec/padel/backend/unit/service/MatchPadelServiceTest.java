@@ -744,6 +744,96 @@ class MatchPadelServiceTest {
     }
 
     @Test
+    void getPublicMatchSummaries_transmet_siteId_null_au_repository() {
+        when(matchRepo.findPublicMatchSummaries(any(), any(), any(), any())).thenReturn(List.of());
+
+        service.getPublicMatchSummaries(
+                LocalDate.of(2030, 1, 1),
+                LocalDate.of(2030, 1, 2),
+                null
+        );
+
+        verify(matchRepo).findPublicMatchSummaries(
+                eq(MatchVisibilite.PUBLIC),
+                any(LocalDateTime.class),
+                any(LocalDateTime.class),
+                isNull()
+        );
+    }
+
+    @Test
+    void getPublicMatchSummaries_transmet_siteId_renseigne_au_repository() {
+        when(matchRepo.findPublicMatchSummaries(any(), any(), any(), any())).thenReturn(List.of());
+
+        service.getPublicMatchSummaries(
+                LocalDate.of(2030, 1, 1),
+                LocalDate.of(2030, 1, 2),
+                5L
+        );
+
+        verify(matchRepo).findPublicMatchSummaries(
+                eq(MatchVisibilite.PUBLIC),
+                any(LocalDateTime.class),
+                any(LocalDateTime.class),
+                eq(5L)
+        );
+    }
+
+    @Test
+    void getPublicMatchSummaries_normalise_from_null_en_debut_de_jour_courant() {
+        when(matchRepo.findPublicMatchSummaries(any(), any(), any(), any())).thenReturn(List.of());
+
+        service.getPublicMatchSummaries(
+                null,
+                LocalDate.of(2030, 1, 2),
+                null
+        );
+
+        verify(matchRepo).findPublicMatchSummaries(
+                eq(MatchVisibilite.PUBLIC),
+                eq(LocalDate.of(2026, 3, 24).atStartOfDay()),
+                any(LocalDateTime.class),
+                isNull()
+        );
+    }
+
+    @Test
+    void getPublicMatchSummaries_normalise_to_en_fin_de_jour() {
+        when(matchRepo.findPublicMatchSummaries(any(), any(), any(), any())).thenReturn(List.of());
+
+        service.getPublicMatchSummaries(
+                LocalDate.of(2030, 1, 1),
+                LocalDate.of(2030, 1, 2),
+                null
+        );
+
+        verify(matchRepo).findPublicMatchSummaries(
+                eq(MatchVisibilite.PUBLIC),
+                eq(LocalDate.of(2030, 1, 1).atStartOfDay()),
+                eq(LocalDate.of(2030, 1, 2).atTime(LocalTime.MAX)),
+                isNull()
+        );
+    }
+
+    @Test
+    void getPublicMatchSummaries_conserve_to_null() {
+        when(matchRepo.findPublicMatchSummaries(any(), any(), any(), any())).thenReturn(List.of());
+
+        service.getPublicMatchSummaries(
+                LocalDate.of(2030, 1, 1),
+                null,
+                null
+        );
+
+        verify(matchRepo).findPublicMatchSummaries(
+                eq(MatchVisibilite.PUBLIC),
+                eq(LocalDate.of(2030, 1, 1).atStartOfDay()),
+                isNull(),
+                isNull()
+        );
+    }
+
+    @Test
     void getMatchDetailDto_public_sansMatricule_ok() {
         MatchPadel match = mock(MatchPadel.class);
         when(match.getId()).thenReturn(1L);
