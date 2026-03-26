@@ -1,0 +1,96 @@
+databaseChangeLog:
+  - changeSet:
+      id: 007-1-add-joueur-technical-id
+      author: codex
+      changes:
+        - addColumn:
+            tableName: joueur
+            columns:
+              - column:
+                  name: id
+                  type: bigint
+                  autoIncrement: true
+        - addNotNullConstraint:
+            tableName: joueur
+            columnName: id
+            columnDataType: bigint
+        - addUniqueConstraint:
+            tableName: joueur
+            columnNames: id
+            constraintName: uk_joueur_id
+
+  - changeSet:
+      id: 007-2-create-app-user
+      author: codex
+      changes:
+        - createTable:
+            tableName: app_user
+            columns:
+              - column:
+                  name: id
+                  type: bigint
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    primaryKeyName: pk_app_user
+                    nullable: false
+              - column:
+                  name: login
+                  type: varchar(100)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: password_hash
+                  type: varchar(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: active
+                  type: bit
+                  constraints:
+                    nullable: false
+              - column:
+                  name: joueur_id
+                  type: bigint
+        - addUniqueConstraint:
+            tableName: app_user
+            columnNames: login
+            constraintName: uk_app_user_login
+        - addForeignKeyConstraint:
+            baseTableName: app_user
+            baseColumnNames: joueur_id
+            referencedTableName: joueur
+            referencedColumnNames: id
+            constraintName: fk_app_user_joueur_id
+            onDelete: NO ACTION
+            onUpdate: NO ACTION
+
+  - changeSet:
+      id: 007-3-create-app-user-role
+      author: codex
+      changes:
+        - createTable:
+            tableName: app_user_role
+            columns:
+              - column:
+                  name: user_id
+                  type: bigint
+                  constraints:
+                    nullable: false
+              - column:
+                  name: role
+                  type: varchar(50)
+                  constraints:
+                    nullable: false
+        - addPrimaryKey:
+            tableName: app_user_role
+            columnNames: user_id, role
+            constraintName: pk_app_user_role
+        - addForeignKeyConstraint:
+            baseTableName: app_user_role
+            baseColumnNames: user_id
+            referencedTableName: app_user
+            referencedColumnNames: id
+            constraintName: fk_app_user_role_user_id
+            onDelete: CASCADE
+            onUpdate: NO ACTION
