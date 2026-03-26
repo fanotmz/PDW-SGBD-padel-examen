@@ -2,6 +2,8 @@ package be.ephec.padel.backend.model.entities;
 
 import be.ephec.padel.backend.model.enums.TypeJoueur;
 import jakarta.persistence.*;
+import org.hibernate.annotations.Generated;
+import org.hibernate.annotations.GenerationTime;
 
 import java.time.LocalDateTime;
 import java.math.BigDecimal;
@@ -11,6 +13,13 @@ import java.util.List;
 @Entity
 @Table(name = "joueur")
 public class Joueur {
+
+    // `matricule` remains the JPA identifier and business key.
+    // `id` is a separate technical database identifier introduced for security-side relations,
+    // especially the optional `User -> Joueur` link.
+    @Generated(GenerationTime.INSERT)
+    @Column(name = "id", nullable = false, unique = true, insertable = false, updatable = false)
+    private Long id;
 
     @Id
     @Column(length = 10)
@@ -59,6 +68,10 @@ public class Joueur {
 
     public String getMatricule() {
         return matricule;
+    }
+
+    public Long getId() {
+        return id;
     }
 
     public String getNom() {

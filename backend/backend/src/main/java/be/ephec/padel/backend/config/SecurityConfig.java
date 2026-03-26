@@ -1,62 +1,25 @@
 package be.ephec.padel.backend.config;
 
-import jakarta.annotation.PostConstruct;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.beans.factory.ObjectProvider;
 
+import be.ephec.padel.backend.security.PersistentUserDetailsService;
+import be.ephec.padel.backend.repository.UserRepository;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
-
-import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetailsService;
-
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
-
-import org.springframework.security.provisioning.InMemoryUserDetailsManager;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.http.HttpMethod;
 
-import java.util.ArrayList;
-import java.util.List;
-
 @Configuration
 public class SecurityConfig {
-
-    @Value("${app.security.admin.global.username:adminGlobal}")
-    private String adminGlobalUsername;
-
-    // Pas de mot de passe par défaut (doit venir d'une env var / secret)
-    @Value("${app.security.admin.global.password:}")
-    private String adminGlobalPassword;
-
-    /**
-     * Admins site sous forme:
-     *   app.security.admin.site.users=adminSite1:1,adminSite2:2
-     * Le ":siteId" est utilisé ailleurs (périmètre). Ici on ne garde que le username.
-     */
-    @Value("${app.security.admin.site.users:adminSite1:1,adminSite2:2}")
-    private String adminSiteUsers;
-
-    // Pas de mot de passe par défaut (doit venir d'une env var / secret)
-    @Value("${app.security.admin.site.password:}")
-    private String adminSitePassword;
-
-    @PostConstruct
-    void validateSecrets() {
-        if (adminGlobalPassword == null || adminGlobalPassword.isBlank()) {
-            throw new IllegalStateException(
-                    "Missing secret: app.security.admin.global.password (env: APP_SECURITY_ADMIN_GLOBAL_PASSWORD)"
-            );
-        }
-        if (adminSitePassword == null || adminSitePassword.isBlank()) {
-            throw new IllegalStateException(
-                    "Missing secret: app.security.admin.site.password (env: APP_SECURITY_ADMIN_SITE_PASSWORD)"
-            );
-        }
-    }
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
@@ -67,6 +30,9 @@ public class SecurityConfig {
 
                         // Swagger / OpenAPI
                         .requestMatchers("/swagger-ui/**", "/swagger-ui.html", "/v3/api-docs/**").permitAll()
+
+                        // Login
+                        .requestMatchers(HttpMethod.POST, "/api/v1/auth/login").permitAll()
 
                         // ===== ADMIN =====
 
@@ -107,38 +73,23 @@ public class SecurityConfig {
     }
 
     @Bean
-    public UserDetailsService users(PasswordEncoder encoder) {
-        List<org.springframework.security.core.userdetails.UserDetails> users = new ArrayList<>();
-
-        // Admin global
-        users.add(User.builder()
-                .username(adminGlobalUsername)
-                .password(encoder.encode(adminGlobalPassword))
-                .roles("ADMIN_GLOBAL")
-                .build());
-
-        // Admins site (on ignore le :siteId ici)
-        for (String entry : adminSiteUsers.split(",")) {
-            String trimmed = entry.trim();
-            if (trimmed.isEmpty()) continue;
-
-            String[] parts = trimmed.split(":");
-            String username = parts[0].trim();
-
-            if (username.isEmpty()) continue;
-
-            users.add(User.builder()
-                    .username(username)
-                    .password(encoder.encode(adminSitePassword))
-                    .roles("ADMIN_SITE")
-                    .build());
+    public UserDetailsService userDetailsService(ObjectProvider<UserRepository> provider) {
+        UserRepository repository = provider.getIfAvailable();
+        if (repository != null) {
+            return new PersistentUserDetailsService(repository);
         }
-
-        return new InMemoryUserDetailsManager(users);
+        return username -> {
+            throw new UsernameNotFoundException("UserDetailsService unavailable in this context");
+        };
     }
 
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
+    }
+
+    @Bean
+    public AuthenticationManager authenticationManager(AuthenticationConfiguration configuration) throws Exception {
+        return configuration.getAuthenticationManager();
     }
 }

@@ -8,6 +8,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.context.annotation.Import;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
@@ -41,16 +42,16 @@ class AdminSiteControllerSecurityTest {
     }
 
     @Test
+    @WithMockUser(username = "adminSite1", roles = {"ADMIN_SITE"})
     void adminSite_auth_200_mapping_ok() throws Exception {
-        mockMvc.perform(get("/api/v1/admin/sites/1/joueurs")
-                        .with(org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.httpBasic("adminSite1", "test123")))
+        mockMvc.perform(get("/api/v1/admin/sites/1/joueurs"))
                 .andExpect(status().isOk());
     }
 
     @Test
+    @WithMockUser(username = "adminGlobal", roles = {"ADMIN_GLOBAL"})
     void adminGlobal_auth_200() throws Exception {
-        mockMvc.perform(get("/api/v1/admin/sites/2/joueurs")
-                        .with(org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.httpBasic("adminGlobal", "test123")))
+        mockMvc.perform(get("/api/v1/admin/sites/2/joueurs"))
                 .andExpect(status().isOk());
     }
 }
