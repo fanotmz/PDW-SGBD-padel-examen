@@ -26,7 +26,7 @@ public class JoueurController {
         this.joueurService = joueurService;
     }
 
-    @SecurityRequirement(name = "basicAuth")
+    @SecurityRequirement(name = "bearerAuth")
     @GetMapping
     public ResponseEntity<List<JoueurDto>> list() {
         List<JoueurDto> dtos = joueurService.lister().stream()
@@ -57,7 +57,7 @@ public class JoueurController {
         return ResponseEntity.ok(joueurService.getOrganizedMatches(matricule));
     }
 
-    @SecurityRequirement(name = "basicAuth")
+    @SecurityRequirement(name = "bearerAuth")
     @PostMapping
     public ResponseEntity<JoueurDto> create(@Valid @RequestBody JoueurCreateRequest req) {
         Joueur created = joueurService.creerJoueur(

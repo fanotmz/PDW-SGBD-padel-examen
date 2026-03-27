@@ -13,6 +13,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
+import org.springframework.security.test.context.support.WithAnonymousUser;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.util.ReflectionTestUtils;
@@ -27,6 +28,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @WebMvcTest(controllers = TerrainController.class)
 @Import({SecurityConfig.class, ApiExceptionHandler.class})
+@WithMockUser(username = "joueur1", roles = "JOUEUR")
 class TerrainControllerTest {
 
     @Autowired
@@ -102,6 +104,7 @@ class TerrainControllerTest {
     // ===== Issue 62 : public refusé sur WRITE =====
 
     @Test
+    @WithAnonymousUser
     void public_ne_peut_pas_creer_terrain_401() throws Exception {
         mvc.perform(post("/api/v1/terrains")
                         .contentType(MediaType.APPLICATION_JSON)

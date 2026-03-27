@@ -14,7 +14,6 @@ import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
-import static org.hamcrest.Matchers.nullValue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -35,7 +34,7 @@ class AuthControllerTest {
     @Test
     void login_ok_200_et_json() throws Exception {
         when(authenticationService.login(any()))
-                .thenReturn(new LoginResponse(null, "Bearer"));
+                .thenReturn(new LoginResponse("jwt-test", "Bearer"));
 
         mvc.perform(post("/api/v1/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -47,7 +46,7 @@ class AuthControllerTest {
                                 """))
                 .andExpect(status().isOk())
                 .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
-                .andExpect(jsonPath("$.token").value(nullValue()))
+                .andExpect(jsonPath("$.token").value("jwt-test"))
                 .andExpect(jsonPath("$.type").value("Bearer"));
     }
 

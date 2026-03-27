@@ -37,7 +37,7 @@ public class SiteController {
         return ResponseEntity.ok(SiteMapper.toDto(site));
     }
 
-    @SecurityRequirement(name = "basicAuth")
+    @SecurityRequirement(name = "bearerAuth")
     @PostMapping
     public ResponseEntity<SiteDto> create(@Valid @RequestBody CreateSiteRequest req) {
         Site created = siteService.creerSite(

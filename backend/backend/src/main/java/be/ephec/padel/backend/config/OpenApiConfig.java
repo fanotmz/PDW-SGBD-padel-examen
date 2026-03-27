@@ -11,14 +11,15 @@ public class OpenApiConfig {
 
     @Bean
     public OpenAPI openAPI() {
-        final String schemeName = "basicAuth";
+        final String schemeName = "bearerAuth";
 
         return new OpenAPI()
                 .components(new Components().addSecuritySchemes(
                         schemeName,
                         new SecurityScheme()
                                 .type(SecurityScheme.Type.HTTP)
-                                .scheme("basic")
+                                .scheme("bearer")
+                                .bearerFormat("JWT")
                 ));
     }
 }

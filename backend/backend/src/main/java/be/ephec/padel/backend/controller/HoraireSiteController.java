@@ -14,7 +14,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/v1/admin/sites/{siteId}/horaires")
-@SecurityRequirement(name = "basicAuth")
+@SecurityRequirement(name = "bearerAuth")
 public class HoraireSiteController {
 
     private final HoraireSiteService horaireSiteService;
