@@ -7,6 +7,7 @@ import be.ephec.padel.backend.dto.response.ParticipationDto;
 import be.ephec.padel.backend.mapper.ParticipationMapper;
 import be.ephec.padel.backend.model.entities.Participation;
 import be.ephec.padel.backend.service.ParticipationService;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -15,6 +16,7 @@ import java.net.URI;
 
 @RestController
 @RequestMapping("/api/v1/matchs")
+@SecurityRequirement(name = "bearerAuth")
 public class ParticipationController {
 
     private final ParticipationService participationService;

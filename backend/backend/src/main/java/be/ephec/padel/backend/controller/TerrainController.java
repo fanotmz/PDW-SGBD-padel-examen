@@ -44,7 +44,7 @@ public class TerrainController {
         return ResponseEntity.ok(TerrainMapper.toDto(terrain));
     }
 
-    @SecurityRequirement(name = "basicAuth")
+    @SecurityRequirement(name = "bearerAuth")
     @PostMapping
     public ResponseEntity<TerrainDto> create(
             @Valid @RequestBody CreateTerrainRequest req) {

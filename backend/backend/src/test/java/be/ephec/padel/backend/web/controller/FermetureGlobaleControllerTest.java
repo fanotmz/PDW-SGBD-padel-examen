@@ -45,6 +45,7 @@ class FermetureGlobaleControllerTest extends SqlServerTestContainerConfig {
 
     // GET reste public
     @Test
+    @WithMockUser(username = "joueur1", roles = "JOUEUR")
     void get_list_public_ok_200() throws Exception {
         mvc.perform(get("/api/v1/fermetures-globales"))
                 .andExpect(status().isOk());

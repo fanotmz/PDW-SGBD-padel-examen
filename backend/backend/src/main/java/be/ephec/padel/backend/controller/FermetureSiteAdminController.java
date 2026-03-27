@@ -8,6 +8,7 @@ import be.ephec.padel.backend.dto.response.FermetureSiteDto;
 import be.ephec.padel.backend.mapper.FermetureSiteMapper;
 import be.ephec.padel.backend.model.entities.FermetureSite;
 import be.ephec.padel.backend.service.FermetureSiteService;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
@@ -17,6 +18,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/v1/admin/sites/{siteId}/fermetures")
+@SecurityRequirement(name = "bearerAuth")
 public class FermetureSiteAdminController {
 
     private final FermetureSiteService fermetureSiteService;

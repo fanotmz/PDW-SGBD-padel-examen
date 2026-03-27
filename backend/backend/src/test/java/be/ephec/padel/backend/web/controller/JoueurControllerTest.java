@@ -18,6 +18,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
+import org.springframework.security.test.context.support.WithAnonymousUser;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
@@ -32,6 +33,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @WebMvcTest(controllers = JoueurController.class)
 @Import({SecurityConfig.class, ApiExceptionHandler.class})
+@WithMockUser(username = "joueur1", roles = "JOUEUR")
 class JoueurControllerTest {
 
     @Autowired
@@ -48,12 +50,14 @@ class JoueurControllerTest {
     // ===== Issue 62 : public doit être refusé sur listing / création =====
 
     @Test
+    @WithAnonymousUser
     void public_ne_peut_pas_lister_401() throws Exception {
         mvc.perform(get("/api/v1/joueurs"))
                 .andExpect(status().isUnauthorized());
     }
 
     @Test
+    @WithAnonymousUser
     void public_ne_peut_pas_creer_401() throws Exception {
         mvc.perform(post("/api/v1/joueurs")
                         .contentType(MediaType.APPLICATION_JSON)

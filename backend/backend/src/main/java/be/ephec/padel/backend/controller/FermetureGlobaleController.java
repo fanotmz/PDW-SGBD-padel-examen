@@ -30,7 +30,7 @@ public class FermetureGlobaleController {
         );
     }
 
-    @SecurityRequirement(name = "basicAuth")
+    @SecurityRequirement(name = "bearerAuth")
     @PostMapping
     public ResponseEntity<FermetureGlobaleDto> create(@Valid @RequestBody CreateFermetureGlobaleRequest req) {
         FermetureGlobale created = service.creer(req);
@@ -38,7 +38,7 @@ public class FermetureGlobaleController {
         return ResponseEntity.created(location).body(FermetureGlobaleMapper.toDto(created));
     }
 
-    @SecurityRequirement(name = "basicAuth")
+    @SecurityRequirement(name = "bearerAuth")
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(@PathVariable Long id) {
         service.supprimer(id);
