@@ -52,13 +52,6 @@ public class JoueurService {
         this.currentUserFacade = currentUserFacade;
     }
 
-    public JoueurService(JoueurRepository joueurRepository,
-                         SiteRepository siteRepository,
-                         ParticipationRepository participationRepository,
-                         MatchPadelRepository matchPadelRepository) {
-        this(joueurRepository, siteRepository, participationRepository, matchPadelRepository, null);
-    }
-
     public Joueur creerJoueur(String matricule, String nom, TypeJoueur type, Long siteId) {
         if (matricule == null || matricule.isBlank()) {
             throw new BusinessException("Matricule obligatoire");

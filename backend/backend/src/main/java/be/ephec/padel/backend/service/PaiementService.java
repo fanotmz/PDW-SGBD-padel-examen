@@ -45,31 +45,14 @@ public class PaiementService {
         this.currentUserFacade = currentUserFacade;
     }
 
-    public PaiementService(PaiementRepository paiementRepository,
-                           ParticipationRepository participationRepository,
-                           SoldeService soldeService,
-                           Clock clock) {
-        this(paiementRepository, participationRepository, soldeService, clock, null);
-    }
-
     public Paiement payerParticipation(Long participationId, BigDecimal montant) {
         Participation participation = getParticipationByIdOrThrow(participationId);
         verifierPaiementAutorise(participation);
         return payerParticipationInterne(participationId, montant, TypePaiement.ENCAISSEMENT, false);
     }
 
-    public Paiement payerPourMatch(Long matchId, String joueurMatricule, BigDecimal montant) {
-        Participation participation = getParticipationOrThrow(matchId, joueurMatricule);
-        return payerParticipation(participation.getId(), montant);
-    }
-
     public Paiement payerParticipationAvecRattrapageDette(Long participationId, BigDecimal montant) {
         return payerParticipationInterne(participationId, montant, TypePaiement.ENCAISSEMENT, true);
-    }
-
-    public Paiement payerPourMatchAvecRattrapageDette(Long matchId, String joueurMatricule, BigDecimal montant) {
-        Participation participation = getParticipationOrThrow(matchId, joueurMatricule);
-        return payerParticipationAvecRattrapageDette(participation.getId(), montant);
     }
 
     Paiement enregistrerRemboursementAnnulation(Participation participation, BigDecimal montantRembourse) {
@@ -139,21 +122,12 @@ public class PaiementService {
         return saved;
     }
 
-    private Participation getParticipationOrThrow(Long matchId, String joueurMatricule) {
-        return participationRepository
-                .findByMatch_IdAndJoueur_Matricule(matchId, joueurMatricule)
-                .orElseThrow(() -> new NotFoundException("Participation introuvable pour ce match/joueur"));
-    }
-
     private Participation getParticipationByIdOrThrow(Long participationId) {
         return participationRepository.findById(participationId)
                 .orElseThrow(() -> new NotFoundException("Participation introuvable"));
     }
 
     private void verifierPaiementAutorise(Participation participation) {
-        if (currentUserFacade == null) {
-            return;
-        }
         String joueurCourantMatricule = currentUserFacade.getCurrentJoueur().getMatricule();
         String joueurParticipationMatricule = participation.getJoueur().getMatricule();
         if (!joueurCourantMatricule.equals(joueurParticipationMatricule)) {

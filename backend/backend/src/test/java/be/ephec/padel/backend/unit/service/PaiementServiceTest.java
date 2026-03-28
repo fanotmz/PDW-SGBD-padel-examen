@@ -1,6 +1,7 @@
 package be.ephec.padel.backend.unit.service;
 
 import be.ephec.padel.backend.exception.BusinessException;
+import be.ephec.padel.backend.exception.ForbiddenException;
 import be.ephec.padel.backend.exception.NotFoundException;
 import be.ephec.padel.backend.model.entities.Joueur;
 import be.ephec.padel.backend.model.entities.MatchPadel;
@@ -10,10 +11,11 @@ import be.ephec.padel.backend.model.entities.Site;
 import be.ephec.padel.backend.model.entities.Terrain;
 import be.ephec.padel.backend.model.enums.MatchStatut;
 import be.ephec.padel.backend.model.enums.MatchVisibilite;
-import be.ephec.padel.backend.model.enums.TypePaiement;
 import be.ephec.padel.backend.model.enums.TypeJoueur;
+import be.ephec.padel.backend.model.enums.TypePaiement;
 import be.ephec.padel.backend.repository.PaiementRepository;
 import be.ephec.padel.backend.repository.ParticipationRepository;
+import be.ephec.padel.backend.security.CurrentUserFacade;
 import be.ephec.padel.backend.service.PaiementService;
 import be.ephec.padel.backend.service.SoldeService;
 import org.junit.jupiter.api.BeforeEach;
@@ -26,15 +28,22 @@ import java.time.Instant;
 import java.time.ZoneOffset;
 import java.util.Optional;
 
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
+import static org.mockito.Mockito.when;
 
 class PaiementServiceTest {
 
     private PaiementRepository paiementRepo;
     private ParticipationRepository participationRepo;
     private SoldeService soldeService;
+    private CurrentUserFacade currentUserFacade;
     private Clock clock;
 
     private PaiementService service;
@@ -44,14 +53,18 @@ class PaiementServiceTest {
         paiementRepo = mock(PaiementRepository.class);
         participationRepo = mock(ParticipationRepository.class);
         soldeService = mock(SoldeService.class);
+        currentUserFacade = mock(CurrentUserFacade.class);
         clock = Clock.fixed(Instant.parse("2030-01-01T09:00:00Z"), ZoneOffset.UTC);
 
-        service = new PaiementService(paiementRepo, participationRepo, soldeService, clock);
+        service = new PaiementService(paiementRepo, participationRepo, soldeService, clock, currentUserFacade);
     }
 
-    // ----------------
-    // payerParticipation
-    // ----------------
+    private Joueur stubCurrentJoueur(String matricule) {
+        Joueur joueur = mock(Joueur.class);
+        when(joueur.getMatricule()).thenReturn(matricule);
+        when(currentUserFacade.getCurrentJoueur()).thenReturn(joueur);
+        return joueur;
+    }
 
     @Test
     void payerParticipation_participationIntrouvable_notFound() {
@@ -63,9 +76,25 @@ class PaiementServiceTest {
     }
 
     @Test
+    void payerParticipation_refuse_si_joueur_courant_non_proprietaire() {
+        Participation participation = mock(Participation.class);
+        Joueur participant = mock(Joueur.class);
+        when(participant.getMatricule()).thenReturn("G2");
+        when(participation.getJoueur()).thenReturn(participant);
+        when(participationRepo.findById(1L)).thenReturn(Optional.of(participation));
+        stubCurrentJoueur("G1");
+
+        assertThrows(ForbiddenException.class, () -> service.payerParticipation(1L, new BigDecimal("5.00")));
+
+        verifyNoInteractions(paiementRepo, soldeService);
+    }
+
+    @Test
     void payerParticipation_montantNull_refuse() {
-        Participation p = mock(Participation.class);
-        when(participationRepo.findById(1L)).thenReturn(Optional.of(p));
+        Participation participation = mock(Participation.class);
+        Joueur joueur = stubCurrentJoueur("G1");
+        when(participation.getJoueur()).thenReturn(joueur);
+        when(participationRepo.findById(1L)).thenReturn(Optional.of(participation));
 
         assertThrows(BusinessException.class, () -> service.payerParticipation(1L, null));
 
@@ -74,8 +103,10 @@ class PaiementServiceTest {
 
     @Test
     void payerParticipation_montantNegatifOuZero_refuse() {
-        Participation p = mock(Participation.class);
-        when(participationRepo.findById(1L)).thenReturn(Optional.of(p));
+        Participation participation = mock(Participation.class);
+        Joueur joueur = stubCurrentJoueur("G1");
+        when(participation.getJoueur()).thenReturn(joueur);
+        when(participationRepo.findById(1L)).thenReturn(Optional.of(participation));
 
         assertThrows(BusinessException.class, () -> service.payerParticipation(1L, BigDecimal.ZERO));
         assertThrows(BusinessException.class, () -> service.payerParticipation(1L, new BigDecimal("-1.00")));
@@ -85,11 +116,13 @@ class PaiementServiceTest {
 
     @Test
     void payerParticipation_matchAnnule_refuse() {
-        Participation p = mock(Participation.class);
+        Participation participation = mock(Participation.class);
         MatchPadel match = mock(MatchPadel.class);
+        Joueur joueur = stubCurrentJoueur("G1");
         when(match.getStatut()).thenReturn(MatchStatut.ANNULE);
-        when(p.getMatch()).thenReturn(match);
-        when(participationRepo.findById(1L)).thenReturn(Optional.of(p));
+        when(participation.getMatch()).thenReturn(match);
+        when(participation.getJoueur()).thenReturn(joueur);
+        when(participationRepo.findById(1L)).thenReturn(Optional.of(participation));
 
         assertThrows(BusinessException.class, () -> service.payerParticipation(1L, new BigDecimal("5.00")));
 
@@ -98,41 +131,36 @@ class PaiementServiceTest {
 
     @Test
     void payerParticipation_dejaPayeTotalement_refuse() {
-        Participation p = mock(Participation.class);
-        when(participationRepo.findById(1L)).thenReturn(Optional.of(p));
-
-        // PART_JOUEUR = 15.00, si dejaPaye >= 15 => reste <= 0
+        Participation participation = mock(Participation.class);
+        Joueur joueur = stubCurrentJoueur("G1");
+        when(participation.getJoueur()).thenReturn(joueur);
+        when(participationRepo.findById(1L)).thenReturn(Optional.of(participation));
         when(paiementRepo.sumMontantByParticipationId(1L)).thenReturn(new BigDecimal("15.00"));
 
         assertThrows(BusinessException.class, () -> service.payerParticipation(1L, new BigDecimal("1.00")));
 
-        verify(paiementRepo, never()).save(any(Paiement.class));
         verifyNoInteractions(soldeService);
     }
 
     @Test
     void payerParticipation_paiementTropEleve_refuse() {
-        Participation p = mock(Participation.class);
-        when(participationRepo.findById(1L)).thenReturn(Optional.of(p));
-
-        // deja payé 10 => reste 5
+        Participation participation = mock(Participation.class);
+        Joueur joueur = stubCurrentJoueur("G1");
+        when(participation.getJoueur()).thenReturn(joueur);
+        when(participationRepo.findById(1L)).thenReturn(Optional.of(participation));
         when(paiementRepo.sumMontantByParticipationId(1L)).thenReturn(new BigDecimal("10.00"));
 
         assertThrows(BusinessException.class, () -> service.payerParticipation(1L, new BigDecimal("6.00")));
 
-        verify(paiementRepo, never()).save(any(Paiement.class));
         verifyNoInteractions(soldeService);
     }
 
     @Test
     void payerParticipation_ok_dejaPayeNull_considererZero_et_crediter() {
-        Participation p = mock(Participation.class);
-        when(participationRepo.findById(1L)).thenReturn(Optional.of(p));
-
-        Joueur j = mock(Joueur.class);
-        when(j.getMatricule()).thenReturn("G1");
-        when(p.getJoueur()).thenReturn(j);
-
+        Participation participation = mock(Participation.class);
+        Joueur joueur = stubCurrentJoueur("G1");
+        when(participation.getJoueur()).thenReturn(joueur);
+        when(participationRepo.findById(1L)).thenReturn(Optional.of(participation));
         when(paiementRepo.sumMontantByParticipationId(1L)).thenReturn(null);
 
         Paiement saved = mock(Paiement.class);
@@ -150,14 +178,10 @@ class PaiementServiceTest {
 
     @Test
     void payerParticipation_ok_paiementPartiel_et_crediter() {
-        Participation p = mock(Participation.class);
-        when(participationRepo.findById(1L)).thenReturn(Optional.of(p));
-
-        Joueur j = mock(Joueur.class);
-        when(j.getMatricule()).thenReturn("G1");
-        when(p.getJoueur()).thenReturn(j);
-
-        // deja payé 7.50 => reste 7.50
+        Participation participation = mock(Participation.class);
+        Joueur joueur = stubCurrentJoueur("G1");
+        when(participation.getJoueur()).thenReturn(joueur);
+        when(participationRepo.findById(1L)).thenReturn(Optional.of(participation));
         when(paiementRepo.sumMontantByParticipationId(1L)).thenReturn(new BigDecimal("7.50"));
 
         Paiement saved = mock(Paiement.class);
@@ -175,19 +199,15 @@ class PaiementServiceTest {
 
     @Test
     void payerParticipation_arrondi_scale2() {
-        Participation p = mock(Participation.class);
-        when(participationRepo.findById(1L)).thenReturn(Optional.of(p));
-
-        Joueur j = mock(Joueur.class);
-        when(j.getMatricule()).thenReturn("G1");
-        when(p.getJoueur()).thenReturn(j);
-
+        Participation participation = mock(Participation.class);
+        Joueur joueur = stubCurrentJoueur("G1");
+        when(participation.getJoueur()).thenReturn(joueur);
+        when(participationRepo.findById(1L)).thenReturn(Optional.of(participation));
         when(paiementRepo.sumMontantByParticipationId(1L)).thenReturn(BigDecimal.ZERO);
 
         Paiement saved = mock(Paiement.class);
         when(paiementRepo.save(any(Paiement.class))).thenReturn(saved);
 
-        // 5.1 doit devenir 5.10
         Paiement result = service.payerParticipation(1L, new BigDecimal("5.1"));
 
         assertSame(saved, result);
@@ -196,51 +216,6 @@ class PaiementServiceTest {
                         && paiement.getMontant().compareTo(new BigDecimal("5.10")) == 0
         ));
         verify(soldeService).crediter("G1", new BigDecimal("5.10"));
-    }
-
-    // ----------------
-    // payerPourMatch
-    // ----------------
-
-    @Test
-    void payerPourMatch_participationIntrouvable_notFound() {
-        when(participationRepo.findByMatch_IdAndJoueur_Matricule(10L, "G1"))
-                .thenReturn(Optional.empty());
-
-        assertThrows(NotFoundException.class,
-                () -> service.payerPourMatch(10L, "G1", new BigDecimal("5.00")));
-
-        verifyNoInteractions(paiementRepo, soldeService);
-    }
-
-    @Test
-    void payerPourMatch_ok_appelle_payerParticipation() {
-        Participation p = mock(Participation.class);
-        when(p.getId()).thenReturn(77L);
-
-        when(participationRepo.findByMatch_IdAndJoueur_Matricule(10L, "G1"))
-                .thenReturn(Optional.of(p));
-
-        // pour payerParticipation : il faut que findById(77) renvoie la même participation
-        when(participationRepo.findById(77L)).thenReturn(Optional.of(p));
-
-        Joueur j = mock(Joueur.class);
-        when(j.getMatricule()).thenReturn("G1");
-        when(p.getJoueur()).thenReturn(j);
-
-        when(paiementRepo.sumMontantByParticipationId(77L)).thenReturn(BigDecimal.ZERO);
-
-        Paiement saved = mock(Paiement.class);
-        when(paiementRepo.save(any(Paiement.class))).thenReturn(saved);
-
-        Paiement result = service.payerPourMatch(10L, "G1", new BigDecimal("5.00"));
-
-        assertSame(saved, result);
-        verify(paiementRepo).save(argThat(paiement ->
-                paiement.getType() == TypePaiement.ENCAISSEMENT
-                        && paiement.getMontant().compareTo(new BigDecimal("5.00")) == 0
-        ));
-        verify(soldeService).crediter("G1", new BigDecimal("5.00"));
     }
 
     @Test

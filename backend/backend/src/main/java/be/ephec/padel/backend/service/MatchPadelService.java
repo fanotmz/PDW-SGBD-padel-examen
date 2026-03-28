@@ -21,7 +21,6 @@ import be.ephec.padel.backend.model.enums.MatchVisibilite;
 import be.ephec.padel.backend.model.enums.TypePaiement;
 import be.ephec.padel.backend.model.enums.TypeJoueur;
 import be.ephec.padel.backend.repository.FermetureGlobaleRepository;
-import be.ephec.padel.backend.repository.JoueurRepository;
 import be.ephec.padel.backend.repository.MatchPadelRepository;
 import be.ephec.padel.backend.repository.PaiementRepository;
 import be.ephec.padel.backend.repository.ParticipationRepository;
@@ -51,7 +50,6 @@ public class MatchPadelService {
 
     private final MatchPadelRepository matchPadelRepository;
     private final TerrainRepository terrainRepository;
-    private final JoueurRepository joueurRepository;
     private final SoldeService soldeService;
     private final ParticipationRepository participationRepository;
     private final PaiementService paiementService;
@@ -65,7 +63,6 @@ public class MatchPadelService {
     @Autowired
     public MatchPadelService(MatchPadelRepository matchPadelRepository,
                              TerrainRepository terrainRepository,
-                             JoueurRepository joueurRepository,
                              SoldeService soldeService,
                              ParticipationRepository participationRepository,
                              PaiementService paiementService,
@@ -77,7 +74,6 @@ public class MatchPadelService {
                              CurrentUserFacade currentUserFacade) {
         this.matchPadelRepository = matchPadelRepository;
         this.terrainRepository = terrainRepository;
-        this.joueurRepository = joueurRepository;
         this.soldeService = soldeService;
         this.participationRepository = participationRepository;
         this.paiementService = paiementService;
@@ -87,22 +83,6 @@ public class MatchPadelService {
         this.fermetureGlobaleRepository = fermetureGlobaleRepository;
         this.clock = clock;
         this.currentUserFacade = currentUserFacade;
-    }
-
-    public MatchPadelService(MatchPadelRepository matchPadelRepository,
-                             TerrainRepository terrainRepository,
-                             JoueurRepository joueurRepository,
-                             SoldeService soldeService,
-                             ParticipationRepository participationRepository,
-                             PaiementService paiementService,
-                             HoraireSiteService horaireSiteService,
-                             FermetureSiteService fermetureSiteService,
-                             PaiementRepository paiementRepository,
-                             FermetureGlobaleRepository fermetureGlobaleRepository,
-                             Clock clock) {
-        this(matchPadelRepository, terrainRepository, joueurRepository, soldeService, participationRepository,
-                paiementService, horaireSiteService, fermetureSiteService, paiementRepository,
-                fermetureGlobaleRepository, clock, null);
     }
 
     @Transactional(readOnly = true)
@@ -162,14 +142,7 @@ public class MatchPadelService {
                                  LocalDateTime dateDebut,
                                  MatchVisibilite visibilite) {
         Joueur organisateur = currentUserFacade.getCurrentJoueur();
-        return creerMatch(terrainId, organisateur.getMatricule(), dateDebut, visibilite);
-    }
-
-    public MatchPadel creerMatch(Long terrainId,
-                                 String organisateurMatricule,
-                                 LocalDateTime dateDebut,
-                                 MatchVisibilite visibilite) {
-        if (organisateurMatricule == null || organisateurMatricule.isBlank()) {
+        if (organisateur == null) {
             throw new BusinessException("Organisateur obligatoire");
         }
 
@@ -190,9 +163,6 @@ public class MatchPadelService {
 
         Terrain terrain = terrainRepository.findById(terrainId)
                 .orElseThrow(() -> new NotFoundException("Terrain introuvable"));
-
-        Joueur organisateur = joueurRepository.findById(organisateurMatricule)
-                .orElseThrow(() -> new NotFoundException("Joueur introuvable"));
 
         if (organisateur.getSolde() != null && organisateur.getSolde().signum() > 0) {
             throw new BusinessException("Reservation impossible : dette en cours (" + organisateur.getSolde() + ").");
@@ -218,7 +188,7 @@ public class MatchPadelService {
         Participation participationOrganisateur = participationRepository.save(new Participation(saved, organisateur));
 
         BigDecimal part = Tarifs.PART_PAR_JOUEUR;
-        soldeService.debiter(organisateurMatricule, part);
+        soldeService.debiter(organisateur.getMatricule(), part);
         paiementService.payerParticipation(participationOrganisateur.getId(), part);
 
         return saved;
@@ -371,17 +341,6 @@ public class MatchPadelService {
             if (match.getVisibilite() == MatchVisibilite.PRIVE && !peutVoirMatchPrive(match, matricule)) {
                 throw new ForbiddenException("Acces refuse a ce match prive.");
             }
-        }
-
-        return buildMatchDetailDto(match);
-    }
-
-    @Transactional(readOnly = true)
-    public MatchDetailDto getMatchDetailDto(Long id, String matricule) {
-        MatchPadel match = getMatch(id);
-
-        if (match.getVisibilite() == MatchVisibilite.PRIVE && !peutVoirMatchPrive(match, matricule)) {
-            throw new ForbiddenException("Acces refuse a ce match prive.");
         }
 
         return buildMatchDetailDto(match);

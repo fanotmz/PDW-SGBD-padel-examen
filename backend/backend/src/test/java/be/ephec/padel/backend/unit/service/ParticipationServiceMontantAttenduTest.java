@@ -9,6 +9,7 @@ import be.ephec.padel.backend.model.enums.TypeJoueur;
 import be.ephec.padel.backend.repository.JoueurRepository;
 import be.ephec.padel.backend.repository.MatchPadelRepository;
 import be.ephec.padel.backend.repository.ParticipationRepository;
+import be.ephec.padel.backend.security.CurrentUserFacade;
 import be.ephec.padel.backend.service.PaiementService;
 import be.ephec.padel.backend.service.ParticipationService;
 import be.ephec.padel.backend.service.SoldeService;
@@ -40,6 +41,8 @@ class ParticipationServiceMontantAttenduTest {
     SoldeService soldeService;
     @Mock
     PaiementService paiementService;
+    @Mock
+    CurrentUserFacade currentUserFacade;
 
     private ParticipationService participationService;
 
@@ -50,24 +53,23 @@ class ParticipationServiceMontantAttenduTest {
                 matchPadelRepository,
                 joueurRepository,
                 soldeService,
-                paiementService
+                paiementService,
+                currentUserFacade
         );
     }
 
     @Test
     void montantAttendu_public_sansDette_retourne15() {
         Long matchId = 1L;
-        String mat = "J1";
-
         MatchPadel match = new MatchPadel();
         match.setVisibilite(MatchVisibilite.PUBLIC);
 
-        Joueur joueur = new Joueur(mat, "Nom", TypeJoueur.GLOBAL);
+        Joueur joueur = new Joueur("J1", "Nom", TypeJoueur.GLOBAL);
 
         when(matchPadelRepository.findById(matchId)).thenReturn(Optional.of(match));
-        when(joueurRepository.findById(mat)).thenReturn(Optional.of(joueur));
+        when(currentUserFacade.getCurrentJoueur()).thenReturn(joueur);
 
-        BigDecimal montant = participationService.calculerMontantAttenduPourMatchPublic(matchId, mat);
+        BigDecimal montant = participationService.calculerMontantAttenduPourMatchPublic(matchId);
 
         assertThat(montant).isEqualByComparingTo(Tarifs.PART_PAR_JOUEUR.setScale(2, RoundingMode.HALF_UP));
     }
@@ -75,18 +77,16 @@ class ParticipationServiceMontantAttenduTest {
     @Test
     void montantAttendu_public_avecDette15_retourne30() {
         Long matchId = 2L;
-        String mat = "J2";
-
         MatchPadel match = new MatchPadel();
         match.setVisibilite(MatchVisibilite.PUBLIC);
 
-        Joueur joueur = new Joueur(mat, "Nom", TypeJoueur.GLOBAL);
+        Joueur joueur = new Joueur("J2", "Nom", TypeJoueur.GLOBAL);
         joueur.setSolde(new BigDecimal("15.00"));
 
         when(matchPadelRepository.findById(matchId)).thenReturn(Optional.of(match));
-        when(joueurRepository.findById(mat)).thenReturn(Optional.of(joueur));
+        when(currentUserFacade.getCurrentJoueur()).thenReturn(joueur);
 
-        BigDecimal montant = participationService.calculerMontantAttenduPourMatchPublic(matchId, mat);
+        BigDecimal montant = participationService.calculerMontantAttenduPourMatchPublic(matchId);
 
         assertThat(montant).isEqualByComparingTo(new BigDecimal("30.00"));
     }
@@ -94,14 +94,12 @@ class ParticipationServiceMontantAttenduTest {
     @Test
     void montantAttendu_matchPrive_lanceBusinessException() {
         Long matchId = 3L;
-        String mat = "J3";
-
         MatchPadel match = new MatchPadel();
         match.setVisibilite(MatchVisibilite.PRIVE);
 
         when(matchPadelRepository.findById(matchId)).thenReturn(Optional.of(match));
 
-        assertThatThrownBy(() -> participationService.calculerMontantAttenduPourMatchPublic(matchId, mat))
+        assertThatThrownBy(() -> participationService.calculerMontantAttenduPourMatchPublic(matchId))
                 .isInstanceOf(BusinessException.class)
                 .hasMessageContaining("Match prive");
 

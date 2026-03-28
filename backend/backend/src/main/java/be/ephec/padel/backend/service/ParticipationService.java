@@ -47,20 +47,8 @@ public class ParticipationService {
         this.currentUserFacade = currentUserFacade;
     }
 
-    public ParticipationService(ParticipationRepository participationRepository,
-                                MatchPadelRepository matchPadelRepository,
-                                JoueurRepository joueurRepository,
-                                SoldeService soldeService,
-                                PaiementService paiementService) {
-        this(participationRepository, matchPadelRepository, joueurRepository, soldeService, paiementService, null);
-    }
-
     public Participation rejoindreEtPayerMatchPublic(Long matchId) {
         Joueur joueur = currentUserFacade.getCurrentJoueur();
-        return rejoindreEtPayerMatchPublic(matchId, joueur.getMatricule());
-    }
-
-    public Participation rejoindreEtPayerMatchPublic(Long matchId, String joueurMatricule) {
         MatchPadel match = matchPadelRepository.findByIdForUpdateWithParticipations(matchId)
                 .orElseThrow(() -> new NotFoundException("Match introuvable"));
         verifierMatchNonAnnule(match);
@@ -69,7 +57,7 @@ public class ParticipationService {
             throw new BusinessException("Match prive : seule l'organisation peut ajouter des joueurs.");
         }
 
-        Joueur joueur = getJoueurOrThrow(joueurMatricule);
+        String joueurMatricule = joueur.getMatricule();
 
         verifierNonDejaInscrit(matchId, joueurMatricule);
 
@@ -90,10 +78,6 @@ public class ParticipationService {
 
     public BigDecimal calculerMontantAttenduPourMatchPublic(Long matchId) {
         Joueur joueur = currentUserFacade.getCurrentJoueur();
-        return calculerMontantAttenduPourMatchPublic(matchId, joueur.getMatricule());
-    }
-
-    public BigDecimal calculerMontantAttenduPourMatchPublic(Long matchId, String joueurMatricule) {
         MatchPadel match = matchPadelRepository.findById(matchId)
                 .orElseThrow(() -> new NotFoundException("Match introuvable"));
         verifierMatchNonAnnule(match);
@@ -102,19 +86,12 @@ public class ParticipationService {
             throw new BusinessException("Match prive : ce calcul n'est valable que pour un match public.");
         }
 
-        Joueur joueur = getJoueurOrThrow(joueurMatricule);
         BigDecimal dette = joueur.getSolde() == null ? BigDecimal.ZERO : joueur.getSolde().setScale(2, RoundingMode.HALF_UP);
         return PART_JOUEUR.add(dette).setScale(2, RoundingMode.HALF_UP);
     }
 
     public Participation ajouterJoueurParOrganisateur(Long matchId, String joueurMatriculeAAjouter) {
         Joueur currentJoueur = currentUserFacade.getCurrentJoueur();
-        return ajouterJoueurParOrganisateur(matchId, currentJoueur.getMatricule(), joueurMatriculeAAjouter);
-    }
-
-    public Participation ajouterJoueurParOrganisateur(Long matchId,
-                                                      String organisateurMatricule,
-                                                      String joueurMatriculeAAjouter) {
         MatchPadel match = getMatchOrThrow(matchId);
         verifierMatchNonAnnule(match);
 
@@ -123,8 +100,8 @@ public class ParticipationService {
         }
 
         String orga = match.getOrganisateur().getMatricule();
-        boolean admin = currentUserFacade != null && currentUserFacade.isAdmin();
-        if (!admin && !orga.equals(organisateurMatricule)) {
+        boolean admin = currentUserFacade.isAdmin();
+        if (!admin && !orga.equals(currentJoueur.getMatricule())) {
             throw new BusinessException("Seul l'organisateur peut ajouter des joueurs a ce match.");
         }
 

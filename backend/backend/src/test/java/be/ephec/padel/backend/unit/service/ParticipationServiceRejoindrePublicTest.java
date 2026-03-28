@@ -10,6 +10,7 @@ import be.ephec.padel.backend.model.enums.TypeJoueur;
 import be.ephec.padel.backend.repository.JoueurRepository;
 import be.ephec.padel.backend.repository.MatchPadelRepository;
 import be.ephec.padel.backend.repository.ParticipationRepository;
+import be.ephec.padel.backend.security.CurrentUserFacade;
 import be.ephec.padel.backend.service.PaiementService;
 import be.ephec.padel.backend.service.ParticipationService;
 import be.ephec.padel.backend.service.SoldeService;
@@ -45,6 +46,8 @@ class ParticipationServiceRejoindrePublicTest {
     SoldeService soldeService;
     @Mock
     PaiementService paiementService;
+    @Mock
+    CurrentUserFacade currentUserFacade;
 
     private ParticipationService participationService;
 
@@ -55,27 +58,26 @@ class ParticipationServiceRejoindrePublicTest {
                 matchPadelRepository,
                 joueurRepository,
                 soldeService,
-                paiementService
+                paiementService,
+                currentUserFacade
         );
     }
 
     @Test
     void rejoindrePublic_avecDette15_paie30_et_debite15() {
         Long matchId = 10L;
-        String mat = "J1";
-
         MatchPadel match = new MatchPadel();
         match.setVisibilite(MatchVisibilite.PUBLIC);
         match.setDateDebut(LocalDateTime.now());
 
-        Joueur joueur = new Joueur(mat, "Nom", TypeJoueur.GLOBAL);
+        Joueur joueur = new Joueur("J1", "Nom", TypeJoueur.GLOBAL);
         joueur.setSolde(new BigDecimal("15.00"));
 
         when(matchPadelRepository.findByIdForUpdateWithParticipations(matchId))
                 .thenReturn(Optional.of(match));
-        when(joueurRepository.findById(mat))
-                .thenReturn(Optional.of(joueur));
-        when(participationRepository.existsByMatch_IdAndJoueur_Matricule(matchId, mat))
+        when(currentUserFacade.getCurrentJoueur())
+                .thenReturn(joueur);
+        when(participationRepository.existsByMatch_IdAndJoueur_Matricule(matchId, "J1"))
                 .thenReturn(false);
         when(participationRepository.save(any(Participation.class)))
                 .thenAnswer(inv -> {
@@ -84,18 +86,16 @@ class ParticipationServiceRejoindrePublicTest {
                     return p;
                 });
 
-        Participation saved = participationService.rejoindreEtPayerMatchPublic(matchId, mat);
+        Participation saved = participationService.rejoindreEtPayerMatchPublic(matchId);
 
         assertThat(saved).isNotNull();
-        verify(soldeService).debiter(eq(mat), eq(Tarifs.PART_PAR_JOUEUR));
+        verify(soldeService).debiter(eq("J1"), eq(Tarifs.PART_PAR_JOUEUR));
         verify(paiementService).payerParticipationAvecRattrapageDette(eq(99L), eq(new BigDecimal("30.00")));
     }
 
     @Test
     void rejoindrePublic_matchDejaComplet_refuse() {
         Long matchId = 11L;
-        String mat = "J2";
-
         MatchPadel match = new MatchPadel();
         match.setVisibilite(MatchVisibilite.PUBLIC);
         match.getParticipations().add(new Participation());
@@ -105,12 +105,12 @@ class ParticipationServiceRejoindrePublicTest {
 
         when(matchPadelRepository.findByIdForUpdateWithParticipations(matchId))
                 .thenReturn(Optional.of(match));
-        when(joueurRepository.findById(mat))
-                .thenReturn(Optional.of(new Joueur(mat, "Nom", TypeJoueur.GLOBAL)));
-        when(participationRepository.existsByMatch_IdAndJoueur_Matricule(matchId, mat))
+        when(currentUserFacade.getCurrentJoueur())
+                .thenReturn(new Joueur("J2", "Nom", TypeJoueur.GLOBAL));
+        when(participationRepository.existsByMatch_IdAndJoueur_Matricule(matchId, "J2"))
                 .thenReturn(false);
 
-        assertThatThrownBy(() -> participationService.rejoindreEtPayerMatchPublic(matchId, mat))
+        assertThatThrownBy(() -> participationService.rejoindreEtPayerMatchPublic(matchId))
                 .isInstanceOf(BusinessException.class)
                 .hasMessageContaining("Match deja complet");
 
