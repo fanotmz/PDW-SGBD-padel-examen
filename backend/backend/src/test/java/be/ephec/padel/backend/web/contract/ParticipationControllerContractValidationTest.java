@@ -12,24 +12,26 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(ParticipationController.class)
 class ParticipationControllerContractValidationTest {
 
-    @Autowired MockMvc mockMvc;
+    @Autowired
+    MockMvc mockMvc;
 
-    @MockitoBean ParticipationService participationService;
+    @MockitoBean
+    ParticipationService participationService;
 
     @Test
     @WithMockUser
-    void rejoindrePublic_invalidBody_returns400_withDetails() throws Exception {
-        // joueurMatricule vide + montant null (ou absent) -> doit déclencher @Valid
+    void ajouterPrive_invalidBody_returns400_withDetails() throws Exception {
         String invalidJson = """
-        { "joueurMatricule": "" }
+        { "joueurMatriculeAAjouter": "" }
         """;
 
-        mockMvc.perform(post("/api/v1/matchs/1/participants/public")
+        mockMvc.perform(post("/api/v1/matchs/1/participants/prive")
                         .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(invalidJson))
@@ -38,7 +40,7 @@ class ParticipationControllerContractValidationTest {
                 .andExpect(jsonPath("$.status").value(400))
                 .andExpect(jsonPath("$.error").value("Bad Request"))
                 .andExpect(jsonPath("$.message").exists())
-                .andExpect(jsonPath("$.path").value("/api/v1/matchs/1/participants/public"))
+                .andExpect(jsonPath("$.path").value("/api/v1/matchs/1/participants/prive"))
                 .andExpect(jsonPath("$.details").exists());
     }
 }

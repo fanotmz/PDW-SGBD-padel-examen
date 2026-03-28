@@ -1,7 +1,6 @@
 package be.ephec.padel.backend.controller;
 
 import be.ephec.padel.backend.dto.request.AddPlayerToPrivateMatchRequest;
-import be.ephec.padel.backend.dto.request.JoinPublicMatchRequest;
 import be.ephec.padel.backend.dto.response.MontantAttenduResponse;
 import be.ephec.padel.backend.dto.response.ParticipationDto;
 import be.ephec.padel.backend.mapper.ParticipationMapper;
@@ -10,7 +9,12 @@ import be.ephec.padel.backend.service.ParticipationService;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 import java.net.URI;
 
@@ -26,14 +30,8 @@ public class ParticipationController {
     }
 
     @PostMapping("/{matchId}/participants/public")
-    public ResponseEntity<ParticipationDto> rejoindreMatchPublic(
-            @PathVariable Long matchId,
-            @Valid @RequestBody JoinPublicMatchRequest req) {
-
-        Participation participation = participationService.rejoindreEtPayerMatchPublic(
-                matchId,
-                req.getJoueurMatricule()
-        );
+    public ResponseEntity<ParticipationDto> rejoindreMatchPublic(@PathVariable Long matchId) {
+        Participation participation = participationService.rejoindreEtPayerMatchPublic(matchId);
 
         URI location = URI.create("/api/v1/matchs/" + matchId);
         return ResponseEntity.created(location).body(ParticipationMapper.toDto(participation));
@@ -46,7 +44,6 @@ public class ParticipationController {
 
         Participation participation = participationService.ajouterJoueurParOrganisateur(
                 matchId,
-                req.getOrganisateurMatricule(),
                 req.getJoueurMatriculeAAjouter()
         );
 
@@ -55,14 +52,9 @@ public class ParticipationController {
     }
 
     @GetMapping("/{matchId}/participants/public/montant-attendu")
-    public ResponseEntity<MontantAttenduResponse> getMontantAttenduPourMatchPublic(
-            @PathVariable Long matchId,
-            @RequestParam String joueurMatricule) {
-
+    public ResponseEntity<MontantAttenduResponse> getMontantAttenduPourMatchPublic(@PathVariable Long matchId) {
         return ResponseEntity.ok(
-                new MontantAttenduResponse(
-                        participationService.calculerMontantAttenduPourMatchPublic(matchId, joueurMatricule)
-                )
+                new MontantAttenduResponse(participationService.calculerMontantAttenduPourMatchPublic(matchId))
         );
     }
 }

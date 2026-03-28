@@ -22,15 +22,20 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.Optional;
 
-import static org.assertj.core.api.Assertions.*;
-import static org.mockito.Mockito.*;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.Mockito.verifyNoInteractions;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class ParticipationServiceMontantAttenduTest {
 
-    @Mock ParticipationRepository participationRepository;
-    @Mock MatchPadelRepository matchPadelRepository;
-    @Mock JoueurRepository joueurRepository;
+    @Mock
+    ParticipationRepository participationRepository;
+    @Mock
+    MatchPadelRepository matchPadelRepository;
+    @Mock
+    JoueurRepository joueurRepository;
     @Mock
     SoldeService soldeService;
     @Mock
@@ -58,7 +63,6 @@ class ParticipationServiceMontantAttenduTest {
         match.setVisibilite(MatchVisibilite.PUBLIC);
 
         Joueur joueur = new Joueur(mat, "Nom", TypeJoueur.GLOBAL);
-        // solde par défaut à 0 dans ton constructeur
 
         when(matchPadelRepository.findById(matchId)).thenReturn(Optional.of(match));
         when(joueurRepository.findById(mat)).thenReturn(Optional.of(joueur));
@@ -77,7 +81,7 @@ class ParticipationServiceMontantAttenduTest {
         match.setVisibilite(MatchVisibilite.PUBLIC);
 
         Joueur joueur = new Joueur(mat, "Nom", TypeJoueur.GLOBAL);
-        joueur.setSolde(new BigDecimal("15.00")); // chez vous : solde = dette
+        joueur.setSolde(new BigDecimal("15.00"));
 
         when(matchPadelRepository.findById(matchId)).thenReturn(Optional.of(match));
         when(joueurRepository.findById(mat)).thenReturn(Optional.of(joueur));
@@ -99,9 +103,8 @@ class ParticipationServiceMontantAttenduTest {
 
         assertThatThrownBy(() -> participationService.calculerMontantAttenduPourMatchPublic(matchId, mat))
                 .isInstanceOf(BusinessException.class)
-                .hasMessageContaining("Match privé");
+                .hasMessageContaining("Match prive");
 
-        // bonus: on s'assure qu'on ne va pas chercher le joueur
         verifyNoInteractions(joueurRepository);
     }
 }

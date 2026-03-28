@@ -12,18 +12,22 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(MatchController.class)
 class MatchControllerContract404Test {
 
-    @Autowired MockMvc mockMvc;
-    @MockitoBean  MatchPadelService matchPadelService;
+    @Autowired
+    MockMvc mockMvc;
+
+    @MockitoBean
+    MatchPadelService matchPadelService;
 
     @Test
-    @WithMockUser // <-- ajout
+    @WithMockUser
     void getMatch_notFound_returns404_withApiErrorFormat() throws Exception {
-        when(matchPadelService.getMatchDetailDto(999L,null))
+        when(matchPadelService.getMatchDetailDto(999L))
                 .thenThrow(new NotFoundException("Match 999 introuvable"));
 
         mockMvc.perform(get("/api/v1/matchs/999"))

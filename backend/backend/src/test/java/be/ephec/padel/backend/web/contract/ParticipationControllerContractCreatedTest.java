@@ -11,35 +11,32 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
-import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(ParticipationController.class)
 class ParticipationControllerContractCreatedTest {
 
-    @Autowired MockMvc mockMvc;
-    @MockitoBean ParticipationService participationService;
+    @Autowired
+    MockMvc mockMvc;
+
+    @MockitoBean
+    ParticipationService participationService;
 
     @Test
     @WithMockUser
     void rejoindrePublic_returns201_andLocationHeader() throws Exception {
         Participation p = new Participation();
-        // on ne peut pas setter id (pas de setter), donc on ne vérifie pas l'id.
-        // Ici Location pointe vers /api/v1/matchs/{matchId} => on peut vérifier exactement.
-        when(participationService.rejoindreEtPayerMatchPublic(eq(1L), anyString()))
+        when(participationService.rejoindreEtPayerMatchPublic(eq(1L)))
                 .thenReturn(p);
-
-        String json = """
-        { "joueurMatricule": "G0001", "montant": 15 }
-        """;
 
         mockMvc.perform(post("/api/v1/matchs/1/participants/public")
                         .with(csrf())
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(json))
+                        .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isCreated())
                 .andExpect(header().string("Location", "/api/v1/matchs/1"));
     }
