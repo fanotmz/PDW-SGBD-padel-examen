@@ -2,6 +2,7 @@ package be.ephec.padel.backend.service;
 
 import be.ephec.padel.backend.common.Tarifs;
 import be.ephec.padel.backend.exception.BusinessException;
+import be.ephec.padel.backend.exception.ForbiddenException;
 import be.ephec.padel.backend.exception.NotFoundException;
 import be.ephec.padel.backend.model.entities.Paiement;
 import be.ephec.padel.backend.model.entities.Participation;
@@ -9,6 +10,8 @@ import be.ephec.padel.backend.model.enums.MatchStatut;
 import be.ephec.padel.backend.model.enums.TypePaiement;
 import be.ephec.padel.backend.repository.PaiementRepository;
 import be.ephec.padel.backend.repository.ParticipationRepository;
+import be.ephec.padel.backend.security.CurrentUserFacade;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -27,18 +30,31 @@ public class PaiementService {
     private final ParticipationRepository participationRepository;
     private final SoldeService soldeService;
     private final Clock clock;
+    private final CurrentUserFacade currentUserFacade;
+
+    @Autowired
+    public PaiementService(PaiementRepository paiementRepository,
+                           ParticipationRepository participationRepository,
+                           SoldeService soldeService,
+                           Clock clock,
+                           CurrentUserFacade currentUserFacade) {
+        this.paiementRepository = paiementRepository;
+        this.participationRepository = participationRepository;
+        this.soldeService = soldeService;
+        this.clock = clock;
+        this.currentUserFacade = currentUserFacade;
+    }
 
     public PaiementService(PaiementRepository paiementRepository,
                            ParticipationRepository participationRepository,
                            SoldeService soldeService,
                            Clock clock) {
-        this.paiementRepository = paiementRepository;
-        this.participationRepository = participationRepository;
-        this.soldeService = soldeService;
-        this.clock = clock;
+        this(paiementRepository, participationRepository, soldeService, clock, null);
     }
 
     public Paiement payerParticipation(Long participationId, BigDecimal montant) {
+        Participation participation = getParticipationByIdOrThrow(participationId);
+        verifierPaiementAutorise(participation);
         return payerParticipationInterne(participationId, montant, TypePaiement.ENCAISSEMENT, false);
     }
 
@@ -61,7 +77,7 @@ public class PaiementService {
             throw new BusinessException("Participation obligatoire");
         }
         if (participation.getMatch() == null || participation.getMatch().getStatut() != MatchStatut.ANNULE) {
-            throw new BusinessException("Remboursement impossible : le match doit être annulé");
+            throw new BusinessException("Remboursement impossible : le match doit etre annule");
         }
 
         BigDecimal montant = validerMontant(
@@ -82,11 +98,10 @@ public class PaiementService {
                                                TypePaiement typePaiement,
                                                boolean autoriserRattrapageDette) {
 
-        Participation participation = participationRepository.findById(participationId)
-                .orElseThrow(() -> new NotFoundException("Participation introuvable"));
+        Participation participation = getParticipationByIdOrThrow(participationId);
 
         if (participation.getMatch() != null && participation.getMatch().getStatut() == MatchStatut.ANNULE) {
-            throw new BusinessException("Match annulé : aucun paiement n'est possible.");
+            throw new BusinessException("Match annule : aucun paiement n'est possible.");
         }
 
         BigDecimal m = validerMontant(montant, typePaiement);
@@ -95,7 +110,7 @@ public class PaiementService {
         BigDecimal restePart = PART_JOUEUR.subtract(dejaPaye).setScale(2, RoundingMode.HALF_UP);
 
         if (restePart.signum() <= 0) {
-            throw new BusinessException("Participation déjà payée en totalité.");
+            throw new BusinessException("Participation deja payee en totalite.");
         }
 
         BigDecimal montantMaximumAutorise = restePart;
@@ -108,11 +123,11 @@ public class PaiementService {
         if (m.compareTo(montantMaximumAutorise) > 0) {
             if (autoriserRattrapageDette) {
                 throw new BusinessException(
-                        "Paiement trop élevé. Total dû (part + dette) = " + montantMaximumAutorise
+                        "Paiement trop eleve. Total du (part + dette) = " + montantMaximumAutorise
                 );
             }
             throw new BusinessException(
-                    "Paiement trop élevé. Reste à payer = " + montantMaximumAutorise
+                    "Paiement trop eleve. Reste a payer = " + montantMaximumAutorise
             );
         }
 
@@ -128,6 +143,22 @@ public class PaiementService {
         return participationRepository
                 .findByMatch_IdAndJoueur_Matricule(matchId, joueurMatricule)
                 .orElseThrow(() -> new NotFoundException("Participation introuvable pour ce match/joueur"));
+    }
+
+    private Participation getParticipationByIdOrThrow(Long participationId) {
+        return participationRepository.findById(participationId)
+                .orElseThrow(() -> new NotFoundException("Participation introuvable"));
+    }
+
+    private void verifierPaiementAutorise(Participation participation) {
+        if (currentUserFacade == null) {
+            return;
+        }
+        String joueurCourantMatricule = currentUserFacade.getCurrentJoueur().getMatricule();
+        String joueurParticipationMatricule = participation.getJoueur().getMatricule();
+        if (!joueurCourantMatricule.equals(joueurParticipationMatricule)) {
+            throw new ForbiddenException("Seul le participant concerne peut payer sa participation.");
+        }
     }
 
     private BigDecimal getDejaPaye(Long participationId) {

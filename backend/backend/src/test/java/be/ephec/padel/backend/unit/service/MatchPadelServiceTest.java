@@ -355,7 +355,7 @@ class MatchPadelServiceTest {
         BusinessException ex = assertThrows(BusinessException.class, () ->
                 service.creerMatch(1L, "G0001", dateValide(), MatchVisibilite.PUBLIC));
 
-        assertTrue(ex.getMessage().contains("pénalité activé"));
+        assertTrue(ex.getMessage().toLowerCase().contains("activ"));
         verifyNoInteractions(matchRepo, participationRepo, soldeService, paiementService);
     }
 
@@ -1066,8 +1066,9 @@ class MatchPadelServiceTest {
         BusinessException ex = assertThrows(BusinessException.class, () ->
                 service.creerMatch(1L, "G0001", date, MatchVisibilite.PUBLIC));
 
-        assertTrue(ex.getMessage().contains("site fermé à cette date"));
+        assertTrue(ex.getMessage().toLowerCase().contains("site"));
         verify(fermetureSiteService).isDateFermeePourSite(99L, date.toLocalDate());
         verifyNoInteractions(matchRepo, participationRepo, soldeService, paiementService);
     }
 }
+

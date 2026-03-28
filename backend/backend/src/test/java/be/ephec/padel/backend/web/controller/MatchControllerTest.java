@@ -19,6 +19,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
+import org.springframework.security.test.context.support.WithAnonymousUser;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
@@ -31,7 +32,6 @@ import java.util.List;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
-import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
@@ -87,6 +87,7 @@ class MatchControllerTest {
                 new BigDecimal("15.00")
         );
     }
+
     private MatchDetailDto sampleDetailDto(Long id, MatchVisibilite visibilite) {
         return new MatchDetailDto(
                 id,
@@ -115,11 +116,26 @@ class MatchControllerTest {
     }
 
     @Test
-    void create_sansAuth_201_location_et_body() throws Exception {
+    @WithAnonymousUser
+    void create_sansAuth_401() throws Exception {
+        mvc.perform(post("/api/v1/matchs")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "terrainId": 1,
+                                  "dateDebut": "2030-01-01T10:00:00",
+                                  "visibilite": "PUBLIC"
+                                }
+                                """))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void create_auth_201_location_et_body() throws Exception {
         MatchPadel created = mock(MatchPadel.class);
         when(created.getId()).thenReturn(123L);
 
-        when(matchPadelService.creerMatch(anyLong(), anyString(), any(), any()))
+        when(matchPadelService.creerMatch(anyLong(), any(), any()))
                 .thenReturn(created);
         when(matchPadelService.getMatchDto(123L))
                 .thenReturn(sampleDto(123L));
@@ -129,7 +145,6 @@ class MatchControllerTest {
                         .content("""
                                 {
                                   "terrainId": 1,
-                                  "organisateurMatricule": "G0001",
                                   "dateDebut": "2030-01-01T10:00:00",
                                   "visibilite": "PUBLIC"
                                 }
@@ -149,7 +164,7 @@ class MatchControllerTest {
     }
 
     @Test
-    void getPublicMatches_sansAuth_200_et_json() throws Exception {
+    void getPublicMatches_200_et_json() throws Exception {
         when(matchPadelService.getPublicMatchSummaries(null, null, null))
                 .thenReturn(List.of(samplePublicSummary(1L), samplePublicSummary(2L)));
 
@@ -191,7 +206,7 @@ class MatchControllerTest {
                 eq(LocalDate.of(2030, 1, 1)),
                 eq(null)
         )).thenThrow(new BusinessException(
-                "Le paramètre 'from' doit être antérieur ou égal à 'to'."
+                "Le paramÃ¨tre 'from' doit Ãªtre antÃ©rieur ou Ã©gal Ã  'to'."
         ));
 
         mvc.perform(get("/api/v1/matchs/public")
@@ -199,9 +214,10 @@ class MatchControllerTest {
                         .param("to", "2030-01-01"))
                 .andExpect(status().isBadRequest());
     }
+
     @Test
-    void getOne_public_sansMatricule_200() throws Exception {
-        when(matchPadelService.getMatchDetailDto(1L, null))
+    void getOne_public_auth_200() throws Exception {
+        when(matchPadelService.getMatchDetailDto(1L))
                 .thenReturn(sampleDetailDto(1L, MatchVisibilite.PUBLIC));
 
         mvc.perform(get("/api/v1/matchs/1"))
@@ -216,7 +232,7 @@ class MatchControllerTest {
                 .andExpect(jsonPath("$.visibilite").value("PUBLIC"))
                 .andExpect(jsonPath("$.participants[0].matricule").value("G0001"))
                 .andExpect(jsonPath("$.participants[1].matricule").value("J0001"))
-                 .andExpect(jsonPath("$.organisateurNom").value("Organisateur"))
+                .andExpect(jsonPath("$.organisateurNom").value("Organisateur"))
                 .andExpect(jsonPath("$.nbParticipants").value(2))
                 .andExpect(jsonPath("$.placesRestantes").value(2))
                 .andExpect(jsonPath("$.complet").value(false))
@@ -224,48 +240,31 @@ class MatchControllerTest {
                 .andExpect(jsonPath("$.montantPaye").value(15.0))
                 .andExpect(jsonPath("$.resteAPayer").value(45.0));
     }
+
     @Test
-    void getOne_prive_sansMatricule_403() throws Exception {
-        when(matchPadelService.getMatchDetailDto(1L, null))
-                .thenThrow(new ForbiddenException("Accès refusé à ce match privé."));
+    void getOne_prive_refuse_403() throws Exception {
+        when(matchPadelService.getMatchDetailDto(1L))
+                .thenThrow(new ForbiddenException("AccÃ¨s refusÃ© Ã  ce match privÃ©."));
 
         mvc.perform(get("/api/v1/matchs/1"))
                 .andExpect(status().isForbidden());
     }
+
     @Test
-    void getOne_prive_organisateur_200() throws Exception {
-        when(matchPadelService.getMatchDetailDto(1L, "G0001"))
+    void getOne_prive_autorise_200() throws Exception {
+        when(matchPadelService.getMatchDetailDto(1L))
                 .thenReturn(sampleDetailDto(1L, MatchVisibilite.PRIVE));
 
-        mvc.perform(get("/api/v1/matchs/1")
-                        .param("matricule", "G0001"))
+        mvc.perform(get("/api/v1/matchs/1"))
                 .andExpect(status().isOk())
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.visibilite").value("PRIVE"))
                 .andExpect(jsonPath("$.organisateurMatricule").value("G0001"));
     }
-    @Test
-    void getOne_prive_participant_200() throws Exception {
-        when(matchPadelService.getMatchDetailDto(1L, "J0001"))
-                .thenReturn(sampleDetailDto(1L, MatchVisibilite.PRIVE));
 
-        mvc.perform(get("/api/v1/matchs/1")
-                        .param("matricule", "J0001"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.visibilite").value("PRIVE"))
-                .andExpect(jsonPath("$.participants[1].matricule").value("J0001"));
-    }
-    @Test
-    void getOne_prive_autreJoueur_403() throws Exception {
-        when(matchPadelService.getMatchDetailDto(1L, "X9999"))
-                .thenThrow(new ForbiddenException("Accès refusé à ce match privé."));
-
-        mvc.perform(get("/api/v1/matchs/1")
-                        .param("matricule", "X9999"))
-                .andExpect(status().isForbidden());
-    }
     @Test
     void getOne_notFound_404_detail() throws Exception {
-        when(matchPadelService.getMatchDetailDto(99L, null))
+        when(matchPadelService.getMatchDetailDto(99L))
                 .thenThrow(new NotFoundException("Match introuvable"));
 
         mvc.perform(get("/api/v1/matchs/99"))

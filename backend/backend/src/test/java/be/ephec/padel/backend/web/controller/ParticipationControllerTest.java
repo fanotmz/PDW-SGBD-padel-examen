@@ -24,7 +24,10 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(controllers = ParticipationController.class)
 @Import({SecurityConfig.class, ApiExceptionHandler.class})
@@ -51,25 +54,16 @@ class ParticipationControllerTest {
         return p;
     }
 
-    // -------------------------
-    // POST /api/v1/matchs/{matchId}/participants/public
-    // -------------------------
-
     @Test
     void rejoindrePublic_ok_201_et_body_et_location() throws Exception {
         long matchId = 10L;
-        String matricule = "J001";
-        Participation saved = participation(77L, matchId, matricule);
+        Participation saved = participation(77L, matchId, "J001");
 
-        when(participationService.rejoindreEtPayerMatchPublic(eq(matchId), eq(matricule)))
+        when(participationService.rejoindreEtPayerMatchPublic(eq(matchId)))
                 .thenReturn(saved);
 
         mvc.perform(post("/api/v1/matchs/{matchId}/participants/public", matchId)
-                        .with(csrf())
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("""
-                                { "joueurMatricule": "J001" }
-                                """))
+                        .with(csrf()))
                 .andExpect(status().isCreated())
                 .andExpect(header().string("Location", "/api/v1/matchs/" + matchId))
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
@@ -79,30 +73,14 @@ class ParticipationControllerTest {
     }
 
     @Test
-    void rejoindrePublic_validation_400_si_body_invalide() throws Exception {
-        long matchId = 10L;
-
-        mvc.perform(post("/api/v1/matchs/{matchId}/participants/public", matchId)
-                        .with(csrf())
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("{}"))
-                .andExpect(status().isBadRequest())
-                .andExpect(content().contentType(MediaType.APPLICATION_JSON));
-    }
-
-    @Test
     void rejoindrePublic_notFound_404() throws Exception {
         long matchId = 999L;
 
-        when(participationService.rejoindreEtPayerMatchPublic(eq(matchId), eq("J001")))
+        when(participationService.rejoindreEtPayerMatchPublic(eq(matchId)))
                 .thenThrow(new NotFoundException("Match introuvable"));
 
         mvc.perform(post("/api/v1/matchs/{matchId}/participants/public", matchId)
-                        .with(csrf())
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("""
-                                { "joueurMatricule": "J001" }
-                                """))
+                        .with(csrf()))
                 .andExpect(status().isNotFound())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.message").value("Match introuvable"));
@@ -112,37 +90,29 @@ class ParticipationControllerTest {
     void rejoindrePublic_business_400() throws Exception {
         long matchId = 10L;
 
-        when(participationService.rejoindreEtPayerMatchPublic(eq(matchId), eq("J001")))
-                .thenThrow(new BusinessException("Match déjà complet"));
+        when(participationService.rejoindreEtPayerMatchPublic(eq(matchId)))
+                .thenThrow(new BusinessException("Match dÃ©jÃ  complet"));
 
         mvc.perform(post("/api/v1/matchs/{matchId}/participants/public", matchId)
-                        .with(csrf())
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("""
-                                { "joueurMatricule": "J001" }
-                                """))
+                        .with(csrf()))
                 .andExpect(status().isBadRequest())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-                .andExpect(jsonPath("$.message").value("Match déjà complet"));
+                .andExpect(jsonPath("$.message").value("Match dÃ©jÃ  complet"));
     }
-
-    // -------------------------
-    // POST /api/v1/matchs/{matchId}/participants/prive
-    // -------------------------
 
     @Test
     void ajouterPrive_ok_201_et_body_et_location() throws Exception {
         long matchId = 11L;
         Participation saved = participation(88L, matchId, "J009");
 
-        when(participationService.ajouterJoueurParOrganisateur(eq(matchId), eq("ORG1"), eq("J009")))
+        when(participationService.ajouterJoueurParOrganisateur(eq(matchId), eq("J009")))
                 .thenReturn(saved);
 
         mvc.perform(post("/api/v1/matchs/{matchId}/participants/prive", matchId)
                         .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
-                                { "organisateurMatricule": "ORG1", "joueurMatriculeAAjouter": "J009" }
+                                { "joueurMatriculeAAjouter": "J009" }
                                 """))
                 .andExpect(status().isCreated())
                 .andExpect(header().string("Location", "/api/v1/matchs/" + matchId))
@@ -168,14 +138,14 @@ class ParticipationControllerTest {
     void ajouterPrive_notFound_404() throws Exception {
         long matchId = 11L;
 
-        when(participationService.ajouterJoueurParOrganisateur(eq(matchId), eq("ORG1"), eq("J009")))
+        when(participationService.ajouterJoueurParOrganisateur(eq(matchId), eq("J009")))
                 .thenThrow(new NotFoundException("Joueur introuvable"));
 
         mvc.perform(post("/api/v1/matchs/{matchId}/participants/prive", matchId)
                         .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
-                                { "organisateurMatricule": "ORG1", "joueurMatriculeAAjouter": "J009" }
+                                { "joueurMatriculeAAjouter": "J009" }
                                 """))
                 .andExpect(status().isNotFound())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
@@ -186,17 +156,17 @@ class ParticipationControllerTest {
     void ajouterPrive_business_400() throws Exception {
         long matchId = 11L;
 
-        when(participationService.ajouterJoueurParOrganisateur(eq(matchId), eq("ORG1"), eq("J009")))
-                .thenThrow(new BusinessException("Seul l'organisateur peut ajouter des joueurs à ce match."));
+        when(participationService.ajouterJoueurParOrganisateur(eq(matchId), eq("J009")))
+                .thenThrow(new BusinessException("Seul l'organisateur peut ajouter des joueurs Ã  ce match."));
 
         mvc.perform(post("/api/v1/matchs/{matchId}/participants/prive", matchId)
                         .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
-                                { "organisateurMatricule": "ORG1", "joueurMatriculeAAjouter": "J009" }
+                                { "joueurMatriculeAAjouter": "J009" }
                                 """))
                 .andExpect(status().isBadRequest())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-                .andExpect(jsonPath("$.message").value("Seul l'organisateur peut ajouter des joueurs à ce match."));
+                .andExpect(jsonPath("$.message").value("Seul l'organisateur peut ajouter des joueurs Ã  ce match."));
     }
 }

@@ -2,8 +2,9 @@ package be.ephec.padel.backend.controller;
 
 import be.ephec.padel.backend.dto.request.CreateMatchRequest;
 import be.ephec.padel.backend.dto.response.ApiErrorDto;
-import be.ephec.padel.backend.dto.response.MatchDto;
 import be.ephec.padel.backend.dto.response.MatchDetailDto;
+import be.ephec.padel.backend.dto.response.MatchDto;
+import be.ephec.padel.backend.dto.response.PublicMatchSummaryDto;
 import be.ephec.padel.backend.model.entities.MatchPadel;
 import be.ephec.padel.backend.service.MatchPadelService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -16,13 +17,17 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
-import be.ephec.padel.backend.dto.response.PublicMatchSummaryDto;
-
-import java.time.LocalDate;
-import java.util.List;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
 import java.net.URI;
+import java.time.LocalDate;
+import java.util.List;
 
 @Tag(name = "Matchs", description = "Gestion des matchs de padel")
 @SecurityRequirement(name = "bearerAuth")
@@ -37,37 +42,34 @@ public class MatchController {
     }
 
     @Operation(
-            summary = "Récupérer le détail d’un match",
-            description = "Retourne le détail d’un match. Un match PUBLIC est visible par tous. "
-                    + "Un match PRIVE est visible uniquement par l’organisateur et les participants."
+            summary = "Recuperer le detail d'un match",
+            description = "Retourne le detail d'un match. Un match PUBLIC est visible par tous. "
+                    + "Un match PRIVE est visible uniquement par l'organisateur, les participants et les admins."
     )
     @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "Match trouvé"),
-            @ApiResponse(responseCode = "403", description = "Accès refusé à ce match privé",
+            @ApiResponse(responseCode = "200", description = "Match trouve"),
+            @ApiResponse(responseCode = "403", description = "Acces refuse a ce match prive",
                     content = @Content(schema = @Schema(implementation = ApiErrorDto.class))),
             @ApiResponse(responseCode = "404", description = "Match introuvable",
                     content = @Content(schema = @Schema(implementation = ApiErrorDto.class)))
     })
     @GetMapping("/{id}")
-    public ResponseEntity<MatchDetailDto> getOne(
-            @PathVariable Long id,
-            @RequestParam(required = false) String matricule) {
-        return ResponseEntity.ok(matchPadelService.getMatchDetailDto(id, matricule));
+    public ResponseEntity<MatchDetailDto> getOne(@PathVariable Long id) {
+        return ResponseEntity.ok(matchPadelService.getMatchDetailDto(id));
     }
 
-    @Operation(summary = "Créer un match", description = "Crée un match (PUBLIC ou PRIVE) si les règles métier sont respectées.")
+    @Operation(summary = "Creer un match", description = "Cree un match (PUBLIC ou PRIVE) pour l'utilisateur authentifie.")
     @ApiResponses({
-            @ApiResponse(responseCode = "201", description = "Match créé"),
-            @ApiResponse(responseCode = "400", description = "Validation ou règle métier non respectée",
+            @ApiResponse(responseCode = "201", description = "Match cree"),
+            @ApiResponse(responseCode = "400", description = "Validation ou regle metier non respectee",
                     content = @Content(schema = @Schema(implementation = ApiErrorDto.class))),
-            @ApiResponse(responseCode = "404", description = "Terrain / site / organisateur introuvable",
+            @ApiResponse(responseCode = "404", description = "Terrain introuvable",
                     content = @Content(schema = @Schema(implementation = ApiErrorDto.class)))
     })
     @PostMapping
     public ResponseEntity<MatchDto> create(@Valid @RequestBody CreateMatchRequest req) {
         MatchPadel created = matchPadelService.creerMatch(
                 req.getTerrainId(),
-                req.getOrganisateurMatricule(),
                 req.getDateDebut(),
                 req.getVisibilite()
         );
@@ -76,13 +78,14 @@ public class MatchController {
         URI location = URI.create("/api/v1/matchs/" + created.getId());
         return ResponseEntity.created(location).body(dto);
     }
+
     @Operation(
             summary = "Lister les matchs publics",
-            description = "Retourne la liste des matchs PUBLIC avec un résumé utile pour le frontend."
+            description = "Retourne la liste des matchs PUBLIC avec un resume utile pour le frontend."
     )
     @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "Liste récupérée"),
-            @ApiResponse(responseCode = "400", description = "Paramètres invalides",
+            @ApiResponse(responseCode = "200", description = "Liste recuperee"),
+            @ApiResponse(responseCode = "400", description = "Parametres invalides",
                     content = @Content(schema = @Schema(implementation = ApiErrorDto.class)))
     })
     @GetMapping("/public")

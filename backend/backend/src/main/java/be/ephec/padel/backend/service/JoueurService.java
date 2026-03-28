@@ -17,6 +17,8 @@ import be.ephec.padel.backend.repository.JoueurRepository;
 import be.ephec.padel.backend.repository.MatchPadelRepository;
 import be.ephec.padel.backend.repository.ParticipationRepository;
 import be.ephec.padel.backend.repository.SiteRepository;
+import be.ephec.padel.backend.security.CurrentUserFacade;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -35,38 +37,55 @@ public class JoueurService {
     private final SiteRepository siteRepository;
     private final ParticipationRepository participationRepository;
     private final MatchPadelRepository matchPadelRepository;
+    private final CurrentUserFacade currentUserFacade;
+
+    @Autowired
+    public JoueurService(JoueurRepository joueurRepository,
+                         SiteRepository siteRepository,
+                         ParticipationRepository participationRepository,
+                         MatchPadelRepository matchPadelRepository,
+                         CurrentUserFacade currentUserFacade) {
+        this.joueurRepository = joueurRepository;
+        this.siteRepository = siteRepository;
+        this.participationRepository = participationRepository;
+        this.matchPadelRepository = matchPadelRepository;
+        this.currentUserFacade = currentUserFacade;
+    }
 
     public JoueurService(JoueurRepository joueurRepository,
                          SiteRepository siteRepository,
                          ParticipationRepository participationRepository,
                          MatchPadelRepository matchPadelRepository) {
-        this.joueurRepository = joueurRepository;
-        this.siteRepository = siteRepository;
-        this.participationRepository = participationRepository;
-        this.matchPadelRepository = matchPadelRepository;
+        this(joueurRepository, siteRepository, participationRepository, matchPadelRepository, null);
     }
 
     public Joueur creerJoueur(String matricule, String nom, TypeJoueur type, Long siteId) {
-        if (matricule == null || matricule.isBlank()) throw new BusinessException("Matricule obligatoire");
-        if (nom == null || nom.isBlank()) throw new BusinessException("Nom obligatoire");
-        if (type == null) throw new BusinessException("Type joueur obligatoire");
+        if (matricule == null || matricule.isBlank()) {
+            throw new BusinessException("Matricule obligatoire");
+        }
+        if (nom == null || nom.isBlank()) {
+            throw new BusinessException("Nom obligatoire");
+        }
+        if (type == null) {
+            throw new BusinessException("Type joueur obligatoire");
+        }
 
         verifierMatricule(type, matricule);
 
         if (joueurRepository.existsById(matricule)) {
-            throw new BusinessException("Matricule déjà utilisé");
+            throw new BusinessException("Matricule deja utilise");
         }
 
         Site site = null;
 
         if (type == TypeJoueur.SITE) {
-            if (siteId == null) throw new BusinessException("Un joueur SITE doit être lié à un site");
+            if (siteId == null) {
+                throw new BusinessException("Un joueur SITE doit etre lie a un site");
+            }
             site = siteRepository.findById(siteId)
                     .orElseThrow(() -> new NotFoundException("Site introuvable"));
-        } else {
-            if (siteId != null) {
-                throw new BusinessException("Seul un joueur SITE peut avoir un site.");
-            }
+        } else if (siteId != null) {
+            throw new BusinessException("Seul un joueur SITE peut avoir un site.");
         }
 
         Joueur joueur = new Joueur(matricule, nom, type, site);
@@ -79,6 +98,10 @@ public class JoueurService {
                 .orElseThrow(() -> new NotFoundException("Joueur introuvable"));
     }
 
+    public Joueur getCurrentJoueurProfile() {
+        return currentUserFacade.getCurrentJoueur();
+    }
+
     public List<Joueur> lister() {
         return joueurRepository.findAll();
     }
@@ -88,9 +111,13 @@ public class JoueurService {
         return joueur.getSolde() != null && joueur.getSolde().compareTo(BigDecimal.ZERO) > 0;
     }
 
+    public boolean currentUserADette() {
+        return aDette(currentUserFacade.getCurrentJoueur().getMatricule());
+    }
+
     public void verifierPasDeDette(String matricule) {
         if (aDette(matricule)) {
-            throw new BusinessException("Action impossible : solde dû (dette) non réglé.");
+            throw new BusinessException("Action impossible : solde du (dette) non regle.");
         }
     }
 
@@ -162,6 +189,10 @@ public class JoueurService {
                 .toList();
     }
 
+    public List<PlayerMatchSummaryDto> getCurrentPlayerMatches() {
+        return getPlayerMatches(currentUserFacade.getCurrentJoueur().getMatricule());
+    }
+
     private OrganizerMatchSummaryDto toOrganizerMatchSummaryDto(MatchPadel match, LocalDate today) {
         LocalDate dateMatch = match.getDateDebut().toLocalDate();
 
@@ -206,6 +237,7 @@ public class JoueurService {
                 risquePenaliteJ1
         );
     }
+
     public List<OrganizerMatchSummaryDto> getOrganizedMatches(String matricule) {
         getJoueur(matricule);
 
@@ -217,5 +249,9 @@ public class JoueurService {
         return matchs.stream()
                 .map(match -> toOrganizerMatchSummaryDto(match, today))
                 .toList();
+    }
+
+    public List<OrganizerMatchSummaryDto> getCurrentOrganizedMatches() {
+        return getOrganizedMatches(currentUserFacade.getCurrentJoueur().getMatricule());
     }
 }
