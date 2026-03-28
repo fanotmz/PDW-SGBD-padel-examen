@@ -59,7 +59,6 @@ public class SecurityConfig {
                             .requestMatchers(HttpMethod.GET, "/api/v1/joueurs").hasRole("ADMIN_GLOBAL")
                             .requestMatchers(HttpMethod.POST, "/api/v1/joueurs").hasRole("ADMIN_GLOBAL")
                             .requestMatchers(HttpMethod.POST, "/api/v1/sites").hasRole("ADMIN_GLOBAL")
-                            .requestMatchers(HttpMethod.PUT, "/api/v1/sites/*/horaires").hasRole("ADMIN_GLOBAL")
                             .requestMatchers(HttpMethod.POST, "/api/v1/terrains").hasRole("ADMIN_GLOBAL")
                             .requestMatchers(HttpMethod.POST, "/api/v1/fermetures-globales").hasRole("ADMIN_GLOBAL")
                             .requestMatchers(HttpMethod.DELETE, "/api/v1/fermetures-globales/*").hasRole("ADMIN_GLOBAL")

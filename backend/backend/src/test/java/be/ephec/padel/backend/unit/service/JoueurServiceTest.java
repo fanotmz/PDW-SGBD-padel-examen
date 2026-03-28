@@ -14,6 +14,7 @@ import be.ephec.padel.backend.repository.JoueurRepository;
 import be.ephec.padel.backend.repository.ParticipationRepository;
 import be.ephec.padel.backend.repository.SiteRepository;
 import be.ephec.padel.backend.repository.MatchPadelRepository;
+import be.ephec.padel.backend.security.CurrentUserFacade;
 import be.ephec.padel.backend.service.JoueurService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -36,6 +37,7 @@ class JoueurServiceTest {
     private JoueurService service;
     private MatchPadelRepository matchPadelRepo;
     private ParticipationRepository participationRepo;
+    private CurrentUserFacade currentUserFacade;
 
     @BeforeEach
     void setup() {
@@ -43,7 +45,8 @@ class JoueurServiceTest {
         siteRepo = mock(SiteRepository.class);
         participationRepo = mock(ParticipationRepository.class);
         matchPadelRepo = mock(MatchPadelRepository.class);
-        service = new JoueurService(joueurRepo, siteRepo, participationRepo,matchPadelRepo);
+        currentUserFacade = mock(CurrentUserFacade.class);
+        service = new JoueurService(joueurRepo, siteRepo, participationRepo, matchPadelRepo, currentUserFacade);
     }
 
     private Participation mockParticipation(String organisateurMatricule,
