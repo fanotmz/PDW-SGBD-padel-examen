@@ -2,6 +2,7 @@ package be.ephec.padel.backend.service;
 
 import be.ephec.padel.backend.model.entities.User;
 import be.ephec.padel.backend.model.enums.SecurityRole;
+import be.ephec.padel.backend.model.enums.UserStatus;
 import be.ephec.padel.backend.repository.UserRepository;
 import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Value;
@@ -84,6 +85,7 @@ public class UserBootstrapService {
         user.setLogin(login);
         user.setPasswordHash(passwordEncoder.encode(rawPassword));
         user.setActive(true);
+        user.setStatus(UserStatus.ACTIVE);
         user.addRole(role);
         userRepository.save(user);
     }

@@ -13,4 +13,8 @@ databaseChangeLog:
       file: db/changelog/006-type-paiement.yaml
   - include:
       file: db/changelog/007-auth-user.yaml
+  - include:
+      file: db/changelog/008-user-registration.yaml
+  - include:
+      file: db/changelog/009-registration-hardening.yaml
 
