@@ -2,6 +2,7 @@ package be.ephec.padel.backend.unit.service;
 
 import be.ephec.padel.backend.model.entities.User;
 import be.ephec.padel.backend.model.enums.SecurityRole;
+import be.ephec.padel.backend.model.enums.UserStatus;
 import be.ephec.padel.backend.repository.UserRepository;
 import be.ephec.padel.backend.service.UserBootstrapService;
 import org.junit.jupiter.api.BeforeEach;
@@ -63,5 +64,8 @@ class UserBootstrapServiceTest {
                 .containsExactly(SecurityRole.ROLE_ADMIN_SITE);
         assertThat(captor.getAllValues().get(2).getRoles())
                 .containsExactly(SecurityRole.ROLE_ADMIN_SITE);
+        assertThat(captor.getAllValues())
+                .extracting(User::getStatus)
+                .containsOnly(UserStatus.ACTIVE);
     }
 }

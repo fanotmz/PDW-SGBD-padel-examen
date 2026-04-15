@@ -53,6 +53,8 @@ public class SecurityConfig {
 
                     auth
                             .requestMatchers(HttpMethod.POST, "/api/v1/auth/login").permitAll()
+                            .requestMatchers(HttpMethod.POST, "/api/v1/auth/register").permitAll()
+                            .requestMatchers("/api/v1/admin/inscriptions/**").hasRole("ADMIN_GLOBAL")
                             .requestMatchers("/api/v1/admin/stats/**").hasRole("ADMIN_GLOBAL")
                             .requestMatchers("/api/v1/admin/sites/**").hasAnyRole("ADMIN_GLOBAL", "ADMIN_SITE")
                             .requestMatchers("/api/v1/admin/**").hasAnyRole("ADMIN_GLOBAL", "ADMIN_SITE")

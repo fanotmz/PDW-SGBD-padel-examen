@@ -1,6 +1,8 @@
 package be.ephec.padel.backend.model.entities;
 
 import be.ephec.padel.backend.model.enums.SecurityRole;
+import be.ephec.padel.backend.model.enums.TypeJoueur;
+import be.ephec.padel.backend.model.enums.UserStatus;
 import jakarta.persistence.*;
 
 import java.util.LinkedHashSet;
@@ -22,6 +24,21 @@ public class User {
 
     @Column(nullable = false)
     private boolean active = true;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 20)
+    private UserStatus status = UserStatus.ACTIVE;
+
+    @Column(name = "requested_nom", length = 255)
+    private String requestedNom;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "requested_type", length = 20)
+    private TypeJoueur requestedType;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "requested_site_id")
+    private Site requestedSite;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "joueur_id", referencedColumnName = "id")
@@ -62,6 +79,38 @@ public class User {
 
     public void setActive(boolean active) {
         this.active = active;
+    }
+
+    public UserStatus getStatus() {
+        return status;
+    }
+
+    public void setStatus(UserStatus status) {
+        this.status = status;
+    }
+
+    public String getRequestedNom() {
+        return requestedNom;
+    }
+
+    public void setRequestedNom(String requestedNom) {
+        this.requestedNom = requestedNom;
+    }
+
+    public TypeJoueur getRequestedType() {
+        return requestedType;
+    }
+
+    public void setRequestedType(TypeJoueur requestedType) {
+        this.requestedType = requestedType;
+    }
+
+    public Site getRequestedSite() {
+        return requestedSite;
+    }
+
+    public void setRequestedSite(Site requestedSite) {
+        this.requestedSite = requestedSite;
     }
 
     public Joueur getJoueur() {

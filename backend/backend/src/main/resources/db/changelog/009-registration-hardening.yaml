@@ -1,0 +1,14 @@
+databaseChangeLog:
+  - changeSet:
+      id: 009-1-add-unique-filtered-index-on-app-user-joueur-id
+      author: codex
+      preConditions:
+        - dbms:
+            type: mssql
+      changes:
+        - sql:
+            dbms: mssql
+            sql: |
+              CREATE UNIQUE INDEX uk_app_user_joueur_id_not_null
+              ON app_user(joueur_id)
+              WHERE joueur_id IS NOT NULL;

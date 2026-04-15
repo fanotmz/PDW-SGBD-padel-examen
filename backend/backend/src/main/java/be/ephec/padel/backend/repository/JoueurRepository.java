@@ -12,6 +12,7 @@ public interface JoueurRepository extends JpaRepository<Joueur, String> {
 
     Optional<Joueur> findById(String matricule); // déjà fourni par JpaRepository
     boolean existsById(String matricule);
+    Optional<Joueur> findFirstByMatriculeStartingWithOrderByMatriculeDesc(String prefix);
     List<Joueur> findBySite_Id(Long siteId);
 
     @Query("""
