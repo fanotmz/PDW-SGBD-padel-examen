@@ -7,6 +7,7 @@ import be.ephec.padel.backend.model.entities.HoraireSite;
 import be.ephec.padel.backend.model.entities.Site;
 import be.ephec.padel.backend.repository.HoraireSiteRepository;
 import be.ephec.padel.backend.repository.SiteRepository;
+import be.ephec.padel.backend.security.ServiceAutorisationAdmin;
 import be.ephec.padel.backend.service.HoraireSiteService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -24,13 +25,15 @@ class HoraireSiteServiceTest {
 
     private HoraireSiteRepository horaireSiteRepository;
     private SiteRepository siteRepository;
+    private ServiceAutorisationAdmin serviceAutorisationAdmin;
     private HoraireSiteService service;
 
     @BeforeEach
     void setup() {
         horaireSiteRepository = mock(HoraireSiteRepository.class);
         siteRepository = mock(SiteRepository.class);
-        service = new HoraireSiteService(horaireSiteRepository, siteRepository);
+        serviceAutorisationAdmin = mock(ServiceAutorisationAdmin.class);
+        service = new HoraireSiteService(horaireSiteRepository, siteRepository, serviceAutorisationAdmin);
     }
 
     private UpsertHoraireSiteRequest req(int annee, int hOpen, int hClose) {
@@ -74,6 +77,7 @@ class HoraireSiteServiceTest {
         verify(siteRepository).findById(1L);
         verify(horaireSiteRepository).existsBySiteIdAndAnnee(1L, 2026);
         verify(horaireSiteRepository).save(any(HoraireSite.class));
+        verify(serviceAutorisationAdmin).verifierAccesAuSite(1L);
     }
 
     @Test
@@ -158,6 +162,7 @@ class HoraireSiteServiceTest {
 
         verify(horaireSiteRepository).findById(10L);
         verify(horaireSiteRepository).existsBySiteIdAndAnneeAndIdNot(1L, 2027, 10L);
+        verify(serviceAutorisationAdmin).verifierAccesAuSite(1L);
     }
 
     @Test
@@ -214,6 +219,7 @@ class HoraireSiteServiceTest {
         assertEquals(2, result.size());
         verify(siteRepository).existsById(1L);
         verify(horaireSiteRepository).findBySiteIdOrderByAnneeAsc(1L);
+        verify(serviceAutorisationAdmin).verifierAccesAuSite(1L);
     }
 
     @Test
@@ -237,6 +243,7 @@ class HoraireSiteServiceTest {
 
         assertSame(h, result);
         verify(horaireSiteRepository).findBySiteIdAndAnnee(1L, 2026);
+        verify(serviceAutorisationAdmin).verifierAccesAuSite(1L);
     }
 
     @Test
@@ -259,6 +266,7 @@ class HoraireSiteServiceTest {
 
         verify(horaireSiteRepository).findById(10L);
         verify(horaireSiteRepository).delete(h);
+        verify(serviceAutorisationAdmin).verifierAccesAuSite(1L);
     }
 
     @Test

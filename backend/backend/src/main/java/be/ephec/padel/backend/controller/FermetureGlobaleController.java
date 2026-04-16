@@ -5,7 +5,6 @@ import be.ephec.padel.backend.dto.response.FermetureGlobaleDto;
 import be.ephec.padel.backend.mapper.FermetureGlobaleMapper;
 import be.ephec.padel.backend.model.entities.FermetureGlobale;
 import be.ephec.padel.backend.service.FermetureGlobaleService;
-import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -30,7 +29,6 @@ public class FermetureGlobaleController {
         );
     }
 
-    @SecurityRequirement(name = "bearerAuth")
     @PostMapping
     public ResponseEntity<FermetureGlobaleDto> create(@Valid @RequestBody CreateFermetureGlobaleRequest req) {
         FermetureGlobale created = service.creer(req);
@@ -38,7 +36,6 @@ public class FermetureGlobaleController {
         return ResponseEntity.created(location).body(FermetureGlobaleMapper.toDto(created));
     }
 
-    @SecurityRequirement(name = "bearerAuth")
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(@PathVariable Long id) {
         service.supprimer(id);

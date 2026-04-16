@@ -42,13 +42,13 @@ public class MatchController {
     }
 
     @Operation(
-            summary = "Recuperer le detail d'un match",
+            summary = "Récupérer le detail d'un match",
             description = "Retourne le detail d'un match. Un match PUBLIC est visible par tous. "
                     + "Un match PRIVE est visible uniquement par l'organisateur, les participants et les admins."
     )
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Match trouve"),
-            @ApiResponse(responseCode = "403", description = "Acces refuse a ce match prive",
+            @ApiResponse(responseCode = "403", description = "Accès refuse a ce match prive",
                     content = @Content(schema = @Schema(implementation = ApiErrorDto.class))),
             @ApiResponse(responseCode = "404", description = "Match introuvable",
                     content = @Content(schema = @Schema(implementation = ApiErrorDto.class)))
@@ -58,10 +58,10 @@ public class MatchController {
         return ResponseEntity.ok(matchPadelService.getMatchDetailDto(id));
     }
 
-    @Operation(summary = "Creer un match", description = "Cree un match (PUBLIC ou PRIVE) pour l'utilisateur authentifie.")
+    @Operation(summary = "Créer un match", description = "Crée un match (PUBLIC ou PRIVE) pour l'utilisateur authentifié.")
     @ApiResponses({
-            @ApiResponse(responseCode = "201", description = "Match cree"),
-            @ApiResponse(responseCode = "400", description = "Validation ou regle metier non respectee",
+            @ApiResponse(responseCode = "201", description = "Match créé"),
+            @ApiResponse(responseCode = "400", description = "Validation ou règle metier non respectée",
                     content = @Content(schema = @Schema(implementation = ApiErrorDto.class))),
             @ApiResponse(responseCode = "404", description = "Terrain introuvable",
                     content = @Content(schema = @Schema(implementation = ApiErrorDto.class)))
@@ -81,11 +81,11 @@ public class MatchController {
 
     @Operation(
             summary = "Lister les matchs publics",
-            description = "Retourne la liste des matchs PUBLIC avec un resume utile pour le frontend."
+            description = "Retourne la liste des matchs PUBLIC avec un resumé utile pour le frontend."
     )
     @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "Liste recuperee"),
-            @ApiResponse(responseCode = "400", description = "Parametres invalides",
+            @ApiResponse(responseCode = "200", description = "Liste récupérée"),
+            @ApiResponse(responseCode = "400", description = "Paramètres invalides",
                     content = @Content(schema = @Schema(implementation = ApiErrorDto.class)))
     })
     @GetMapping("/public")

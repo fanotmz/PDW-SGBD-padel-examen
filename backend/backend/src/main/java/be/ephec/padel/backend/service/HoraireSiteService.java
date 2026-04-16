@@ -7,6 +7,7 @@ import be.ephec.padel.backend.model.entities.HoraireSite;
 import be.ephec.padel.backend.model.entities.Site;
 import be.ephec.padel.backend.repository.HoraireSiteRepository;
 import be.ephec.padel.backend.repository.SiteRepository;
+import be.ephec.padel.backend.security.ServiceAutorisationAdmin;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -19,14 +20,19 @@ public class HoraireSiteService {
 
     private final HoraireSiteRepository horaireSiteRepository;
     private final SiteRepository siteRepository;
+    private final ServiceAutorisationAdmin serviceAutorisationAdmin;
 
     public HoraireSiteService(HoraireSiteRepository horaireSiteRepository,
-                              SiteRepository siteRepository) {
+                              SiteRepository siteRepository,
+                              ServiceAutorisationAdmin serviceAutorisationAdmin) {
         this.horaireSiteRepository = horaireSiteRepository;
         this.siteRepository = siteRepository;
+        this.serviceAutorisationAdmin = serviceAutorisationAdmin;
     }
 
     public HoraireSite create(Long siteId, UpsertHoraireSiteRequest req) {
+        serviceAutorisationAdmin.verifierAccesAuSite(siteId);
+
         Site site = siteRepository.findById(siteId)
                 .orElseThrow(() -> new NotFoundException("Site introuvable"));
 
@@ -47,6 +53,8 @@ public class HoraireSiteService {
     }
 
     public HoraireSite update(Long siteId, Long horaireId, UpsertHoraireSiteRequest req) {
+        serviceAutorisationAdmin.verifierAccesAuSite(siteId);
+
         HoraireSite horaire = horaireSiteRepository.findById(horaireId)
                 .orElseThrow(() -> new NotFoundException("Horaire introuvable"));
 
@@ -69,6 +77,8 @@ public class HoraireSiteService {
 
     @Transactional(readOnly = true)
     public List<HoraireSite> listBySite(Long siteId) {
+        serviceAutorisationAdmin.verifierAccesAuSite(siteId);
+
         if (!siteRepository.existsById(siteId)) {
             throw new NotFoundException("Site introuvable");
         }
@@ -77,6 +87,8 @@ public class HoraireSiteService {
 
     @Transactional(readOnly = true)
     public HoraireSite getBySiteAndAnnee(Long siteId, Integer annee) {
+        serviceAutorisationAdmin.verifierAccesAuSite(siteId);
+
         return horaireSiteRepository.findBySiteIdAndAnnee(siteId, annee)
                 .orElseThrow(() -> new NotFoundException(
                         "Aucun horaire trouvé pour le site " + siteId + " en " + annee + "."
@@ -84,6 +96,8 @@ public class HoraireSiteService {
     }
 
     public void delete(Long siteId, Long horaireId) {
+        serviceAutorisationAdmin.verifierAccesAuSite(siteId);
+
         HoraireSite horaire = horaireSiteRepository.findById(horaireId)
                 .orElseThrow(() -> new NotFoundException("Horaire introuvable"));
 

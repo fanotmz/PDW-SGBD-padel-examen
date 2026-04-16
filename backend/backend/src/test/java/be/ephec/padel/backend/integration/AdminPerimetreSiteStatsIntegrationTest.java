@@ -35,11 +35,13 @@ class AdminPerimetreSiteStatsIntegrationTest extends SqlServerTestContainerConfi
         jdbcTemplate.execute("DELETE FROM paiement");
         jdbcTemplate.execute("DELETE FROM match_padel");
         jdbcTemplate.execute("DELETE FROM joueur");
+        jdbcTemplate.execute("DELETE FROM horaire_site");
         jdbcTemplate.execute("DELETE FROM terrain");
         jdbcTemplate.execute("DELETE FROM site");
 
         // Reset identity (si tables en IDENTITY)
         jdbcTemplate.execute("DBCC CHECKIDENT ('site', RESEED, 0)");
+        jdbcTemplate.execute("DBCC CHECKIDENT ('horaire_site', RESEED, 0)");
         jdbcTemplate.execute("DBCC CHECKIDENT ('terrain', RESEED, 0)");
         jdbcTemplate.execute("DBCC CHECKIDENT ('match_padel', RESEED, 0)");
         jdbcTemplate.execute("DBCC CHECKIDENT ('paiement', RESEED, 0)");
