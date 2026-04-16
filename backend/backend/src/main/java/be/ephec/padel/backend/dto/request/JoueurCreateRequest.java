@@ -14,7 +14,7 @@ public class JoueurCreateRequest {
     @NotNull
     private TypeJoueur type;
 
-    // Peut être null, ton service valide selon le type
+    // Peut-être null, ton service valide selon le type
     private Long siteId;
 
     public String getMatricule() { return matricule; }

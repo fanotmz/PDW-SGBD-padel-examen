@@ -5,7 +5,6 @@ import be.ephec.padel.backend.dto.response.TerrainDto;
 import be.ephec.padel.backend.mapper.TerrainMapper;
 import be.ephec.padel.backend.model.entities.Terrain;
 import be.ephec.padel.backend.service.TerrainService;
-import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -44,7 +43,6 @@ public class TerrainController {
         return ResponseEntity.ok(TerrainMapper.toDto(terrain));
     }
 
-    @SecurityRequirement(name = "bearerAuth")
     @PostMapping
     public ResponseEntity<TerrainDto> create(
             @Valid @RequestBody CreateTerrainRequest req) {

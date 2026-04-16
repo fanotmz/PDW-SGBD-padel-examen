@@ -37,12 +37,14 @@ class AdminPerimetreSiteIntegrationTest extends SqlServerTestContainerConfig {
     @BeforeEach
     void preparerDonnees() {
         // Nettoyage (ordre important pour FK)
+        jdbcTemplate.execute("DELETE FROM horaire_site");
         joueurRepository.deleteAll();
         siteRepository.deleteAll();
 
         // 🔧 IMPORTANT : reset IDENTITY pour que les prochains sites reprennent id=1,2
         // Sans ça, deleteAll() n’efface pas le compteur IDENTITY => ids 3,4,... au prochain run
         try {
+            jdbcTemplate.execute("DBCC CHECKIDENT ('horaire_site', RESEED, 0)");
             jdbcTemplate.execute("DBCC CHECKIDENT ('site', RESEED, 0)");
         } catch (Exception ignored) {
             // Si jamais permissions/problème dans un environnement différent,
