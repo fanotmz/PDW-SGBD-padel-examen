@@ -12,6 +12,7 @@ import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
@@ -153,6 +154,23 @@ public class ApiExceptionHandler {
             HttpServletRequest request) {
 
         String msg = "Invalid value for parameter '" + ex.getName() + "': " + ex.getValue();
+
+        ApiErrorDto error = buildError(
+                HttpStatus.BAD_REQUEST,
+                msg,
+                request.getRequestURI(),
+                null
+        );
+
+        return ResponseEntity.badRequest().body(error);
+    }
+
+    @ExceptionHandler(MissingServletRequestParameterException.class)
+    public ResponseEntity<ApiErrorDto> handleMissingRequestParameter(
+            MissingServletRequestParameterException ex,
+            HttpServletRequest request) {
+
+        String msg = "Missing required parameter '" + ex.getParameterName() + "'";
 
         ApiErrorDto error = buildError(
                 HttpStatus.BAD_REQUEST,

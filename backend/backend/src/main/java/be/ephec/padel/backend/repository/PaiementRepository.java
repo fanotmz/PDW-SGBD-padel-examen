@@ -59,10 +59,12 @@ public interface PaiementRepository extends JpaRepository<Paiement, Long> {
         from Paiement p
         where p.datePaiement >= :from
           and p.datePaiement < :to
+          and p.type = :typePaiement
     """)
-    BigDecimal sumMontantByDatePaiementBetween(
+    BigDecimal sumMontantByDatePaiementBetweenAndType(
             @Param("from") LocalDateTime from,
-            @Param("to") LocalDateTime to
+            @Param("to") LocalDateTime to,
+            @Param("typePaiement") TypePaiement typePaiement
     );
 
     @Query("""
@@ -70,11 +72,13 @@ public interface PaiementRepository extends JpaRepository<Paiement, Long> {
         from Paiement p
         where p.datePaiement >= :from
           and p.datePaiement < :to
+          and p.type = :typePaiement
           and p.participation.match.terrain.site.id = :siteId
     """)
-    BigDecimal sumMontantByDatePaiementBetweenAndSiteId(
+    BigDecimal sumMontantByDatePaiementBetweenAndSiteIdAndType(
             @Param("from") LocalDateTime from,
             @Param("to") LocalDateTime to,
-            @Param("siteId") Long siteId
+            @Param("siteId") Long siteId,
+            @Param("typePaiement") TypePaiement typePaiement
     );
 }

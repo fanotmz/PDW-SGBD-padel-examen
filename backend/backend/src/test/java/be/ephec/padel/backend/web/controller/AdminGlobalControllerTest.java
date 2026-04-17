@@ -5,6 +5,7 @@ import be.ephec.padel.backend.controller.AdminGlobalController;
 import be.ephec.padel.backend.dto.response.AdminCaStatsDto;
 import be.ephec.padel.backend.dto.response.AdminDettesStatsDto;
 import be.ephec.padel.backend.dto.response.AdminMatchsStatsDto;
+import be.ephec.padel.backend.exception.BusinessException;
 import be.ephec.padel.backend.service.AdminStatsService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -98,6 +99,41 @@ class AdminGlobalControllerTest {
 
     @Test
     @WithMockUser(username = "adminGlobal", roles = {"ADMIN_GLOBAL"})
+    void statsCa_parametre_manquant_400() throws Exception {
+        mvc.perform(get("/api/v1/admin/stats/ca")
+                        .param("to", "2026-01-31"))
+                .andExpect(status().isBadRequest());
+
+        verifyNoInteractions(adminStatsService);
+    }
+
+    @Test
+    void statsCa_sansAuth_401() throws Exception {
+        mvc.perform(get("/api/v1/admin/stats/ca")
+                        .param("from", "2026-01-01")
+                        .param("to", "2026-01-31"))
+                .andExpect(status().isUnauthorized());
+
+        verifyNoInteractions(adminStatsService);
+    }
+
+    @Test
+    @WithMockUser(username = "adminGlobal", roles = {"ADMIN_GLOBAL"})
+    void statsCa_periode_invalide_400() throws Exception {
+        LocalDate from = LocalDate.of(2026, 1, 31);
+        LocalDate to = LocalDate.of(2026, 1, 1);
+
+        when(adminStatsService.getCa(from, to))
+                .thenThrow(new BusinessException("La date 'from' doit etre <= a la date 'to'."));
+
+        mvc.perform(get("/api/v1/admin/stats/ca")
+                        .param("from", "2026-01-31")
+                        .param("to", "2026-01-01"))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @WithMockUser(username = "adminGlobal", roles = {"ADMIN_GLOBAL"})
     void statsMatchs_adminGlobal_200() throws Exception {
         LocalDate from = LocalDate.of(2026, 1, 1);
         LocalDate to = LocalDate.of(2026, 1, 31);
@@ -115,6 +151,16 @@ class AdminGlobalControllerTest {
 
         verify(adminStatsService, times(1)).getNbMatchs(from, to);
         verifyNoMoreInteractions(adminStatsService);
+    }
+
+    @Test
+    @WithMockUser(username = "adminGlobal", roles = {"ADMIN_GLOBAL"})
+    void statsMatchs_parametre_manquant_400() throws Exception {
+        mvc.perform(get("/api/v1/admin/stats/matchs")
+                        .param("from", "2026-01-01"))
+                .andExpect(status().isBadRequest());
+
+        verifyNoInteractions(adminStatsService);
     }
 
     @Test

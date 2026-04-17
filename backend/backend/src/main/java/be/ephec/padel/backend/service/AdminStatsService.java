@@ -7,6 +7,7 @@ import be.ephec.padel.backend.exception.BusinessException;
 import be.ephec.padel.backend.repository.JoueurRepository;
 import be.ephec.padel.backend.repository.MatchPadelRepository;
 import be.ephec.padel.backend.repository.PaiementRepository;
+import be.ephec.padel.backend.model.enums.TypePaiement;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -36,7 +37,11 @@ public class AdminStatsService {
         LocalDateTime fromStart = from.atStartOfDay();
         LocalDateTime toExclusive = to.plusDays(1).atStartOfDay();
 
-        BigDecimal ca = paiementRepository.sumMontantByDatePaiementBetween(fromStart, toExclusive);
+        BigDecimal ca = paiementRepository.sumMontantByDatePaiementBetweenAndType(
+                fromStart,
+                toExclusive,
+                TypePaiement.ENCAISSEMENT
+        );
         return new AdminCaStatsDto(ca, from, to);
     }
 
