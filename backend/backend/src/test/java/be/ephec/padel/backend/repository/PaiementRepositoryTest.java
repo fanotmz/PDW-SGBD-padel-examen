@@ -181,4 +181,47 @@ class PaiementRepositoryTest extends SqlServerTestContainerConfig {
 
         assertThat(sum).isEqualByComparingTo(new BigDecimal("15.00"));
     }
+
+    @Test
+    void sumMontantByParticipationJoueurMatriculeAndType_somme_uniquement_les_encaissements_du_joueur() {
+        Site s = siteRepository.save(new Site("Site A", "Bruxelles"));
+        Terrain t = terrainRepository.save(new Terrain("T1", s));
+
+        Joueur orga = joueurRepository.save(new Joueur("ORG1", "Orga", TypeJoueur.GLOBAL));
+        Joueur j1 = joueurRepository.save(new Joueur("J001", "Alice", TypeJoueur.GLOBAL));
+        Joueur j2 = joueurRepository.save(new Joueur("J002", "Bob", TypeJoueur.GLOBAL));
+
+        MatchPadel match = matchPadelRepository.save(
+                new MatchPadel(t, orga, LocalDateTime.of(2026, 3, 10, 10, 0), MatchVisibilite.PUBLIC)
+        );
+
+        Participation part1 = participationRepository.save(new Participation(match, j1));
+        Participation part2 = participationRepository.save(new Participation(match, j2));
+
+        paiementRepository.save(new Paiement(
+                part1,
+                new BigDecimal("10.00"),
+                TypePaiement.ENCAISSEMENT,
+                LocalDateTime.of(2026, 3, 10, 12, 0)
+        ));
+        paiementRepository.save(new Paiement(
+                part1,
+                new BigDecimal("-4.00"),
+                TypePaiement.REMBOURSEMENT,
+                LocalDateTime.of(2026, 3, 10, 13, 0)
+        ));
+        paiementRepository.save(new Paiement(
+                part2,
+                new BigDecimal("8.00"),
+                TypePaiement.ENCAISSEMENT,
+                LocalDateTime.of(2026, 3, 10, 14, 0)
+        ));
+
+        BigDecimal sum = paiementRepository.sumMontantByParticipationJoueurMatriculeAndType(
+                "J001",
+                TypePaiement.ENCAISSEMENT
+        );
+
+        assertThat(sum).isEqualByComparingTo(new BigDecimal("10.00"));
+    }
 }

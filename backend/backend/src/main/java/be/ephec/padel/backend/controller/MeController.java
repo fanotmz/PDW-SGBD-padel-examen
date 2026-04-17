@@ -2,10 +2,12 @@ package be.ephec.padel.backend.controller;
 
 import be.ephec.padel.backend.dto.response.DetteDto;
 import be.ephec.padel.backend.dto.response.JoueurDto;
+import be.ephec.padel.backend.dto.response.MeStatsDto;
 import be.ephec.padel.backend.dto.response.OrganizerMatchSummaryDto;
 import be.ephec.padel.backend.dto.response.PlayerMatchSummaryDto;
 import be.ephec.padel.backend.mapper.JoueurMapper;
 import be.ephec.padel.backend.service.JoueurService;
+import be.ephec.padel.backend.service.MeStatsService;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -20,9 +22,11 @@ import java.util.List;
 public class MeController {
 
     private final JoueurService joueurService;
+    private final MeStatsService meStatsService;
 
-    public MeController(JoueurService joueurService) {
+    public MeController(JoueurService joueurService, MeStatsService meStatsService) {
         this.joueurService = joueurService;
+        this.meStatsService = meStatsService;
     }
 
     @GetMapping
@@ -43,5 +47,10 @@ public class MeController {
     @GetMapping("/dette")
     public ResponseEntity<DetteDto> getMyDette() {
         return ResponseEntity.ok(new DetteDto(joueurService.currentUserADette()));
+    }
+
+    @GetMapping("/stats")
+    public ResponseEntity<MeStatsDto> getMyStats() {
+        return ResponseEntity.ok(meStatsService.getCurrentUserStats());
     }
 }

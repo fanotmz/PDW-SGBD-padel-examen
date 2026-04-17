@@ -479,4 +479,65 @@ class MatchPadelRepositoryTest extends SqlServerTestContainerConfig {
 
         assertThat(rows).extracting(MatchPadel::getId).containsExactly(inScope.getId());
     }
+
+    @Test
+    void countByOrganisateurMatricule_compte_les_matchs_organises() {
+        Site s = siteRepository.save(new Site("Site A", "Bruxelles"));
+        Terrain t = terrainRepository.save(new Terrain("T1", s));
+        Joueur orga = joueurRepository.save(new Joueur("ORG1", "Orga", TypeJoueur.GLOBAL));
+        Joueur other = joueurRepository.save(new Joueur("ORG2", "Other", TypeJoueur.GLOBAL));
+
+        matchPadelRepository.save(new MatchPadel(
+                t, orga, LocalDateTime.of(2030, 1, 1, 10, 0), MatchVisibilite.PUBLIC
+        ));
+        MatchPadel cancelled = new MatchPadel(
+                t, orga, LocalDateTime.of(2030, 1, 2, 10, 0), MatchVisibilite.PUBLIC
+        );
+        cancelled.setStatut(MatchStatut.ANNULE);
+        matchPadelRepository.save(cancelled);
+        matchPadelRepository.save(new MatchPadel(
+                t, other, LocalDateTime.of(2030, 1, 3, 10, 0), MatchVisibilite.PUBLIC
+        ));
+
+        assertThat(matchPadelRepository.countByOrganisateur_Matricule("ORG1")).isEqualTo(2L);
+        assertThat(matchPadelRepository.countByOrganisateur_Matricule("ORG2")).isEqualTo(1L);
+    }
+
+    @Test
+    void countDistinctLinkedMatches_dedoublonne_et_separe_passe_futur_annule() {
+        Site s = siteRepository.save(new Site("Site A", "Bruxelles"));
+        Terrain t = terrainRepository.save(new Terrain("T1", s));
+
+        Joueur joueur = joueurRepository.save(new Joueur("J001", "Alice", TypeJoueur.GLOBAL));
+        Joueur other = joueurRepository.save(new Joueur("J002", "Bob", TypeJoueur.GLOBAL));
+
+        LocalDateTime now = LocalDateTime.of(2030, 1, 10, 9, 30);
+
+        MatchPadel pastAsParticipant = matchPadelRepository.save(new MatchPadel(
+                t, other, LocalDateTime.of(2030, 1, 9, 10, 0), MatchVisibilite.PUBLIC
+        ));
+        MatchPadel futureAsOrganizer = matchPadelRepository.save(new MatchPadel(
+                t, joueur, LocalDateTime.of(2030, 1, 11, 10, 0), MatchVisibilite.PUBLIC
+        ));
+        MatchPadel futureOrganizerAndParticipant = matchPadelRepository.save(new MatchPadel(
+                t, joueur, LocalDateTime.of(2030, 1, 12, 10, 0), MatchVisibilite.PRIVE
+        ));
+        MatchPadel cancelledLinked = new MatchPadel(
+                t, other, LocalDateTime.of(2030, 1, 8, 10, 0), MatchVisibilite.PUBLIC
+        );
+        cancelledLinked.setStatut(MatchStatut.ANNULE);
+        cancelledLinked = matchPadelRepository.save(cancelledLinked);
+
+        participationRepository.save(new Participation(pastAsParticipant, joueur));
+        participationRepository.save(new Participation(futureOrganizerAndParticipant, joueur));
+        participationRepository.save(new Participation(cancelledLinked, joueur));
+
+        long past = matchPadelRepository.countDistinctLinkedPastMatchesByMatricule("J001", now);
+        long future = matchPadelRepository.countDistinctLinkedFutureMatchesByMatricule("J001", now);
+        long cancelled = matchPadelRepository.countDistinctLinkedCancelledMatchesByMatricule("J001");
+
+        assertThat(past).isEqualTo(1L);
+        assertThat(future).isEqualTo(2L);
+        assertThat(cancelled).isEqualTo(1L);
+    }
 }
