@@ -111,4 +111,21 @@ class AdminPerimetreSiteStatsIntegrationTest extends SqlServerTestContainerConfi
                         .param("to", "2026-03-03"))
                 .andExpect(status().isOk());
     }
+
+    @Test
+    @WithMockUser(username = "adminGlobal", roles = {"ADMIN_GLOBAL"})
+    void stats_site_inexistant_404() throws Exception {
+        mockMvc.perform(get("/api/v1/admin/sites/99/stats/dettes"))
+                .andExpect(status().isNotFound());
+
+        mockMvc.perform(get("/api/v1/admin/sites/99/stats/ca")
+                        .param("from", "2026-03-02")
+                        .param("to", "2026-03-03"))
+                .andExpect(status().isNotFound());
+
+        mockMvc.perform(get("/api/v1/admin/sites/99/stats/matchs")
+                        .param("from", "2026-03-02")
+                        .param("to", "2026-03-03"))
+                .andExpect(status().isNotFound());
+    }
 }

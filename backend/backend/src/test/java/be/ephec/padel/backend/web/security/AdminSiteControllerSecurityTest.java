@@ -42,6 +42,12 @@ class AdminSiteControllerSecurityTest {
     }
 
     @Test
+    void statsSansAuth_401() throws Exception {
+        mockMvc.perform(get("/api/v1/admin/sites/1/stats/dettes"))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
     @WithMockUser(username = "adminSite1", roles = {"ADMIN_SITE"})
     void adminSite_auth_200_mapping_ok() throws Exception {
         mockMvc.perform(get("/api/v1/admin/sites/1/joueurs"))

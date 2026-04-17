@@ -95,4 +95,90 @@ class PaiementRepositoryTest extends SqlServerTestContainerConfig {
         assertThat(encaissements).isEqualByComparingTo(new BigDecimal("15.00"));
         assertThat(remboursements).isEqualByComparingTo(new BigDecimal("-6.00"));
     }
+
+    @Test
+    void sumMontantByDatePaiementBetweenAndType_ne_compte_que_les_encaissements() {
+        Site s = siteRepository.save(new Site("Site A", "Bruxelles"));
+        Terrain t = terrainRepository.save(new Terrain("T1", s));
+
+        Joueur orga = joueurRepository.save(new Joueur("ORG1", "Orga", TypeJoueur.GLOBAL));
+        Joueur j1 = joueurRepository.save(new Joueur("J001", "Alice", TypeJoueur.GLOBAL));
+
+        MatchPadel match = matchPadelRepository.save(
+                new MatchPadel(t, orga, LocalDateTime.of(2026, 3, 10, 10, 0), MatchVisibilite.PUBLIC)
+        );
+
+        Participation part = participationRepository.save(new Participation(match, j1));
+
+        paiementRepository.save(new Paiement(
+                part,
+                new BigDecimal("20.00"),
+                TypePaiement.ENCAISSEMENT,
+                LocalDateTime.of(2026, 3, 10, 12, 0)
+        ));
+        paiementRepository.save(new Paiement(
+                part,
+                new BigDecimal("-5.00"),
+                TypePaiement.REMBOURSEMENT,
+                LocalDateTime.of(2026, 3, 10, 13, 0)
+        ));
+
+        BigDecimal sum = paiementRepository.sumMontantByDatePaiementBetweenAndType(
+                LocalDateTime.of(2026, 3, 10, 0, 0),
+                LocalDateTime.of(2026, 3, 11, 0, 0),
+                TypePaiement.ENCAISSEMENT
+        );
+
+        assertThat(sum).isEqualByComparingTo(new BigDecimal("20.00"));
+    }
+
+    @Test
+    void sumMontantByDatePaiementBetweenAndSiteIdAndType_filtre_par_site_et_exclut_les_remboursements() {
+        Site siteA = siteRepository.save(new Site("Site A", "Bruxelles"));
+        Site siteB = siteRepository.save(new Site("Site B", "Namur"));
+        Terrain terrainA = terrainRepository.save(new Terrain("T1", siteA));
+        Terrain terrainB = terrainRepository.save(new Terrain("T2", siteB));
+
+        Joueur orga = joueurRepository.save(new Joueur("ORG1", "Orga", TypeJoueur.GLOBAL));
+        Joueur j1 = joueurRepository.save(new Joueur("J001", "Alice", TypeJoueur.GLOBAL));
+        Joueur j2 = joueurRepository.save(new Joueur("J002", "Bob", TypeJoueur.GLOBAL));
+
+        MatchPadel matchSiteA = matchPadelRepository.save(
+                new MatchPadel(terrainA, orga, LocalDateTime.of(2026, 3, 10, 10, 0), MatchVisibilite.PUBLIC)
+        );
+        MatchPadel matchSiteB = matchPadelRepository.save(
+                new MatchPadel(terrainB, orga, LocalDateTime.of(2026, 3, 10, 11, 0), MatchVisibilite.PUBLIC)
+        );
+
+        Participation partA = participationRepository.save(new Participation(matchSiteA, j1));
+        Participation partB = participationRepository.save(new Participation(matchSiteB, j2));
+
+        paiementRepository.save(new Paiement(
+                partA,
+                new BigDecimal("15.00"),
+                TypePaiement.ENCAISSEMENT,
+                LocalDateTime.of(2026, 3, 10, 12, 0)
+        ));
+        paiementRepository.save(new Paiement(
+                partA,
+                new BigDecimal("-3.00"),
+                TypePaiement.REMBOURSEMENT,
+                LocalDateTime.of(2026, 3, 10, 13, 0)
+        ));
+        paiementRepository.save(new Paiement(
+                partB,
+                new BigDecimal("8.00"),
+                TypePaiement.ENCAISSEMENT,
+                LocalDateTime.of(2026, 3, 10, 12, 30)
+        ));
+
+        BigDecimal sum = paiementRepository.sumMontantByDatePaiementBetweenAndSiteIdAndType(
+                LocalDateTime.of(2026, 3, 10, 0, 0),
+                LocalDateTime.of(2026, 3, 11, 0, 0),
+                siteA.getId(),
+                TypePaiement.ENCAISSEMENT
+        );
+
+        assertThat(sum).isEqualByComparingTo(new BigDecimal("15.00"));
+    }
 }

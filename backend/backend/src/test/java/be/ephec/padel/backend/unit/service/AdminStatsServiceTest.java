@@ -1,8 +1,10 @@
 package be.ephec.padel.backend.unit.service;
 
 import be.ephec.padel.backend.dto.response.AdminCaStatsDto;
+import be.ephec.padel.backend.dto.response.AdminDettesStatsDto;
 import be.ephec.padel.backend.dto.response.AdminMatchsStatsDto;
 import be.ephec.padel.backend.exception.BusinessException;
+import be.ephec.padel.backend.model.enums.TypePaiement;
 import be.ephec.padel.backend.repository.JoueurRepository;
 import be.ephec.padel.backend.repository.MatchPadelRepository;
 import be.ephec.padel.backend.repository.PaiementRepository;
@@ -15,7 +17,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -41,6 +42,27 @@ class AdminStatsServiceTest {
     }
 
     @Test
+    void getCa_utilise_uniquement_les_encaissements() {
+        LocalDate from = LocalDate.of(2026, 3, 1);
+        LocalDate to = LocalDate.of(2026, 3, 31);
+
+        when(paiementRepository.sumMontantByDatePaiementBetweenAndType(
+                eq(from.atStartOfDay()),
+                eq(to.plusDays(1).atStartOfDay()),
+                eq(TypePaiement.ENCAISSEMENT)
+        )).thenReturn(new BigDecimal("42.50"));
+
+        AdminCaStatsDto dto = service.getCa(from, to);
+
+        assertThat(dto.getCaTotal()).isEqualByComparingTo("42.50");
+        verify(paiementRepository).sumMontantByDatePaiementBetweenAndType(
+                from.atStartOfDay(),
+                to.plusDays(1).atStartOfDay(),
+                TypePaiement.ENCAISSEMENT
+        );
+    }
+
+    @Test
     void getNbMatchs_utilise_le_compteur_filtre_par_statut() {
         LocalDate from = LocalDate.of(2026, 3, 1);
         LocalDate to = LocalDate.of(2026, 3, 31);
@@ -60,18 +82,14 @@ class AdminStatsServiceTest {
     }
 
     @Test
-    void getCa_conserve_un_mode_cash_base() {
-        LocalDate from = LocalDate.of(2026, 3, 1);
-        LocalDate to = LocalDate.of(2026, 3, 31);
-        LocalDateTime fromStart = from.atStartOfDay();
-        LocalDateTime toExclusive = to.plusDays(1).atStartOfDay();
+    void getDettes_retourne_la_somme_et_le_nombre_de_joueurs_en_dette() {
+        when(joueurRepository.sumDettes()).thenReturn(new BigDecimal("50.00"));
+        when(joueurRepository.countJoueursEnDette()).thenReturn(3L);
 
-        when(paiementRepository.sumMontantByDatePaiementBetween(fromStart, toExclusive))
-                .thenReturn(new BigDecimal("42.50"));
+        AdminDettesStatsDto dto = service.getDettes();
 
-        AdminCaStatsDto dto = service.getCa(from, to);
-
-        assertThat(dto.getCaTotal()).isEqualByComparingTo("42.50");
+        assertThat(dto.getDetteTotale()).isEqualByComparingTo("50.00");
+        assertThat(dto.getNbJoueursEnDette()).isEqualTo(3L);
     }
 
     @Test
