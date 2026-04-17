@@ -97,6 +97,8 @@ public interface MatchPadelRepository extends JpaRepository<MatchPadel, Long> {
 """)
     long countByDateDebutBetween(LocalDateTime from, LocalDateTime to);
 
+    long countByOrganisateur_Matricule(String matricule);
+
     @Query("""
         select count(m)
         from MatchPadel m
@@ -123,6 +125,62 @@ public interface MatchPadelRepository extends JpaRepository<MatchPadel, Long> {
             @Param("from") LocalDateTime from,
             @Param("to") LocalDateTime to
     );
+
+    @Query("""
+        select count(distinct m.id)
+        from MatchPadel m
+        where m.statut <> be.ephec.padel.backend.model.enums.MatchStatut.ANNULE
+          and m.dateDebut < :now
+          and (
+              m.organisateur.matricule = :matricule
+              or exists (
+                  select 1
+                  from Participation p
+                  where p.match = m
+                    and p.joueur.matricule = :matricule
+              )
+          )
+    """)
+    long countDistinctLinkedPastMatchesByMatricule(
+            @Param("matricule") String matricule,
+            @Param("now") LocalDateTime now
+    );
+
+    @Query("""
+        select count(distinct m.id)
+        from MatchPadel m
+        where m.statut <> be.ephec.padel.backend.model.enums.MatchStatut.ANNULE
+          and m.dateDebut >= :now
+          and (
+              m.organisateur.matricule = :matricule
+              or exists (
+                  select 1
+                  from Participation p
+                  where p.match = m
+                    and p.joueur.matricule = :matricule
+              )
+          )
+    """)
+    long countDistinctLinkedFutureMatchesByMatricule(
+            @Param("matricule") String matricule,
+            @Param("now") LocalDateTime now
+    );
+
+    @Query("""
+        select count(distinct m.id)
+        from MatchPadel m
+        where m.statut = be.ephec.padel.backend.model.enums.MatchStatut.ANNULE
+          and (
+              m.organisateur.matricule = :matricule
+              or exists (
+                  select 1
+                  from Participation p
+                  where p.match = m
+                    and p.joueur.matricule = :matricule
+              )
+          )
+    """)
+    long countDistinctLinkedCancelledMatchesByMatricule(@Param("matricule") String matricule);
 
     @Query("""
     select

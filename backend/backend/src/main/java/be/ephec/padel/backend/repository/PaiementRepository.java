@@ -81,4 +81,15 @@ public interface PaiementRepository extends JpaRepository<Paiement, Long> {
             @Param("siteId") Long siteId,
             @Param("typePaiement") TypePaiement typePaiement
     );
+
+    @Query("""
+        select coalesce(sum(p.montant), 0)
+        from Paiement p
+        where p.participation.joueur.matricule = :matricule
+          and p.type = :typePaiement
+    """)
+    BigDecimal sumMontantByParticipationJoueurMatriculeAndType(
+            @Param("matricule") String matricule,
+            @Param("typePaiement") TypePaiement typePaiement
+    );
 }

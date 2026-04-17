@@ -3,6 +3,7 @@ package be.ephec.padel.backend.web.controller;
 import be.ephec.padel.backend.config.SecurityConfig;
 import be.ephec.padel.backend.controller.MeController;
 import be.ephec.padel.backend.dto.enums.MatchTemporalStatusDto;
+import be.ephec.padel.backend.dto.response.MeStatsDto;
 import be.ephec.padel.backend.dto.enums.PlayerMatchRoleDto;
 import be.ephec.padel.backend.dto.response.OrganizerMatchSummaryDto;
 import be.ephec.padel.backend.dto.response.PlayerMatchSummaryDto;
@@ -13,6 +14,7 @@ import be.ephec.padel.backend.model.enums.MatchStatut;
 import be.ephec.padel.backend.model.enums.MatchVisibilite;
 import be.ephec.padel.backend.model.enums.TypeJoueur;
 import be.ephec.padel.backend.service.JoueurService;
+import be.ephec.padel.backend.service.MeStatsService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
@@ -24,6 +26,7 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.time.LocalDateTime;
+import java.math.BigDecimal;
 import java.util.List;
 
 import static org.mockito.Mockito.when;
@@ -42,6 +45,9 @@ class MeControllerTest {
 
     @MockitoBean
     JoueurService joueurService;
+
+    @MockitoBean
+    MeStatsService meStatsService;
 
     @Test
     @WithAnonymousUser
@@ -157,5 +163,46 @@ class MeControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.dette").value(true));
+    }
+
+    @Test
+    @WithAnonymousUser
+    void getMyStats_sans_auth_401() throws Exception {
+        mvc.perform(get("/api/v1/me/stats"))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void getMyStats_ok_200() throws Exception {
+        when(meStatsService.getCurrentUserStats()).thenReturn(new MeStatsDto(
+                5L,
+                2L,
+                3L,
+                1L,
+                1L,
+                new BigDecimal("42.00"),
+                new BigDecimal("7.50")
+        ));
+
+        mvc.perform(get("/api/v1/me/stats"))
+                .andExpect(status().isOk())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.nbMatchsParticipes").value(5))
+                .andExpect(jsonPath("$.nbMatchsOrganises").value(2))
+                .andExpect(jsonPath("$.nbMatchsPasses").value(3))
+                .andExpect(jsonPath("$.nbMatchsFuturs").value(1))
+                .andExpect(jsonPath("$.nbMatchsAnnules").value(1))
+                .andExpect(jsonPath("$.montantTotalPaye").value(42.00))
+                .andExpect(jsonPath("$.detteActuelle").value(7.50));
+    }
+
+    @Test
+    void getMyStats_forbidden_si_aucun_joueur_lie() throws Exception {
+        when(meStatsService.getCurrentUserStats())
+                .thenThrow(new ForbiddenException("Aucun joueur lie a l'utilisateur authentifie."));
+
+        mvc.perform(get("/api/v1/me/stats"))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.message").value("Aucun joueur lie a l'utilisateur authentifie."));
     }
 }

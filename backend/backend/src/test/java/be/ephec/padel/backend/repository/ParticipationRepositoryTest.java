@@ -58,4 +58,28 @@ class ParticipationRepositoryTest extends SqlServerTestContainerConfig {
         assertThat(participationRepository.countByMatch_Id(match.getId()))
                 .isEqualTo(2);
     }
+
+    @Test
+    void countByJoueurMatricule_compte_les_participations_du_joueur() {
+        Site s = siteRepository.save(new Site("Site C", "Liege"));
+        Terrain t = terrainRepository.save(new Terrain("T3", s));
+
+        Joueur orga = joueurRepository.save(new Joueur("ORG3", "Orga3", TypeJoueur.GLOBAL));
+        Joueur j1 = joueurRepository.save(new Joueur("J020", "Alice", TypeJoueur.GLOBAL));
+        Joueur j2 = joueurRepository.save(new Joueur("J021", "Bob", TypeJoueur.GLOBAL));
+
+        MatchPadel match1 = matchPadelRepository.save(
+                new MatchPadel(t, orga, LocalDateTime.of(2030, 1, 1, 10, 0), MatchVisibilite.PUBLIC)
+        );
+        MatchPadel match2 = matchPadelRepository.save(
+                new MatchPadel(t, orga, LocalDateTime.of(2030, 1, 2, 10, 0), MatchVisibilite.PRIVE)
+        );
+
+        participationRepository.save(new Participation(match1, j1));
+        participationRepository.save(new Participation(match2, j1));
+        participationRepository.save(new Participation(match2, j2));
+
+        assertThat(participationRepository.countByJoueur_Matricule("J020")).isEqualTo(2L);
+        assertThat(participationRepository.countByJoueur_Matricule("J021")).isEqualTo(1L);
+    }
 }
