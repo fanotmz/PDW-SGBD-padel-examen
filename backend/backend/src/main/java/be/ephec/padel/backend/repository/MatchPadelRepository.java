@@ -16,6 +16,8 @@ import java.util.Optional;
 
 public interface MatchPadelRepository extends JpaRepository<MatchPadel, Long> {
 
+    Optional<MatchPadel> findByTerrain_IdAndDateDebut(Long terrainId, LocalDateTime dateDebut);
+
     @Query("select m from MatchPadel m where m.terrain.id = :terrainId")
     List<MatchPadel> findByTerrainId(@Param("terrainId") Long terrainId);
 

@@ -9,10 +9,12 @@ import org.springframework.data.repository.query.Param;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 public interface PaiementRepository extends JpaRepository<Paiement, Long> {
 
     List<Paiement> findByParticipation_Id(Long participationId);
+    Optional<Paiement> findByParticipation_IdAndType(Long participationId, TypePaiement type);
 
     List<Paiement> findByParticipation_Joueur_Matricule(String matricule);
 
