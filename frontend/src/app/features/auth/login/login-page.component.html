@@ -1,0 +1,24 @@
+<section class="login-page">
+  <form class="login-card" [formGroup]="form" (ngSubmit)="onSubmit()">
+    <h1>Connexion</h1>
+    <p class="login-subtitle">Connectez-vous pour acceder a votre espace padel.</p>
+
+    <label class="field">
+      <span>Username</span>
+      <input type="text" formControlName="username" autocomplete="username" />
+    </label>
+
+    <label class="field">
+      <span>Password</span>
+      <input type="password" formControlName="password" autocomplete="current-password" />
+    </label>
+
+    @if (errorMessage) {
+      <p class="error-message">{{ errorMessage }}</p>
+    }
+
+    <button type="submit" [disabled]="isSubmitting">
+      {{ isSubmitting ? 'Connexion...' : 'Se connecter' }}
+    </button>
+  </form>
+</section>
