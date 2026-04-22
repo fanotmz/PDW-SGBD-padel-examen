@@ -1,11 +1,6 @@
-.home-page {
-  display: flex;
-  justify-content: center;
-  padding: 4rem 1.5rem;
-}
-
-.home-card {
+.private-page {
   width: min(100%, 34rem);
+  margin: 4rem auto;
   padding: 2rem;
   border: 1px solid #d7e0eb;
   border-radius: 1rem;
@@ -13,21 +8,13 @@
   box-shadow: 0 20px 45px rgba(15, 23, 42, 0.08);
 }
 
-.eyebrow {
-  margin: 0 0 0.5rem;
-  color: #0f766e;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-}
-
-h1 {
+.private-page h1 {
   margin: 0 0 1rem;
   font-size: 2rem;
   color: #10233f;
 }
 
-p {
+.private-page p {
   margin: 0;
   color: #526277;
 }
@@ -39,11 +26,12 @@ p {
   margin-top: 1.5rem;
 }
 
-a,
-button {
+.actions a,
+.actions button {
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  min-width: 11rem;
   padding: 0.85rem 1rem;
   border: 0;
   border-radius: 0.75rem;
@@ -53,4 +41,13 @@ button {
   font-weight: 700;
   text-decoration: none;
   cursor: pointer;
+}
+
+.actions a {
+  background: #1d4ed8;
+}
+
+.actions a:hover,
+.actions button:hover {
+  filter: brightness(0.95);
 }
