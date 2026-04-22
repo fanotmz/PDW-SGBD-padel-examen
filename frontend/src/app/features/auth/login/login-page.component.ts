@@ -2,7 +2,7 @@ import { CommonModule } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, inject } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { ApiErrorResponse, LoginRequest } from '../../../core/auth/auth.models';
 import { AuthService } from '../../../core/auth/auth.service';
 
@@ -15,6 +15,7 @@ import { AuthService } from '../../../core/auth/auth.service';
 })
 export class LoginPageComponent {
   private readonly fb = inject(FormBuilder);
+  private readonly route = inject(ActivatedRoute);
   private readonly authService = inject(AuthService);
   private readonly router = inject(Router);
 
@@ -39,7 +40,7 @@ export class LoginPageComponent {
 
     this.authService.login(payload).subscribe({
       next: () => {
-        this.router.navigateByUrl('/');
+        this.router.navigateByUrl(this.getTargetUrl());
       },
       error: (error: HttpErrorResponse) => {
         this.isSubmitting = false;
@@ -66,9 +67,19 @@ export class LoginPageComponent {
         return Object.values(details).join(' ');
       }
 
-      return apiError?.message ?? 'Requete invalide.';
+      return apiError?.message ?? 'Requête invalide.';
     }
 
     return 'Backend inaccessible ou erreur inattendue.';
+  }
+
+  private getTargetUrl(): string {
+    const returnUrl = this.route.snapshot.queryParamMap.get('returnUrl');
+
+    if (returnUrl?.startsWith('/')) {
+      return returnUrl;
+    }
+
+    return '/';
   }
 }
