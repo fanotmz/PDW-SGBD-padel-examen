@@ -1,8 +1,7 @@
 import { HttpClient } from '@angular/common/http';
 import { Component, inject } from '@angular/core';
-import { Router, RouterLink } from '@angular/router';
+import { RouterLink } from '@angular/router';
 import { environment } from '../../../environments/environment';
-import { AuthService } from '../../core/auth/auth.service';
 
 type BackendTestStatus = 'idle' | 'loading' | 'success' | 'error';
 
@@ -14,9 +13,7 @@ type BackendTestStatus = 'idle' | 'loading' | 'success' | 'error';
   styleUrl: './espace-prive-page.component.css'
 })
 export class EspacePrivePageComponent {
-  private readonly authService = inject(AuthService);
   private readonly http = inject(HttpClient);
-  private readonly router = inject(Router);
 
   protected backendTestStatus: BackendTestStatus = 'idle';
   protected backendTestMessage = '';
@@ -30,17 +27,12 @@ export class EspacePrivePageComponent {
       .subscribe({
         next: () => {
           this.backendTestStatus = 'success';
-          this.backendTestMessage = 'Succés: appel backend effectué.';
+          this.backendTestMessage = 'Succès: appel backend effectué.';
         },
         error: () => {
           this.backendTestStatus = 'error';
           this.backendTestMessage = 'Échec: appel backend impossible.';
         }
       });
-  }
-
-  protected logout(): void {
-    this.authService.logout();
-    this.router.navigateByUrl('/');
   }
 }

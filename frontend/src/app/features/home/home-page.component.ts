@@ -1,19 +1,10 @@
-import { CommonModule } from '@angular/common';
-import { Component, inject } from '@angular/core';
-import { RouterLink } from '@angular/router';
-import { AuthService } from '../../core/auth/auth.service';
+import { Component } from '@angular/core';
 
 @Component({
   selector: 'app-home-page',
   standalone: true,
-  imports: [CommonModule, RouterLink],
+  imports: [],
   templateUrl: './home-page.component.html',
   styleUrl: './home-page.component.css'
 })
-export class HomePageComponent {
-  protected readonly authService = inject(AuthService);
-
-  protected logout(): void {
-    this.authService.logout();
-  }
-}
+export class HomePageComponent {}

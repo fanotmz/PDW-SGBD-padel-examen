@@ -2,19 +2,10 @@
   <div class="home-card">
     <p class="eyebrow">Padel Manager</p>
     <h1>Accueil</h1>
-
-    @if (authService.isAuthenticated()) {
-      <p>Connexion réussie. Le token JWT est stocké localement.</p>
-      <div class="actions">
-        <a routerLink="/espace-prive">Tester l'espace privé</a>
-        <button type="button" (click)="logout()">Se déconnecter</button>
-      </div>
-    } @else {
-      <p>Vous n'êtes pas connecte.</p>
-      <div class="actions">
-        <a routerLink="/espace-prive">Essayer l'espace privé</a>
-        <a routerLink="/login">Aller à la page de login</a>
-      </div>
-    }
+    <p>Frontend Angular de démonstration pour le projet PDW / SGBD padel.</p>
+    <p>
+      La navigation principale est maintenant portée par le layout global. Les pages métiers seront
+      branchées progressivement derrière cette structure.
+    </p>
   </div>
 </section>
