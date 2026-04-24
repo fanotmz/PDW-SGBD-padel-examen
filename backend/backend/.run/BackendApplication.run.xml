@@ -1,9 +1,14 @@
 <component name="ProjectRunConfigurationManager">
   <configuration default="false" name="BackendApplication" type="SpringBootApplicationConfigurationType" factoryName="Spring Boot" nameIsGenerated="true">
+    <option name="ACTIVE_PROFILES" value="dev" />
     <envs>
       <env name="DB_USER" value="padel_app" />
-      <env name="DB_PASSWORD" value="Pass1419" />
+      <env name="DB_PASSWORD" value="PadelApp2026!" />
       <env name="SERVER_PORT" value="8081" />
+      <env name="ADMIN_GLOBAL_USERNAME" value="adminGlobal" />
+      <env name="ADMIN_GLOBAL_PASSWORD" value="admin123" />
+      <env name="ADMIN_SITE_PASSWORD" value="admin123" />
+      <env name="ADMIN_SITE_USERS" value="adminSite1:1,adminSite2:2" />
     </envs>
     <module name="backend" />
     <option name="SPRING_BOOT_MAIN_CLASS" value="be.ephec.padel.backend.BackendApplication" />
