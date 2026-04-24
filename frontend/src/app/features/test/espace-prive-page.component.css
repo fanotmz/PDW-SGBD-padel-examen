@@ -51,3 +51,20 @@
 .actions button:hover {
   filter: brightness(0.95);
 }
+
+.test-status {
+  margin: 1rem 0 0;
+  font-weight: 600;
+}
+
+.test-status.is-loading {
+  color: #9a6700;
+}
+
+.test-status.is-success {
+  color: #15803d;
+}
+
+.test-status.is-error {
+  color: #b91c1c;
+}
