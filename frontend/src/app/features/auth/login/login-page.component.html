@@ -1,7 +1,7 @@
 <section class="login-page">
   <form class="login-card" [formGroup]="form" (ngSubmit)="onSubmit()">
     <h1>Connexion</h1>
-    <p class="login-subtitle">Connectez-vous pour accedér à3 votre espace padel.</p>
+    <p class="login-subtitle">Connectez-vous pour accedér à votre espace padel.</p>
 
     <label class="field">
       <span>Username</span>
@@ -10,15 +10,29 @@
 
     <label class="field">
       <span>Password</span>
-      <input type="password" formControlName="password" autocomplete="current-password" />
+      <div class="password-field">
+        <input
+          [type]="showPassword() ? 'text' : 'password'"
+          formControlName="password"
+          autocomplete="current-password"
+        />
+        <button
+          type="button"
+          class="password-toggle"
+          [attr.aria-label]="showPassword() ? 'Masquer le mot de passe' : 'Afficher le mot de passe'"
+          (click)="togglePasswordVisibility()"
+        >
+          &#128065;
+        </button>
+      </div>
     </label>
 
-    @if (errorMessage) {
-      <p class="error-message">{{ errorMessage }}</p>
+    @if (errorMessage()) {
+      <p class="error-message">{{ errorMessage() }}</p>
     }
 
-    <button type="submit" [disabled]="isSubmitting">
-      {{ isSubmitting ? 'Connexion...' : 'Se connecter' }}
+    <button type="submit" class="submit-button" [disabled]="isSubmitting()">
+      {{ isSubmitting() ? 'Connexion...' : 'Se connecter' }}
     </button>
   </form>
 </section>

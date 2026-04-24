@@ -1,8 +1,9 @@
 import { CommonModule } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
-import { Component, inject } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
+import { finalize } from 'rxjs';
 import { ApiErrorResponse, LoginRequest } from '../../../core/auth/auth.models';
 import { AuthService } from '../../../core/auth/auth.service';
 
@@ -19,8 +20,9 @@ export class LoginPageComponent {
   private readonly authService = inject(AuthService);
   private readonly router = inject(Router);
 
-  protected isSubmitting = false;
-  protected errorMessage = '';
+  protected readonly isSubmitting = signal(false);
+  protected readonly errorMessage = signal('');
+  protected readonly showPassword = signal(false);
 
   protected readonly form = this.fb.nonNullable.group({
     username: ['', Validators.required],
@@ -33,27 +35,37 @@ export class LoginPageComponent {
       return;
     }
 
-    this.isSubmitting = true;
-    this.errorMessage = '';
+    this.isSubmitting.set(true);
+    this.errorMessage.set('');
 
     const payload: LoginRequest = this.form.getRawValue();
 
-    this.authService.login(payload).subscribe({
-      next: () => {
-        this.router.navigateByUrl(this.getTargetUrl());
-      },
-      error: (error: HttpErrorResponse) => {
-        this.isSubmitting = false;
-        this.errorMessage = this.buildErrorMessage(error);
-      }
-    });
+    this.authService
+      .login(payload)
+      .pipe(finalize(() => this.isSubmitting.set(false)))
+      .subscribe({
+        next: () => {
+          this.router.navigateByUrl(this.getTargetUrl());
+        },
+        error: (error: HttpErrorResponse) => {
+          this.errorMessage.set(this.buildErrorMessage(error));
+        }
+      });
+  }
+
+  protected togglePasswordVisibility(): void {
+    this.showPassword.update((value) => !value);
   }
 
   private buildErrorMessage(error: HttpErrorResponse): string {
     const apiError = error.error as ApiErrorResponse | null;
 
+    if (error.status === 0) {
+      return 'Backend inaccessible.';
+    }
+
     if (error.status === 401) {
-      return 'Identifiants invalides.';
+      return 'Identifiant ou mot de passe invalide.';
     }
 
     if (error.status === 403 && apiError?.message) {
