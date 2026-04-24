@@ -1,0 +1,91 @@
+<section class="matches-page">
+  <div class="page-header">
+    <p class="eyebrow">Matchs</p>
+    <h1>Matchs publics</h1>
+    <p>Consultez les matchs publics actuellement disponibles.</p>
+  </div>
+
+  <form class="filters-card" (submit)="submitFilters($event)">
+    <label class="filter-field">
+      <span>From</span>
+      <input
+        type="date"
+        [value]="filters().from"
+        (input)="updateFilter('from', $any($event.target).value)"
+      />
+    </label>
+
+    <label class="filter-field">
+      <span>To</span>
+      <input
+        type="date"
+        [value]="filters().to"
+        (input)="updateFilter('to', $any($event.target).value)"
+      />
+    </label>
+
+    <label class="filter-field">
+      <span>Site ID</span>
+      <input
+        type="number"
+        min="1"
+        [value]="filters().siteId"
+        (input)="updateFilter('siteId', $any($event.target).value)"
+      />
+    </label>
+
+    <button type="submit" class="filters-submit">Charger</button>
+  </form>
+
+  @if (isLoading()) {
+    <p class="state-message">Chargement des matchs...</p>
+  } @else if (errorMessage()) {
+    <p class="state-message is-error">{{ errorMessage() }}</p>
+  } @else if (matches().length === 0) {
+    <p class="state-message">Aucun match public disponible pour le moment.</p>
+  } @else {
+    <div class="match-list">
+      @for (match of matches(); track match.id) {
+        <article class="match-card">
+          <div class="match-card-top">
+            <div>
+              <p class="match-site">{{ match.siteNom }}</p>
+              <h2>{{ match.terrainNom }}</h2>
+            </div>
+
+            <span class="status" [class.is-full]="match.complet">
+              {{ match.complet ? 'Complet' : 'Places disponibles' }}
+            </span>
+          </div>
+
+          <dl class="match-details">
+            <div>
+              <dt>Date</dt>
+              <dd>{{ match.dateDebut }}</dd>
+            </div>
+            <div>
+              <dt>Heure</dt>
+              <dd>{{ match.heureDebut }}</dd>
+            </div>
+            <div>
+              <dt>Organisateur</dt>
+              <dd>{{ match.organisateurMatricule }}</dd>
+            </div>
+            <div>
+              <dt>Participants</dt>
+              <dd>{{ match.nbParticipants }}</dd>
+            </div>
+            <div>
+              <dt>Places restantes</dt>
+              <dd>{{ match.placesRestantes }}</dd>
+            </div>
+            <div>
+              <dt>Montant par joueur</dt>
+              <dd>{{ match.montantParJoueur | currency:'EUR' }}</dd>
+            </div>
+          </dl>
+        </article>
+      }
+    </div>
+  }
+</section>
