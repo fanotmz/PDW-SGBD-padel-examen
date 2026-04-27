@@ -1,0 +1,79 @@
+<section class="organized-matches-page">
+  <div class="page-header">
+    <p class="eyebrow">Matchs organisés</p>
+    <h1>Matchs organisés</h1>
+    <p>Retrouvez ici les matchs que vous organisez actuellement.</p>
+  </div>
+
+  @if (isLoading()) {
+    <p class="state-message">Chargement de vos matchs organisés...</p>
+  } @else if (errorMessage()) {
+    <p class="state-message is-error">{{ errorMessage() }}</p>
+  } @else if (matches().length === 0) {
+    <p class="state-message">Vous n'avez aucun match organisé pour le moment.</p>
+  } @else {
+    <div class="match-list">
+      @for (match of matches(); track match.id) {
+        <article class="match-card">
+          <div class="match-card-top">
+            <div>
+              <p class="match-site">{{ match.siteNom }}</p>
+              <h2>{{ match.terrainNom }}</h2>
+            </div>
+
+            <div class="badge-group">
+              <span class="status-badge temporal-{{ match.statutTemporel.toLowerCase() }}">
+                {{ match.statutTemporel }}
+              </span>
+              <span
+                class="status-badge"
+                [class.is-cancelled]="match.statut === 'ANNULE'"
+                [class.is-full]="match.statut !== 'ANNULE' && match.complet"
+                [class.is-open]="match.statut !== 'ANNULE' && !match.complet"
+              >
+                {{ match.statut === 'ANNULE' ? 'Annulé' : (match.complet ? 'Complet' : 'Incomplet') }}
+              </span>
+            </div>
+          </div>
+
+          <dl class="match-details">
+            <div>
+              <dt>Date</dt>
+              <dd>{{ match.dateDebut | date:"dd/MM/yyyy 'à' HH:mm" }}</dd>
+            </div>
+            <div>
+              <dt>Visibilité</dt>
+              <dd>{{ match.visibilite }}</dd>
+            </div>
+            <div>
+              <dt>Statut</dt>
+              <dd>{{ match.statut }}</dd>
+            </div>
+            <div>
+              <dt>Participants</dt>
+              <dd>{{ match.nbParticipants }}</dd>
+            </div>
+            <div>
+              <dt>Places restantes</dt>
+              <dd>{{ match.placesRestantes }}</dd>
+            </div>
+            <div>
+              <dt>Statut temporel</dt>
+              <dd>{{ match.statutTemporel }}</dd>
+            </div>
+            @if (match.joursAvantMatch !== null) {
+              <div>
+                <dt>Jours avant match</dt>
+                <dd>{{ match.joursAvantMatch }}</dd>
+              </div>
+            }
+          </dl>
+
+          @if (match.risquePenaliteJ1) {
+            <p class="risk-message">Risque de pénalité J-1</p>
+          }
+        </article>
+      }
+    </div>
+  }
+</section>
