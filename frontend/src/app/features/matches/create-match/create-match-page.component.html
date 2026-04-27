@@ -1,0 +1,157 @@
+<section class="create-match-page">
+  <div class="page-header">
+    <p class="eyebrow">Création</p>
+    <h1>Créer un match</h1>
+    <p>Choisissez un site, un terrain, une date, une heure et une visibilité.</p>
+  </div>
+
+  @if (isLoadingSites()) {
+    <p class="state-message">Chargement des sites...</p>
+  } @else {
+    <div class="form-card">
+      @if (globalErrorMessage()) {
+        <div class="feedback-box is-error" role="alert" aria-live="assertive">
+          <p class="feedback-title is-error">Création impossible</p>
+          <p class="feedback-message is-error">{{ globalErrorMessage() }}</p>
+
+          @if (backendErrorDetails().length > 0) {
+            <ul class="feedback-details">
+              @for (detail of backendErrorDetails(); track detail[0]) {
+                <li><strong>{{ detail[0] }}</strong> : {{ detail[1] }}</li>
+              }
+            </ul>
+          }
+        </div>
+      }
+
+      @if (successMessage()) {
+        <div class="feedback-box is-success">
+          <p class="feedback-title">{{ successMessage() }}</p>
+
+          @if (createdMatch(); as match) {
+            <dl class="summary-grid">
+              <div>
+                <dt>Terrain</dt>
+                <dd>{{ match.terrainNom }}</dd>
+              </div>
+              <div>
+                <dt>Date</dt>
+                <dd>{{ match.dateDebut | date:"dd/MM/yyyy 'à' HH:mm" }}</dd>
+              </div>
+              <div>
+                <dt>Visibilité</dt>
+                <dd>{{ match.visibilite }}</dd>
+              </div>
+              <div>
+                <dt>Statut</dt>
+                <dd>{{ match.statut }}</dd>
+              </div>
+              <div>
+                <dt>Participants</dt>
+                <dd>{{ match.nbParticipants }}</dd>
+              </div>
+              <div>
+                <dt>Reste à payer</dt>
+                <dd>{{ match.resteAPayer | currency:'EUR' }}</dd>
+              </div>
+            </dl>
+          }
+
+          <a routerLink="/me/matchs/organises" class="summary-link">Voir mes matchs organisés</a>
+        </div>
+      }
+
+      <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
+        <div class="form-grid">
+          <label class="field">
+            <span>Site</span>
+            <select formControlName="siteId">
+              <option [ngValue]="null">Sélectionner un site</option>
+              @for (site of sites(); track site.id) {
+                <option [ngValue]="site.id">{{ siteLabel(site) }}</option>
+              }
+            </select>
+            @if (getFieldError('siteId')) {
+              <small class="field-error">{{ getFieldError('siteId') }}</small>
+            }
+          </label>
+
+          <label class="field">
+            <span>Terrain</span>
+            <select formControlName="terrainId">
+              <option [ngValue]="null">
+                @if (isLoadingTerrains()) { Chargement des terrains... } @else { Sélectionner un terrain }
+              </option>
+              @for (terrain of terrains(); track terrain.id) {
+                <option [ngValue]="terrain.id">{{ terrain.nom }}</option>
+              }
+            </select>
+            @if (getFieldError('terrainId')) {
+              <small class="field-error">{{ getFieldError('terrainId') }}</small>
+            }
+            @if (backendFieldErrors()['terrainId']) {
+              <small class="field-error">{{ backendFieldErrors()['terrainId'] }}</small>
+            }
+          </label>
+
+          <label class="field">
+            <span>Date</span>
+            <input type="date" formControlName="date" />
+            @if (getFieldError('date')) {
+              <small class="field-error">{{ getFieldError('date') }}</small>
+            }
+          </label>
+
+          <label class="field">
+            <span>Heure</span>
+            <select formControlName="heure">
+              <option value="">Sélectionner une heure</option>
+              @for (slot of timeSlots; track slot) {
+                <option [value]="slot">{{ slot }}</option>
+              }
+            </select>
+            @if (getFieldError('heure')) {
+              <small class="field-error">{{ getFieldError('heure') }}</small>
+            }
+            @if (dateDebutFieldError()) {
+              <small class="field-error">{{ dateDebutFieldError() }}</small>
+            }
+          </label>
+
+          <label class="field">
+            <span>Visibilité</span>
+            <select formControlName="visibilite">
+              <option value="PUBLIC">PUBLIC</option>
+              <option value="PRIVE">PRIVE</option>
+            </select>
+            @if (getFieldError('visibilite')) {
+              <small class="field-error">{{ getFieldError('visibilite') }}</small>
+            }
+            @if (backendFieldErrors()['visibilite']) {
+              <small class="field-error">{{ backendFieldErrors()['visibilite'] }}</small>
+            }
+          </label>
+        </div>
+
+        <div class="form-actions">
+          <button
+            type="submit"
+            class="submit-button"
+            [class.is-ready]="canSubmit()"
+            [disabled]="!canSubmit()"
+          >
+            {{ isSubmitting() ? 'Création en cours...' : 'Créer le match' }}
+          </button>
+
+          @if (!canSubmit() && getSubmitHints().length > 0) {
+            <ul class="submit-hints">
+              @for (reason of getSubmitHints(); track reason) {
+                <li>{{ reason }}</li>
+              }
+            </ul>
+          }
+        </div>
+      </form>
+    </div>
+  }
+</section>
