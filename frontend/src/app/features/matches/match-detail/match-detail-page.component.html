@@ -1,0 +1,114 @@
+<section class="match-detail-page">
+  <div class="page-header">
+    <div class="page-header-text">
+      <p class="eyebrow">Matchs</p>
+      <div class="title-row">
+        <h1>Détail du match</h1>
+        <button type="button" class="back-button" (click)="goBack()">&larr; Retour</button>
+      </div>
+      <p>Consultez les informations disponibles pour ce match.</p>
+    </div>
+  </div>
+
+  @if (isLoading()) {
+    <p class="state-message">Chargement du détail du match...</p>
+  } @else if (errorMessage()) {
+    <div class="state-message is-error" role="alert" aria-live="polite">
+      <p>{{ errorMessage() }}</p>
+      <a routerLink="/matchs" class="back-link">Retour aux matchs</a>
+    </div>
+  } @else if (match(); as detail) {
+    <div class="detail-layout">
+      <article class="detail-card">
+        <h2>Informations générales</h2>
+        <dl class="detail-grid">
+          <div>
+            <dt>Site</dt>
+            <dd>{{ detail.siteNom }}</dd>
+          </div>
+          <div>
+            <dt>Terrain</dt>
+            <dd>{{ detail.terrainNom }}</dd>
+          </div>
+          <div>
+            <dt>Date</dt>
+            <dd>{{ detail.dateDebut | date:'dd/MM/yyyy' }}</dd>
+          </div>
+          <div>
+            <dt>Heure</dt>
+            <dd>{{ detail.heureDebut }}</dd>
+          </div>
+          <div>
+            <dt>Visibilité</dt>
+            <dd>{{ detail.visibilite }}</dd>
+          </div>
+          <div>
+            <dt>Statut</dt>
+            <dd>{{ detail.statut }}</dd>
+          </div>
+          <div>
+            <dt>Organisateur</dt>
+            <dd>{{ detail.organisateurMatricule }} - {{ detail.organisateurNom }}</dd>
+          </div>
+        </dl>
+      </article>
+
+      <article class="detail-card">
+        <h2>État du match</h2>
+        <div class="badge-row">
+          <span class="status-badge" [class.is-full]="detail.complet" [class.is-open]="!detail.complet">
+            {{ detail.complet ? 'Complet' : 'Incomplet' }}
+          </span>
+        </div>
+        <dl class="detail-grid">
+          <div>
+            <dt>Participants</dt>
+            <dd>{{ detail.nbParticipants }}</dd>
+          </div>
+          <div>
+            <dt>Places restantes</dt>
+            <dd>{{ detail.placesRestantes }}</dd>
+          </div>
+        </dl>
+      </article>
+
+      <article class="detail-card">
+        <h2>Montants</h2>
+        <dl class="detail-grid">
+          <div>
+            <dt>Montant total</dt>
+            <dd>{{ detail.montantTotal | currency:'EUR' }}</dd>
+          </div>
+          <div>
+            <dt>Montant payé</dt>
+            <dd>{{ detail.montantPaye | currency:'EUR' }}</dd>
+          </div>
+          <div>
+            <dt>Reste à payer</dt>
+            <dd>{{ detail.resteAPayer | currency:'EUR' }}</dd>
+          </div>
+          <div>
+            <dt>Montant remboursé</dt>
+            <dd>{{ detail.montantRembourse | currency:'EUR' }}</dd>
+          </div>
+        </dl>
+      </article>
+
+      <article class="detail-card">
+        <h2>Participants</h2>
+        @if (detail.participants.length === 0) {
+          <p class="empty-participants">Aucun participant à afficher.</p>
+        } @else {
+          <ul class="participants-list">
+            @for (participant of detail.participants; track participant.matricule) {
+              <li>
+                <strong>{{ participant.matricule }}</strong>
+                <span>{{ participant.nom }}</span>
+              </li>
+            }
+          </ul>
+        }
+      </article>
+    </div>
+  }
+</section>

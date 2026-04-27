@@ -72,6 +72,8 @@
           @if (match.risquePenaliteJ1) {
             <p class="risk-message">Risque de pénalité J-1</p>
           }
+
+          <a [routerLink]="['/matchs', match.id]" class="detail-link">Voir le détail</a>
         </article>
       }
     </div>

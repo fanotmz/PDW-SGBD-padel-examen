@@ -84,6 +84,8 @@
               <dd>{{ match.montantParJoueur | currency:'EUR' }}</dd>
             </div>
           </dl>
+
+          <a [routerLink]="['/matchs', match.id]" class="detail-link">Voir le détail</a>
         </article>
       }
     </div>

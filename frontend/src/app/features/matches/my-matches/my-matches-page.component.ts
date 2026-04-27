@@ -1,6 +1,7 @@
 import { CommonModule, DatePipe } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, OnInit, inject, signal } from '@angular/core';
+import { RouterLink } from '@angular/router';
 import { finalize } from 'rxjs';
 import { PlayerMatchSummary } from '../../../core/matches/player-match-summary.models';
 import { PlayerMatchesService } from '../../../core/matches/player-matches.service';
@@ -8,7 +9,7 @@ import { PlayerMatchesService } from '../../../core/matches/player-matches.servi
 @Component({
   selector: 'app-my-matches-page',
   standalone: true,
-  imports: [CommonModule, DatePipe],
+  imports: [CommonModule, RouterLink, DatePipe],
   templateUrl: './my-matches-page.component.html',
   styleUrl: './my-matches-page.component.css'
 })

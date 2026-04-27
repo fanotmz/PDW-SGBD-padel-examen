@@ -1,6 +1,7 @@
 import { CommonModule, CurrencyPipe } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, OnInit, inject, signal } from '@angular/core';
+import { RouterLink } from '@angular/router';
 import { finalize } from 'rxjs';
 import { PublicMatch } from '../../../core/matches/public-match.models';
 import { PublicMatchesService } from '../../../core/matches/public-matches.service';
@@ -8,7 +9,7 @@ import { PublicMatchesService } from '../../../core/matches/public-matches.servi
 @Component({
   selector: 'app-public-matches-page',
   standalone: true,
-  imports: [CommonModule, CurrencyPipe],
+  imports: [CommonModule, RouterLink, CurrencyPipe],
   templateUrl: './public-matches-page.component.html',
   styleUrl: './public-matches-page.component.css'
 })
