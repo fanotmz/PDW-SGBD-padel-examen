@@ -3,6 +3,7 @@ import { authGuard } from './core/auth/auth.guard';
 import { LoginPageComponent } from './features/auth/login/login-page.component';
 import { HomePageComponent } from './features/home/home-page.component';
 import { CreateMatchPageComponent } from './features/matches/create-match/create-match-page.component';
+import { MatchDetailPageComponent } from './features/matches/match-detail/match-detail-page.component';
 import { MyMatchesPageComponent } from './features/matches/my-matches/my-matches-page.component';
 import { OrganizedMatchesPageComponent } from './features/matches/organized-matches/organized-matches-page.component';
 import { PublicMatchesPageComponent } from './features/matches/public-matches/public-matches-page.component';
@@ -19,6 +20,7 @@ export const routes: Routes = [
       { path: 'login', component: LoginPageComponent },
       { path: 'espace-prive', component: EspacePrivePageComponent, canActivate: [authGuard] },
       { path: 'matchs/creer', component: CreateMatchPageComponent, canActivate: [authGuard] },
+      { path: 'matchs/:id', component: MatchDetailPageComponent, canActivate: [authGuard] },
       { path: 'me/matchs', component: MyMatchesPageComponent, canActivate: [authGuard] },
       { path: 'me/matchs/organises', component: OrganizedMatchesPageComponent, canActivate: [authGuard] },
       { path: 'matchs', component: PublicMatchesPageComponent, canActivate: [authGuard] },

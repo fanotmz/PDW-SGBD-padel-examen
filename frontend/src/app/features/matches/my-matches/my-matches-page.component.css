@@ -122,6 +122,18 @@ dd {
   color: #10233f;
 }
 
+.detail-link {
+  display: inline-flex;
+  margin-top: 1rem;
+  color: #0f766e;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.detail-link:hover {
+  text-decoration: underline;
+}
+
 @media (max-width: 680px) {
   .my-matches-page {
     padding: 2rem 0;

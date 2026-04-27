@@ -1,6 +1,7 @@
 import { CommonModule, DatePipe } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, OnInit, inject, signal } from '@angular/core';
+import { RouterLink } from '@angular/router';
 import { finalize } from 'rxjs';
 import { OrganizedMatchSummary } from '../../../core/matches/organized-match-summary.models';
 import { OrganizedMatchesService } from '../../../core/matches/organized-matches.service';
@@ -8,7 +9,7 @@ import { OrganizedMatchesService } from '../../../core/matches/organized-matches
 @Component({
   selector: 'app-organized-matches-page',
   standalone: true,
-  imports: [CommonModule, DatePipe],
+  imports: [CommonModule, RouterLink, DatePipe],
   templateUrl: './organized-matches-page.component.html',
   styleUrl: './organized-matches-page.component.css'
 })
