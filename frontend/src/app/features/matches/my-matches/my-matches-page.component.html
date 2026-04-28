@@ -2,7 +2,7 @@
   <div class="page-header">
     <p class="eyebrow">Mes matchs</p>
     <h1>Mes matchs</h1>
-    <p>Retrouvez ici les matchs associés à votre compte joueur.</p>
+    <p>Retrouvez ici les matchs associ&eacute;s &agrave; votre compte joueur.</p>
   </div>
 
   @if (isLoading()) {
@@ -21,34 +21,40 @@
               <h2>{{ match.terrainNom }}</h2>
             </div>
 
-            <span class="status-badge temporal-{{ match.statutTemporel.toLowerCase() }}">
-              {{ match.statutTemporel }}
+            <span
+              class="status-badge"
+              [class.is-cancelled]="match.statut === 'ANNULE'"
+              [class.temporal-passe]="match.statut !== 'ANNULE' && match.statutTemporel === 'PASSE'"
+              [class.temporal-aujourd_hui]="match.statut !== 'ANNULE' && match.statutTemporel === 'AUJOURD_HUI'"
+              [class.temporal-futur]="match.statut !== 'ANNULE' && match.statutTemporel === 'FUTUR'"
+            >
+              {{ getDisplayStatusLabel(match) }}
             </span>
           </div>
 
           <dl class="match-details">
             <div>
               <dt>Date</dt>
-              <dd>{{ match.dateDebut | date:"dd/MM/yyyy 'à' HH:mm" }}</dd>
+              <dd>{{ match.dateDebut | date:'dd/MM/yyyy' }}</dd>
             </div>
             <div>
-              <dt>Visibilité</dt>
+              <dt>Heure</dt>
+              <dd>{{ match.dateDebut | date:'HH:mm' }}</dd>
+            </div>
+            <div>
+              <dt>Visibilit&eacute;</dt>
               <dd>{{ match.visibilite }}</dd>
             </div>
             <div>
               <dt>Statut</dt>
-              <dd>{{ match.statut }}</dd>
+              <dd>{{ getDisplayStatusLabel(match) }}</dd>
             </div>
             <div>
-              <dt>Rôle du joueur</dt>
+              <dt>R&ocirc;le du joueur</dt>
               <dd>{{ match.roleJoueur }}</dd>
             </div>
             <div>
-              <dt>Statut temporel</dt>
-              <dd>{{ match.statutTemporel }}</dd>
-            </div>
-            <div>
-              <dt>Paiement effectué</dt>
+              <dt>Paiement effectu&eacute;</dt>
               <dd>{{ match.paiementJoueurEffectue ? 'Oui' : 'Non' }}</dd>
             </div>
             @if (match.joursAvantMatch !== null) {
@@ -59,7 +65,7 @@
             }
           </dl>
 
-          <a [routerLink]="['/matchs', match.id]" class="detail-link">Voir le détail</a>
+          <a [routerLink]="['/matchs', match.id]" class="detail-link">Voir le d&eacute;tail</a>
         </article>
       }
     </div>

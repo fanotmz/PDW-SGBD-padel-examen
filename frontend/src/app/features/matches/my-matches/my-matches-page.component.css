@@ -84,6 +84,11 @@ h2 {
   font-weight: 700;
 }
 
+.status-badge.is-cancelled {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
 .temporal-passe {
   background: #e5e7eb;
   color: #374151;

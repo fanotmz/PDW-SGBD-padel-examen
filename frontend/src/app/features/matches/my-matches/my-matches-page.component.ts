@@ -24,6 +24,22 @@ export class MyMatchesPageComponent implements OnInit {
     this.loadMatches();
   }
 
+  protected getDisplayStatusLabel(match: PlayerMatchSummary): string {
+    if (match.statut === 'ANNULE') {
+      return 'Annul\u00e9';
+    }
+
+    switch (match.statutTemporel) {
+      case 'PASSE':
+        return 'D\u00e9j\u00e0 jou\u00e9';
+      case 'AUJOURD_HUI':
+        return 'Aujourd\u2019hui';
+      case 'FUTUR':
+      default:
+        return '\u00c0 venir';
+    }
+  }
+
   private loadMatches(): void {
     this.isLoading.set(true);
     this.errorMessage.set('');

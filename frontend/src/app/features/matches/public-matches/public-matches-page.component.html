@@ -37,15 +37,28 @@
     <button type="submit" class="filters-submit">Charger</button>
   </form>
 
+  <div class="display-filters" aria-label="Filtrer les matchs publics">
+    @for (filter of displayFilterOptions; track filter.value) {
+      <button
+        type="button"
+        class="display-filter-button"
+        [class.is-active]="isFilterSelected(filter.value)"
+        (click)="selectDisplayFilter(filter.value)"
+      >
+        {{ filter.label }}
+      </button>
+    }
+  </div>
+
   @if (isLoading()) {
     <p class="state-message">Chargement des matchs...</p>
   } @else if (errorMessage()) {
     <p class="state-message is-error">{{ errorMessage() }}</p>
-  } @else if (matches().length === 0) {
-    <p class="state-message">Aucun match public disponible pour le moment.</p>
+  } @else if (filteredMatches().length === 0) {
+    <p class="state-message">{{ emptyStateMessage() }}</p>
   } @else {
     <div class="match-list">
-      @for (match of matches(); track match.id) {
+      @for (match of filteredMatches(); track match.id) {
         <article class="match-card">
           <div class="match-card-top">
             <div>
@@ -53,19 +66,19 @@
               <h2>{{ match.terrainNom }}</h2>
             </div>
 
-            <span class="status" [class.is-full]="match.complet">
-              {{ match.complet ? 'Complet' : 'Places disponibles' }}
+            <span class="status" [class]=" 'status ' + getMatchBadgeClass(match) ">
+              {{ getMatchBadgeLabel(match) }}
             </span>
           </div>
 
           <dl class="match-details">
             <div>
               <dt>Date</dt>
-              <dd>{{ match.dateDebut }}</dd>
+              <dd>{{ match.dateDebut | date:'dd/MM/yyyy' }}</dd>
             </div>
             <div>
               <dt>Heure</dt>
-              <dd>{{ match.heureDebut }}</dd>
+              <dd>{{ match.heureDebut | slice:0:5 }}</dd>
             </div>
             <div>
               <dt>Organisateur</dt>
@@ -85,7 +98,7 @@
             </div>
           </dl>
 
-          <a [routerLink]="['/matchs', match.id]" class="detail-link">Voir le détail</a>
+          <a [routerLink]="['/matchs', match.id]" class="detail-link">{{ getDetailLinkLabel(match) }}</a>
         </article>
       }
     </div>
