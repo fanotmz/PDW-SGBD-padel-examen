@@ -3,7 +3,7 @@
     <div class="page-header-text">
       <p class="eyebrow">Matchs</p>
       <div class="title-row">
-        <h1>Détail du match</h1>
+        <h1>D&eacute;tail du match</h1>
         <button type="button" class="back-button" (click)="goBack()">&larr; Retour</button>
       </div>
       <p>Consultez les informations disponibles pour ce match.</p>
@@ -11,7 +11,7 @@
   </div>
 
   @if (isLoading()) {
-    <p class="state-message">Chargement du détail du match...</p>
+    <p class="state-message">Chargement du d&eacute;tail du match...</p>
   } @else if (errorMessage()) {
     <div class="state-message is-error" role="alert" aria-live="polite">
       <p>{{ errorMessage() }}</p>
@@ -20,7 +20,7 @@
   } @else if (match(); as detail) {
     <div class="detail-layout">
       <article class="detail-card">
-        <h2>Informations générales</h2>
+        <h2>Informations g&eacute;n&eacute;rales</h2>
         <dl class="detail-grid">
           <div>
             <dt>Site</dt>
@@ -36,15 +36,15 @@
           </div>
           <div>
             <dt>Heure</dt>
-            <dd>{{ detail.heureDebut }}</dd>
+            <dd>{{ detail.heureDebut | slice:0:5 }}</dd>
           </div>
           <div>
-            <dt>Visibilité</dt>
+            <dt>Visibilit&eacute;</dt>
             <dd>{{ detail.visibilite }}</dd>
           </div>
           <div>
             <dt>Statut</dt>
-            <dd>{{ detail.statut }}</dd>
+            <dd>{{ getDisplayStatusLabel(detail) }}</dd>
           </div>
           <div>
             <dt>Organisateur</dt>
@@ -54,12 +54,46 @@
       </article>
 
       <article class="detail-card">
-        <h2>État du match</h2>
+        <h2>&Eacute;tat du match</h2>
+
+        @if (joinSuccessMessage()) {
+          <div class="action-message is-success" role="status" aria-live="polite">
+            <p>{{ joinSuccessMessage() }}</p>
+          </div>
+        }
+
+        @if (joinErrorMessage()) {
+          <div class="action-message is-error" role="alert" aria-live="polite">
+            <p>{{ joinErrorMessage() }}</p>
+
+            @if (joinErrorDetails(); as details) {
+              <ul class="action-details">
+                @for (detailEntry of details | keyvalue; track detailEntry.key) {
+                  <li>{{ detailEntry.value }}</li>
+                }
+              </ul>
+            }
+          </div>
+        }
+
         <div class="badge-row">
-          <span class="status-badge" [class.is-full]="detail.complet" [class.is-open]="!detail.complet">
-            {{ detail.complet ? 'Complet' : 'Incomplet' }}
+          <span
+            class="status-badge"
+            [class.is-cancelled]="isCancelled(detail)"
+            [class.temporal-passe]="!isCancelled(detail) && getDisplayStatusLabel(detail) === 'D\u00e9j\u00e0 jou\u00e9'"
+            [class.temporal-aujourd_hui]="!isCancelled(detail) && getDisplayStatusLabel(detail) === 'Aujourd\u2019hui'"
+            [class.temporal-futur]="!isCancelled(detail) && getDisplayStatusLabel(detail) === '\u00c0 venir'"
+          >
+            {{ getDisplayStatusLabel(detail) }}
           </span>
+
+          @if (!isCancelled(detail) && getDisplayStatusLabel(detail) !== 'D\u00e9j\u00e0 jou\u00e9') {
+            <span class="status-badge" [class.is-full]="detail.complet" [class.is-open]="!detail.complet">
+              {{ detail.complet ? 'Complet' : 'Places disponibles' }}
+            </span>
+          }
         </div>
+
         <dl class="detail-grid">
           <div>
             <dt>Participants</dt>
@@ -70,6 +104,17 @@
             <dd>{{ detail.placesRestantes }}</dd>
           </div>
         </dl>
+
+        @if (canShowJoinButton()) {
+          <button
+            type="button"
+            class="join-button"
+            [disabled]="isJoining()"
+            (click)="joinPublicMatch()"
+          >
+            {{ isJoining() ? 'Inscription en cours...' : 'Rejoindre le match' }}
+          </button>
+        }
       </article>
 
       <article class="detail-card">
@@ -80,15 +125,15 @@
             <dd>{{ detail.montantTotal | currency:'EUR' }}</dd>
           </div>
           <div>
-            <dt>Montant payé</dt>
+            <dt>Montant pay&eacute;</dt>
             <dd>{{ detail.montantPaye | currency:'EUR' }}</dd>
           </div>
           <div>
-            <dt>Reste à payer</dt>
+            <dt>Reste &agrave; payer</dt>
             <dd>{{ detail.resteAPayer | currency:'EUR' }}</dd>
           </div>
           <div>
-            <dt>Montant remboursé</dt>
+            <dt>Montant rembours&eacute;</dt>
             <dd>{{ detail.montantRembourse | currency:'EUR' }}</dd>
           </div>
         </dl>
@@ -97,7 +142,7 @@
       <article class="detail-card">
         <h2>Participants</h2>
         @if (detail.participants.length === 0) {
-          <p class="empty-participants">Aucun participant à afficher.</p>
+          <p class="empty-participants">Aucun participant &agrave; afficher.</p>
         } @else {
           <ul class="participants-list">
             @for (participant of detail.participants; track participant.matricule) {

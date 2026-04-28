@@ -1,16 +1,16 @@
 <section class="organized-matches-page">
   <div class="page-header">
-    <p class="eyebrow">Matchs organisés</p>
-    <h1>Matchs organisés</h1>
+    <p class="eyebrow">Matchs organis&eacute;s</p>
+    <h1>Matchs organis&eacute;s</h1>
     <p>Retrouvez ici les matchs que vous organisez actuellement.</p>
   </div>
 
   @if (isLoading()) {
-    <p class="state-message">Chargement de vos matchs organisés...</p>
+    <p class="state-message">Chargement de vos matchs organis&eacute;s...</p>
   } @else if (errorMessage()) {
     <p class="state-message is-error">{{ errorMessage() }}</p>
   } @else if (matches().length === 0) {
-    <p class="state-message">Vous n'avez aucun match organisé pour le moment.</p>
+    <p class="state-message">Vous n'avez aucun match organis&eacute; pour le moment.</p>
   } @else {
     <div class="match-list">
       @for (match of matches(); track match.id) {
@@ -22,32 +22,44 @@
             </div>
 
             <div class="badge-group">
-              <span class="status-badge temporal-{{ match.statutTemporel.toLowerCase() }}">
-                {{ match.statutTemporel }}
-              </span>
               <span
                 class="status-badge"
                 [class.is-cancelled]="match.statut === 'ANNULE'"
-                [class.is-full]="match.statut !== 'ANNULE' && match.complet"
-                [class.is-open]="match.statut !== 'ANNULE' && !match.complet"
+                [class.temporal-passe]="match.statut !== 'ANNULE' && match.statutTemporel === 'PASSE'"
+                [class.temporal-aujourd_hui]="match.statut !== 'ANNULE' && match.statutTemporel === 'AUJOURD_HUI'"
+                [class.temporal-futur]="match.statut !== 'ANNULE' && match.statutTemporel === 'FUTUR'"
               >
-                {{ match.statut === 'ANNULE' ? 'Annulé' : (match.complet ? 'Complet' : 'Incomplet') }}
+                {{ getDisplayStatusLabel(match) }}
               </span>
+
+              @if (match.statut !== 'ANNULE' && match.statutTemporel !== 'PASSE') {
+                <span
+                  class="status-badge"
+                  [class.is-full]="match.complet"
+                  [class.is-open]="!match.complet"
+                >
+                  {{ match.complet ? 'Complet' : 'Places disponibles' }}
+                </span>
+              }
             </div>
           </div>
 
           <dl class="match-details">
             <div>
               <dt>Date</dt>
-              <dd>{{ match.dateDebut | date:"dd/MM/yyyy 'à' HH:mm" }}</dd>
+              <dd>{{ match.dateDebut | date:'dd/MM/yyyy' }}</dd>
             </div>
             <div>
-              <dt>Visibilité</dt>
+              <dt>Heure</dt>
+              <dd>{{ match.dateDebut | date:'HH:mm' }}</dd>
+            </div>
+            <div>
+              <dt>Visibilit&eacute;</dt>
               <dd>{{ match.visibilite }}</dd>
             </div>
             <div>
               <dt>Statut</dt>
-              <dd>{{ match.statut }}</dd>
+              <dd>{{ getDisplayStatusLabel(match) }}</dd>
             </div>
             <div>
               <dt>Participants</dt>
@@ -56,10 +68,6 @@
             <div>
               <dt>Places restantes</dt>
               <dd>{{ match.placesRestantes }}</dd>
-            </div>
-            <div>
-              <dt>Statut temporel</dt>
-              <dd>{{ match.statutTemporel }}</dd>
             </div>
             @if (match.joursAvantMatch !== null) {
               <div>
@@ -70,10 +78,10 @@
           </dl>
 
           @if (match.risquePenaliteJ1) {
-            <p class="risk-message">Risque de pénalité J-1</p>
+            <p class="risk-message">Risque de p&eacute;nalit&eacute; J-1</p>
           }
 
-          <a [routerLink]="['/matchs', match.id]" class="detail-link">Voir le détail</a>
+          <a [routerLink]="['/matchs', match.id]" class="detail-link">Voir le d&eacute;tail</a>
         </article>
       }
     </div>

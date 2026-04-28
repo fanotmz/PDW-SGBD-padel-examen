@@ -132,17 +132,57 @@ dd {
 }
 
 .badge-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
   margin-bottom: 1rem;
+}
+
+.action-message {
+  margin: 0 0 1rem;
+  padding: 0.9rem 1rem;
+  border: 1px solid #d7e0eb;
+  border-radius: 0.9rem;
+}
+
+.action-message p {
+  margin: 0;
+}
+
+.action-message.is-success {
+  border-color: #bbf7d0;
+  background: #f0fdf4;
+  color: #166534;
+}
+
+.action-message.is-error {
+  border-color: #fecaca;
+  background: #fef2f2;
+  color: #b91c1c;
+}
+
+.action-details {
+  margin: 0.7rem 0 0;
+  padding-left: 1.1rem;
+}
+
+.action-details li + li {
+  margin-top: 0.3rem;
 }
 
 .status-badge {
   display: inline-flex;
   padding: 0.4rem 0.75rem;
   border-radius: 999px;
-  background: #fee2e2;
-  color: #991b1b;
+  background: #e0f2fe;
+  color: #075985;
   font-size: 0.9rem;
   font-weight: 700;
+}
+
+.status-badge.is-cancelled {
+  background: #fee2e2;
+  color: #991b1b;
 }
 
 .status-badge.is-full {
@@ -151,8 +191,44 @@ dd {
 }
 
 .status-badge.is-open {
-  background: #fee2e2;
-  color: #991b1b;
+  background: #dcfce7;
+  color: #166534;
+}
+
+.temporal-passe {
+  background: #e5e7eb;
+  color: #374151;
+}
+
+.temporal-aujourd_hui {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.temporal-futur {
+  background: #dbeafe;
+  color: #1d4ed8;
+}
+
+.join-button {
+  margin-top: 1rem;
+  border: none;
+  border-radius: 0.85rem;
+  background: #0f766e;
+  color: #ffffff;
+  font: inherit;
+  font-weight: 700;
+  padding: 0.8rem 1.2rem;
+  cursor: pointer;
+}
+
+.join-button:hover:not(:disabled) {
+  background: #115e59;
+}
+
+.join-button:disabled {
+  opacity: 0.7;
+  cursor: wait;
 }
 
 .participants-list {

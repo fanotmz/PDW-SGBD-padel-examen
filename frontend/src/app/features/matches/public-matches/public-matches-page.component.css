@@ -50,6 +50,37 @@
   cursor: pointer;
 }
 
+.display-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+}
+
+.display-filter-button {
+  min-width: 8.5rem;
+  padding: 0.7rem 1rem;
+  border: 1px solid #c3d0de;
+  border-radius: 999px;
+  background: #ffffff;
+  color: #526277;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background-color 0.12s ease, border-color 0.12s ease, color 0.12s ease;
+}
+
+.display-filter-button:hover {
+  border-color: #0f766e;
+  color: #0f766e;
+}
+
+.display-filter-button.is-active {
+  border-color: #0f766e;
+  background: #0f766e;
+  color: #ffffff;
+}
+
 .eyebrow {
   margin: 0 0 0.5rem;
   color: #0f766e;
@@ -127,9 +158,24 @@ h2 {
   font-weight: 700;
 }
 
+.status.is-open {
+  background: #dcfce7;
+  color: #166534;
+}
+
 .status.is-full {
   background: #fee2e2;
   color: #991b1b;
+}
+
+.status.is-cancelled {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.status.is-past {
+  background: #e5e7eb;
+  color: #374151;
 }
 
 .match-details {

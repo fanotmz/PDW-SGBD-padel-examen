@@ -2,6 +2,8 @@ export interface PublicMatch {
   id: number;
   dateDebut: string;
   heureDebut: string;
+  statut?: string;
+  statutTemporel?: string;
   siteId: number;
   siteNom: string;
   terrainId: number;
