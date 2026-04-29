@@ -104,6 +104,7 @@ class MatchControllerTest {
                 2,
                 2,
                 false,
+                visibilite == MatchVisibilite.PRIVE,
                 new BigDecimal("60.00"),
                 new BigDecimal("15.00"),
                 new BigDecimal("45.00"),
@@ -236,6 +237,7 @@ class MatchControllerTest {
                 .andExpect(jsonPath("$.nbParticipants").value(2))
                 .andExpect(jsonPath("$.placesRestantes").value(2))
                 .andExpect(jsonPath("$.complet").value(false))
+                .andExpect(jsonPath("$.peutAjouterJoueurPrive").value(false))
                 .andExpect(jsonPath("$.montantTotal").value(60.0))
                 .andExpect(jsonPath("$.montantPaye").value(15.0))
                 .andExpect(jsonPath("$.resteAPayer").value(45.0));
@@ -259,7 +261,8 @@ class MatchControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.visibilite").value("PRIVE"))
-                .andExpect(jsonPath("$.organisateurMatricule").value("G0001"));
+                .andExpect(jsonPath("$.organisateurMatricule").value("G0001"))
+                .andExpect(jsonPath("$.peutAjouterJoueurPrive").value(true));
     }
 
     @Test

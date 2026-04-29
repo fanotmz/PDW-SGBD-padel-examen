@@ -2,6 +2,7 @@ package be.ephec.padel.backend.service;
 
 import be.ephec.padel.backend.common.Tarifs;
 import be.ephec.padel.backend.exception.BusinessException;
+import be.ephec.padel.backend.exception.ForbiddenException;
 import be.ephec.padel.backend.exception.NotFoundException;
 import be.ephec.padel.backend.model.entities.Joueur;
 import be.ephec.padel.backend.model.entities.MatchPadel;
@@ -12,6 +13,7 @@ import be.ephec.padel.backend.repository.JoueurRepository;
 import be.ephec.padel.backend.repository.MatchPadelRepository;
 import be.ephec.padel.backend.repository.ParticipationRepository;
 import be.ephec.padel.backend.security.CurrentUserFacade;
+import be.ephec.padel.backend.security.ServiceAutorisationAdmin;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -31,6 +33,7 @@ public class ParticipationService {
     private final SoldeService soldeService;
     private final PaiementService paiementService;
     private final CurrentUserFacade currentUserFacade;
+    private final ServiceAutorisationAdmin serviceAutorisationAdmin;
 
     @Autowired
     public ParticipationService(ParticipationRepository participationRepository,
@@ -38,13 +41,15 @@ public class ParticipationService {
                                 JoueurRepository joueurRepository,
                                 SoldeService soldeService,
                                 PaiementService paiementService,
-                                CurrentUserFacade currentUserFacade) {
+                                CurrentUserFacade currentUserFacade,
+                                ServiceAutorisationAdmin serviceAutorisationAdmin) {
         this.participationRepository = participationRepository;
         this.matchPadelRepository = matchPadelRepository;
         this.joueurRepository = joueurRepository;
         this.soldeService = soldeService;
         this.paiementService = paiementService;
         this.currentUserFacade = currentUserFacade;
+        this.serviceAutorisationAdmin = serviceAutorisationAdmin;
     }
 
     public Participation rejoindreEtPayerMatchPublic(Long matchId) {
@@ -54,7 +59,7 @@ public class ParticipationService {
         verifierMatchNonAnnule(match);
 
         if (match.getVisibilite() != MatchVisibilite.PUBLIC) {
-            throw new BusinessException("Match prive : seule l'organisation peut ajouter des joueurs.");
+            throw new BusinessException("Match priv\u00e9 : seule l'organisation peut ajouter des joueurs.");
         }
 
         String joueurMatricule = joueur.getMatricule();
@@ -83,7 +88,7 @@ public class ParticipationService {
         verifierMatchNonAnnule(match);
 
         if (match.getVisibilite() != MatchVisibilite.PUBLIC) {
-            throw new BusinessException("Match prive : ce calcul n'est valable que pour un match public.");
+            throw new BusinessException("Match priv\u00e9 : ce calcul n'est valable que pour un match public.");
         }
 
         BigDecimal dette = joueur.getSolde() == null ? BigDecimal.ZERO : joueur.getSolde().setScale(2, RoundingMode.HALF_UP);
@@ -91,7 +96,6 @@ public class ParticipationService {
     }
 
     public Participation ajouterJoueurParOrganisateur(Long matchId, String joueurMatriculeAAjouter) {
-        Joueur currentJoueur = currentUserFacade.getCurrentJoueur();
         MatchPadel match = getMatchOrThrow(matchId);
         verifierMatchNonAnnule(match);
 
@@ -99,10 +103,14 @@ public class ParticipationService {
             throw new BusinessException("Match public : l'organisateur ne peut pas ajouter des joueurs.");
         }
 
-        String orga = match.getOrganisateur().getMatricule();
-        boolean admin = currentUserFacade.isAdmin();
-        if (!admin && !orga.equals(currentJoueur.getMatricule())) {
-            throw new BusinessException("Seul l'organisateur peut ajouter des joueurs a ce match.");
+        if (match.getStatut() != MatchStatut.PLANIFIE) {
+            throw new BusinessException("Ajout impossible : seuls les matchs planifi\u00e9s acceptent de nouveaux joueurs.");
+        }
+
+        if (!peutAjouterJoueurPrive(match)) {
+            throw new BusinessException(
+                    "Seul l'organisateur ou un admin autoris\u00e9 sur le site peut ajouter des joueurs \u00e0 ce match."
+            );
         }
 
         Joueur joueurAAjouter = getJoueurOrThrow(joueurMatriculeAAjouter);
@@ -134,14 +142,46 @@ public class ParticipationService {
 
     private void verifierNonDejaInscrit(Long matchId, String joueurMatricule) {
         if (participationRepository.existsByMatch_IdAndJoueur_Matricule(matchId, joueurMatricule)) {
-            throw new BusinessException("Joueur deja inscrit a ce match");
+            throw new BusinessException("Joueur d\u00e9j\u00e0 inscrit \u00e0 ce match");
         }
     }
 
     private void verifierPlaceDisponible(Long matchId) {
         int nb = participationRepository.countByMatch_Id(matchId);
         if (nb >= 4) {
-            throw new BusinessException("Match deja complet");
+            throw new BusinessException("Match d\u00e9j\u00e0 complet");
         }
+    }
+
+    private boolean peutAjouterJoueurPrive(MatchPadel match) {
+        if (estOrganisateur(match)) {
+            return true;
+        }
+
+        return serviceAutorisationAdmin.peutAdministrerSite(getSiteId(match));
+    }
+
+    private boolean estOrganisateur(MatchPadel match) {
+        try {
+            Joueur currentJoueur = currentUserFacade.getCurrentJoueur();
+            Joueur organisateur = match.getOrganisateur();
+
+            return currentJoueur != null
+                    && organisateur != null
+                    && currentJoueur.getMatricule() != null
+                    && currentJoueur.getMatricule().equals(organisateur.getMatricule());
+        } catch (ForbiddenException exception) {
+            return false;
+        }
+    }
+
+    private Long getSiteId(MatchPadel match) {
+        if (match == null
+                || match.getTerrain() == null
+                || match.getTerrain().getSite() == null) {
+            return null;
+        }
+
+        return match.getTerrain().getSite().getId();
     }
 }

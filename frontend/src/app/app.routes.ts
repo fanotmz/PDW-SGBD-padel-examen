@@ -7,8 +7,8 @@ import { MatchDetailPageComponent } from './features/matches/match-detail/match-
 import { MyMatchesPageComponent } from './features/matches/my-matches/my-matches-page.component';
 import { OrganizedMatchesPageComponent } from './features/matches/organized-matches/organized-matches-page.component';
 import { PublicMatchesPageComponent } from './features/matches/public-matches/public-matches-page.component';
+import { EspacePrivePageComponent } from './features/player/espace-prive/espace-prive-page.component';
 import { AdminPageComponent } from './features/placeholders/admin-page.component';
-import { EspacePrivePageComponent } from './features/test/espace-prive-page.component';
 import { MainLayoutComponent } from './layout/main-layout.component';
 
 export const routes: Routes = [

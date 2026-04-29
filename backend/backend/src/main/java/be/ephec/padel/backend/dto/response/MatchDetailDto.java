@@ -30,6 +30,7 @@ public class MatchDetailDto {
     private int nbParticipants;
     private int placesRestantes;
     private boolean complet;
+    private boolean peutAjouterJoueurPrive;
 
     private BigDecimal montantTotal;
     private BigDecimal montantPaye;
@@ -52,6 +53,7 @@ public class MatchDetailDto {
                           int nbParticipants,
                           int placesRestantes,
                           boolean complet,
+                          boolean peutAjouterJoueurPrive,
                           BigDecimal montantTotal,
                           BigDecimal montantPaye,
                           BigDecimal resteAPayer,
@@ -71,6 +73,7 @@ public class MatchDetailDto {
         this.nbParticipants = nbParticipants;
         this.placesRestantes = placesRestantes;
         this.complet = complet;
+        this.peutAjouterJoueurPrive = peutAjouterJoueurPrive;
         this.montantTotal = montantTotal;
         this.montantPaye = montantPaye;
         this.resteAPayer = resteAPayer;
@@ -132,6 +135,10 @@ public class MatchDetailDto {
 
     public boolean isComplet() {
         return complet;
+    }
+
+    public boolean isPeutAjouterJoueurPrive() {
+        return peutAjouterJoueurPrive;
     }
 
     public BigDecimal getMontantTotal() {
