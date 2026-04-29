@@ -67,6 +67,7 @@ class JoueurServiceTest {
 
         when(participation.getMatch()).thenReturn(match);
         when(participation.getJoueur()).thenReturn(joueur);
+        when(participation.getId()).thenReturn(terrainId + 1000L);
 
         when(match.getId()).thenReturn(999L);
         when(match.getDateDebut()).thenReturn(LocalDateTime.of(dateMatch, LocalTime.of(10, 0)));
@@ -86,10 +87,50 @@ class JoueurServiceTest {
         when(site.getNom()).thenReturn(siteNom);
 
         if (paiementEffectue) {
-            when(participation.getPaiements()).thenReturn(List.of(mock(Paiement.class)));
+            Paiement paiement = mock(Paiement.class);
+            when(paiement.getMontant()).thenReturn(new BigDecimal("7.50"));
+            when(participation.getPaiements()).thenReturn(List.of(paiement));
         } else {
             when(participation.getPaiements()).thenReturn(List.of());
         }
+
+        return participation;
+    }
+
+    private Participation mockParticipationAvecMontants(String organisateurMatricule,
+                                                        String joueurMatricule,
+                                                        LocalDate dateMatch,
+                                                        MatchVisibilite visibilite,
+                                                        MatchStatut statut,
+                                                        Long terrainId,
+                                                        String terrainNom,
+                                                        Long siteId,
+                                                        String siteNom,
+                                                        Long participationId,
+                                                        BigDecimal... montantsPaiements) {
+        Participation participation = mockParticipation(
+                organisateurMatricule,
+                joueurMatricule,
+                dateMatch,
+                visibilite,
+                false,
+                terrainId,
+                terrainNom,
+                siteId,
+                siteNom
+        );
+
+        when(participation.getId()).thenReturn(participationId);
+        when(participation.getMatch().getStatut()).thenReturn(statut);
+
+        List<Paiement> paiements = java.util.Arrays.stream(montantsPaiements)
+                .map(montant -> {
+                    Paiement paiement = mock(Paiement.class);
+                    when(paiement.getMontant()).thenReturn(montant);
+                    return paiement;
+                })
+                .toList();
+        when(participation.getPaiements()).thenReturn(paiements);
 
         return participation;
     }
@@ -397,6 +438,10 @@ class JoueurServiceTest {
         assertEquals("Terrain 1", dto.terrainNom());
         assertEquals(1L, dto.siteId());
         assertEquals("Site Delta", dto.siteNom());
+        assertEquals(1010L, dto.participationId());
+        assertEquals(new BigDecimal("0.00"), dto.montantPayeJoueur());
+        assertEquals(new BigDecimal("15.00"), dto.montantRestantJoueur());
+        assertTrue(dto.peutPayerParticipation());
     }
 
     @Test
@@ -569,6 +614,122 @@ class JoueurServiceTest {
         assertEquals("Terrain B", result.get(1).terrainNom());
         assertEquals(PlayerMatchRoleDto.ORGANISATEUR, result.get(1).roleJoueur());
         assertTrue(result.get(1).paiementJoueurEffectue());
+    }
+
+    @Test
+    void getPlayerMatches_participationImpayee_montantRestantComplet_et_peutPayerTrue() {
+        Joueur joueur = mock(Joueur.class);
+        when(joueurRepo.findById("G0001")).thenReturn(Optional.of(joueur));
+
+        Participation participation = mockParticipationAvecMontants(
+                "G9999",
+                "G0001",
+                LocalDate.now().plusDays(2),
+                MatchVisibilite.PRIVE,
+                MatchStatut.PLANIFIE,
+                60L,
+                "Terrain Impaye",
+                600L,
+                "Site Impaye",
+                5001L
+        );
+
+        when(participationRepo.findByJoueur_MatriculeOrderByMatch_DateDebutAsc("G0001"))
+                .thenReturn(List.of(participation));
+
+        PlayerMatchSummaryDto dto = service.getPlayerMatches("G0001").get(0);
+
+        assertEquals(5001L, dto.participationId());
+        assertEquals(new BigDecimal("0.00"), dto.montantPayeJoueur());
+        assertEquals(new BigDecimal("15.00"), dto.montantRestantJoueur());
+        assertTrue(dto.peutPayerParticipation());
+    }
+
+    @Test
+    void getPlayerMatches_participationPartiellementPayee_montantRestantPositif_et_peutPayerTrue() {
+        Joueur joueur = mock(Joueur.class);
+        when(joueurRepo.findById("G0001")).thenReturn(Optional.of(joueur));
+
+        Participation participation = mockParticipationAvecMontants(
+                "G9999",
+                "G0001",
+                LocalDate.now().plusDays(2),
+                MatchVisibilite.PRIVE,
+                MatchStatut.PLANIFIE,
+                61L,
+                "Terrain Partiel",
+                610L,
+                "Site Partiel",
+                5002L,
+                new BigDecimal("2.50")
+        );
+
+        when(participationRepo.findByJoueur_MatriculeOrderByMatch_DateDebutAsc("G0001"))
+                .thenReturn(List.of(participation));
+
+        PlayerMatchSummaryDto dto = service.getPlayerMatches("G0001").get(0);
+
+        assertEquals(new BigDecimal("2.50"), dto.montantPayeJoueur());
+        assertEquals(new BigDecimal("12.50"), dto.montantRestantJoueur());
+        assertTrue(dto.peutPayerParticipation());
+    }
+
+    @Test
+    void getPlayerMatches_participationTotalementPayee_montantRestantZero_et_peutPayerFalse() {
+        Joueur joueur = mock(Joueur.class);
+        when(joueurRepo.findById("G0001")).thenReturn(Optional.of(joueur));
+
+        Participation participation = mockParticipationAvecMontants(
+                "G9999",
+                "G0001",
+                LocalDate.now().plusDays(2),
+                MatchVisibilite.PUBLIC,
+                MatchStatut.PLANIFIE,
+                62L,
+                "Terrain Paye",
+                620L,
+                "Site Paye",
+                5003L,
+                new BigDecimal("15.00")
+        );
+
+        when(participationRepo.findByJoueur_MatriculeOrderByMatch_DateDebutAsc("G0001"))
+                .thenReturn(List.of(participation));
+
+        PlayerMatchSummaryDto dto = service.getPlayerMatches("G0001").get(0);
+
+        assertEquals(new BigDecimal("15.00"), dto.montantPayeJoueur());
+        assertEquals(new BigDecimal("0.00"), dto.montantRestantJoueur());
+        assertFalse(dto.peutPayerParticipation());
+    }
+
+    @Test
+    void getPlayerMatches_matchAnnule_peutPayerFalse() {
+        Joueur joueur = mock(Joueur.class);
+        when(joueurRepo.findById("G0001")).thenReturn(Optional.of(joueur));
+
+        Participation participation = mockParticipationAvecMontants(
+                "G9999",
+                "G0001",
+                LocalDate.now().plusDays(2),
+                MatchVisibilite.PUBLIC,
+                MatchStatut.ANNULE,
+                63L,
+                "Terrain Annule",
+                630L,
+                "Site Annule",
+                5004L,
+                new BigDecimal("1.50")
+        );
+
+        when(participationRepo.findByJoueur_MatriculeOrderByMatch_DateDebutAsc("G0001"))
+                .thenReturn(List.of(participation));
+
+        PlayerMatchSummaryDto dto = service.getPlayerMatches("G0001").get(0);
+
+        assertEquals(new BigDecimal("1.50"), dto.montantPayeJoueur());
+        assertEquals(new BigDecimal("13.50"), dto.montantRestantJoueur());
+        assertFalse(dto.peutPayerParticipation());
     }
     // ----------------
 // getOrganizedMatches
