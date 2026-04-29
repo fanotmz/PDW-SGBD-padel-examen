@@ -27,6 +27,7 @@ import be.ephec.padel.backend.repository.ParticipationRepository;
 import be.ephec.padel.backend.repository.TerrainRepository;
 import be.ephec.padel.backend.repository.projection.PublicMatchSummaryProjection;
 import be.ephec.padel.backend.security.CurrentUserFacade;
+import be.ephec.padel.backend.security.ServiceAutorisationAdmin;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -59,6 +60,7 @@ public class MatchPadelService {
     private final FermetureGlobaleRepository fermetureGlobaleRepository;
     private final Clock clock;
     private final CurrentUserFacade currentUserFacade;
+    private final ServiceAutorisationAdmin serviceAutorisationAdmin;
 
     @Autowired
     public MatchPadelService(MatchPadelRepository matchPadelRepository,
@@ -71,7 +73,8 @@ public class MatchPadelService {
                              PaiementRepository paiementRepository,
                              FermetureGlobaleRepository fermetureGlobaleRepository,
                              Clock clock,
-                             CurrentUserFacade currentUserFacade) {
+                             CurrentUserFacade currentUserFacade,
+                             ServiceAutorisationAdmin serviceAutorisationAdmin) {
         this.matchPadelRepository = matchPadelRepository;
         this.terrainRepository = terrainRepository;
         this.soldeService = soldeService;
@@ -83,6 +86,7 @@ public class MatchPadelService {
         this.fermetureGlobaleRepository = fermetureGlobaleRepository;
         this.clock = clock;
         this.currentUserFacade = currentUserFacade;
+        this.serviceAutorisationAdmin = serviceAutorisationAdmin;
     }
 
     @Transactional(readOnly = true)
@@ -339,7 +343,7 @@ public class MatchPadelService {
         if (!currentUserFacade.isAdmin()) {
             String matricule = currentUserFacade.getCurrentJoueur().getMatricule();
             if (match.getVisibilite() == MatchVisibilite.PRIVE && !peutVoirMatchPrive(match, matricule)) {
-                throw new ForbiddenException("Acces refuse a ce match prive.");
+                throw new ForbiddenException("Acc\u00e8s refus\u00e9 \u00e0 ce match priv\u00e9.");
             }
         }
 
@@ -351,8 +355,60 @@ public class MatchPadelService {
         BigDecimal montantPaye = getMontantEncaisseParMatch(match);
         BigDecimal montantRembourse = getMontantRembourseParMatch(match);
         BigDecimal resteAPayer = calculerResteAPayer(match, montantTotal, montantPaye);
+        boolean peutAjouterJoueurPrive = peutAjouterJoueurPrive(match);
 
-        return MatchDetailMapper.toDto(match, montantTotal, montantPaye, resteAPayer, montantRembourse);
+        return MatchDetailMapper.toDto(
+                match,
+                peutAjouterJoueurPrive,
+                montantTotal,
+                montantPaye,
+                resteAPayer,
+                montantRembourse
+        );
+    }
+
+    private boolean peutAjouterJoueurPrive(MatchPadel match) {
+        if (match.getVisibilite() != MatchVisibilite.PRIVE) {
+            return false;
+        }
+
+        if (match.getStatut() != MatchStatut.PLANIFIE) {
+            return false;
+        }
+
+        if (match.getParticipations() != null && match.getParticipations().size() >= 4) {
+            return false;
+        }
+
+        if (estOrganisateur(match)) {
+            return true;
+        }
+
+        return serviceAutorisationAdmin.peutAdministrerSite(getSiteId(match));
+    }
+
+    private boolean estOrganisateur(MatchPadel match) {
+        try {
+            Joueur currentJoueur = currentUserFacade.getCurrentJoueur();
+            Joueur organisateur = match.getOrganisateur();
+
+            return currentJoueur != null
+                    && organisateur != null
+                    && currentJoueur.getMatricule() != null
+                    && currentJoueur.getMatricule().equals(organisateur.getMatricule());
+        } catch (ForbiddenException exception) {
+            return false;
+        }
+    }
+
+    private Long getSiteId(MatchPadel match) {
+        if (match == null
+                || match.getTerrain() == null
+                || match.getTerrain().getSite() == null) {
+            return null;
+        }
+
+        return match.getTerrain().getSite().getId();
     }
 
     private BigDecimal getMontantEncaisseParMatch(MatchPadel match) {

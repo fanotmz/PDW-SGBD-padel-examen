@@ -10,6 +10,7 @@ import be.ephec.padel.backend.repository.JoueurRepository;
 import be.ephec.padel.backend.repository.MatchPadelRepository;
 import be.ephec.padel.backend.repository.ParticipationRepository;
 import be.ephec.padel.backend.security.CurrentUserFacade;
+import be.ephec.padel.backend.security.ServiceAutorisationAdmin;
 import be.ephec.padel.backend.service.PaiementService;
 import be.ephec.padel.backend.service.ParticipationService;
 import be.ephec.padel.backend.service.SoldeService;
@@ -43,6 +44,8 @@ class ParticipationServiceMontantAttenduTest {
     PaiementService paiementService;
     @Mock
     CurrentUserFacade currentUserFacade;
+    @Mock
+    ServiceAutorisationAdmin serviceAutorisationAdmin;
 
     private ParticipationService participationService;
 
@@ -54,7 +57,8 @@ class ParticipationServiceMontantAttenduTest {
                 joueurRepository,
                 soldeService,
                 paiementService,
-                currentUserFacade
+                currentUserFacade,
+                serviceAutorisationAdmin
         );
     }
 
@@ -101,7 +105,7 @@ class ParticipationServiceMontantAttenduTest {
 
         assertThatThrownBy(() -> participationService.calculerMontantAttenduPourMatchPublic(matchId))
                 .isInstanceOf(BusinessException.class)
-                .hasMessageContaining("Match prive");
+                .hasMessageContaining("Match privé");
 
         verifyNoInteractions(joueurRepository);
     }

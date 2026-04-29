@@ -13,6 +13,7 @@ import be.ephec.padel.backend.repository.JoueurRepository;
 import be.ephec.padel.backend.repository.MatchPadelRepository;
 import be.ephec.padel.backend.repository.ParticipationRepository;
 import be.ephec.padel.backend.security.CurrentUserFacade;
+import be.ephec.padel.backend.security.ServiceAutorisationAdmin;
 import be.ephec.padel.backend.service.PaiementService;
 import be.ephec.padel.backend.service.ParticipationService;
 import be.ephec.padel.backend.service.SoldeService;
@@ -44,6 +45,7 @@ class ParticipationServiceTest {
     private SoldeService soldeService;
     private PaiementService paiementService;
     private CurrentUserFacade currentUserFacade;
+    private ServiceAutorisationAdmin serviceAutorisationAdmin;
 
     private ParticipationService service;
 
@@ -55,6 +57,7 @@ class ParticipationServiceTest {
         soldeService = mock(SoldeService.class);
         paiementService = mock(PaiementService.class);
         currentUserFacade = mock(CurrentUserFacade.class);
+        serviceAutorisationAdmin = mock(ServiceAutorisationAdmin.class);
 
         service = new ParticipationService(
                 participationRepo,
@@ -62,7 +65,8 @@ class ParticipationServiceTest {
                 joueurRepo,
                 soldeService,
                 paiementService,
-                currentUserFacade
+                currentUserFacade,
+                serviceAutorisationAdmin
         );
     }
 
@@ -276,6 +280,7 @@ class ParticipationServiceTest {
     void ajouterJoueurParOrganisateur_matchPublic_refuse() {
         MatchPadel match = new MatchPadel();
         match.setVisibilite(MatchVisibilite.PUBLIC);
+        match.setStatut(MatchStatut.PLANIFIE);
 
         when(matchRepo.findById(1L)).thenReturn(Optional.of(match));
 
@@ -303,6 +308,7 @@ class ParticipationServiceTest {
     void ajouterJoueurParOrganisateur_organisateurDifferent_refuse() {
         MatchPadel match = new MatchPadel();
         match.setVisibilite(MatchVisibilite.PRIVE);
+        match.setStatut(MatchStatut.PLANIFIE);
         match.setOrganisateur(new Joueur("G999", "Orga", TypeJoueur.GLOBAL));
 
         when(currentUserFacade.getCurrentJoueur()).thenReturn(new Joueur("G1", "Current", TypeJoueur.GLOBAL));
@@ -318,6 +324,7 @@ class ParticipationServiceTest {
     void ajouterJoueurParOrganisateur_joueurAAjouterIntrouvable_notFound() {
         MatchPadel match = new MatchPadel();
         match.setVisibilite(MatchVisibilite.PRIVE);
+        match.setStatut(MatchStatut.PLANIFIE);
         Joueur orga = new Joueur("G1", "Orga", TypeJoueur.GLOBAL);
         match.setOrganisateur(orga);
 
@@ -335,6 +342,7 @@ class ParticipationServiceTest {
     void ajouterJoueurParOrganisateur_dejaInscrit_refuse() {
         MatchPadel match = new MatchPadel();
         match.setVisibilite(MatchVisibilite.PRIVE);
+        match.setStatut(MatchStatut.PLANIFIE);
         Joueur orga = new Joueur("G1", "Orga", TypeJoueur.GLOBAL);
         match.setOrganisateur(orga);
 
@@ -354,6 +362,7 @@ class ParticipationServiceTest {
     void ajouterJoueurParOrganisateur_matchComplet_refuse() {
         MatchPadel match = new MatchPadel();
         match.setVisibilite(MatchVisibilite.PRIVE);
+        match.setStatut(MatchStatut.PLANIFIE);
         Joueur orga = new Joueur("G1", "Orga", TypeJoueur.GLOBAL);
         match.setOrganisateur(orga);
 
@@ -374,6 +383,7 @@ class ParticipationServiceTest {
     void ajouterJoueurParOrganisateur_ok_creeParticipation_et_debite_sans_payer() {
         MatchPadel match = new MatchPadel();
         match.setVisibilite(MatchVisibilite.PRIVE);
+        match.setStatut(MatchStatut.PLANIFIE);
         Joueur orga = new Joueur("G1", "Orga", TypeJoueur.GLOBAL);
         match.setOrganisateur(orga);
 
@@ -393,4 +403,75 @@ class ParticipationServiceTest {
         verify(soldeService).debiter(eq("G2"), eq(Tarifs.PART_PAR_JOUEUR));
         verifyNoInteractions(paiementService);
     }
+
+    @Test
+    void ajouterJoueurParOrganisateur_adminGlobal_peutAjouter() {
+        MatchPadel match = new MatchPadel();
+        match.setVisibilite(MatchVisibilite.PRIVE);
+        match.setStatut(MatchStatut.PLANIFIE);
+        match.setOrganisateur(new Joueur("G1", "Orga", TypeJoueur.GLOBAL));
+        match.setTerrain(terrainAvecSite(5L));
+
+        when(matchRepo.findById(1L)).thenReturn(Optional.of(match));
+        when(joueurRepo.findById("G2")).thenReturn(Optional.of(new Joueur("G2", "Joueur", TypeJoueur.GLOBAL)));
+        when(participationRepo.existsByMatch_IdAndJoueur_Matricule(1L, "G2")).thenReturn(false);
+        when(participationRepo.countByMatch_Id(1L)).thenReturn(1);
+        when(serviceAutorisationAdmin.peutAdministrerSite(5L)).thenReturn(true);
+
+        Participation saved = new Participation();
+        when(participationRepo.save(any(Participation.class))).thenReturn(saved);
+
+        Participation result = service.ajouterJoueurParOrganisateur(1L, "G2");
+
+        assertSame(saved, result);
+    }
+
+    @Test
+    void ajouterJoueurParOrganisateur_adminSiteBonPerimetre_peutAjouter() {
+        MatchPadel match = new MatchPadel();
+        match.setVisibilite(MatchVisibilite.PRIVE);
+        match.setStatut(MatchStatut.PLANIFIE);
+        match.setOrganisateur(new Joueur("G1", "Orga", TypeJoueur.GLOBAL));
+        match.setTerrain(terrainAvecSite(5L));
+
+        when(matchRepo.findById(1L)).thenReturn(Optional.of(match));
+        when(joueurRepo.findById("G2")).thenReturn(Optional.of(new Joueur("G2", "Joueur", TypeJoueur.GLOBAL)));
+        when(participationRepo.existsByMatch_IdAndJoueur_Matricule(1L, "G2")).thenReturn(false);
+        when(participationRepo.countByMatch_Id(1L)).thenReturn(1);
+        when(serviceAutorisationAdmin.peutAdministrerSite(5L)).thenReturn(true);
+
+        Participation saved = new Participation();
+        when(participationRepo.save(any(Participation.class))).thenReturn(saved);
+
+        Participation result = service.ajouterJoueurParOrganisateur(1L, "G2");
+
+        assertSame(saved, result);
+    }
+
+    @Test
+    void ajouterJoueurParOrganisateur_adminSiteHorsPerimetre_refuse() {
+        MatchPadel match = new MatchPadel();
+        match.setVisibilite(MatchVisibilite.PRIVE);
+        match.setStatut(MatchStatut.PLANIFIE);
+        match.setOrganisateur(new Joueur("G1", "Orga", TypeJoueur.GLOBAL));
+        match.setTerrain(terrainAvecSite(5L));
+
+        when(matchRepo.findById(1L)).thenReturn(Optional.of(match));
+        when(serviceAutorisationAdmin.peutAdministrerSite(5L)).thenReturn(false);
+
+        assertThrows(BusinessException.class,
+                () -> service.ajouterJoueurParOrganisateur(1L, "G2"));
+
+        verifyNoInteractions(joueurRepo, participationRepo, soldeService, paiementService);
+    }
+
+    private be.ephec.padel.backend.model.entities.Terrain terrainAvecSite(Long siteId) {
+        be.ephec.padel.backend.model.entities.Site site = mock(be.ephec.padel.backend.model.entities.Site.class);
+        when(site.getId()).thenReturn(siteId);
+
+        be.ephec.padel.backend.model.entities.Terrain terrain = mock(be.ephec.padel.backend.model.entities.Terrain.class);
+        when(terrain.getSite()).thenReturn(site);
+        return terrain;
+    }
+
 }

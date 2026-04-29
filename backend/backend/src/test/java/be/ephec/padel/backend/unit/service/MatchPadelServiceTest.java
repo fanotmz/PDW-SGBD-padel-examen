@@ -20,6 +20,7 @@ import be.ephec.padel.backend.repository.ParticipationRepository;
 import be.ephec.padel.backend.repository.TerrainRepository;
 import be.ephec.padel.backend.repository.projection.PublicMatchSummaryProjection;
 import be.ephec.padel.backend.security.CurrentUserFacade;
+import be.ephec.padel.backend.security.ServiceAutorisationAdmin;
 import be.ephec.padel.backend.service.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -52,6 +53,7 @@ class MatchPadelServiceTest {
     private FermetureSiteService fermetureSiteService;
     private HoraireSiteService horaireSiteService;
     private CurrentUserFacade currentUserFacade;
+    private ServiceAutorisationAdmin serviceAutorisationAdmin;
     private Clock clock;
 
     private MatchPadelService service;
@@ -69,6 +71,7 @@ class MatchPadelServiceTest {
         fermetureSiteService = mock(FermetureSiteService.class);
         horaireSiteService = mock(HoraireSiteService.class);
         currentUserFacade = mock(CurrentUserFacade.class);
+        serviceAutorisationAdmin = mock(ServiceAutorisationAdmin.class);
         clock = Clock.fixed(
                 Instant.parse("2026-03-24T10:00:00Z"),
                 ZoneId.of("Europe/Brussels")
@@ -85,7 +88,8 @@ class MatchPadelServiceTest {
                 paiementRepo,
                 fermetureGlobaleRepo,
                 clock,
-                currentUserFacade
+                currentUserFacade,
+                serviceAutorisationAdmin
         );
 
         stubCurrentJoueur("G0001", TypeJoueur.GLOBAL, BigDecimal.ZERO);
@@ -883,6 +887,7 @@ class MatchPadelServiceTest {
         assertEquals(0, dto.getNbParticipants());
         assertEquals(4, dto.getPlacesRestantes());
         assertFalse(dto.isComplet());
+        assertFalse(dto.isPeutAjouterJoueurPrive());
         assertEquals(0, BigDecimal.ZERO.compareTo(dto.getMontantRembourse()));
     }
 
@@ -935,6 +940,7 @@ class MatchPadelServiceTest {
 
         assertEquals(1L, dto.getId());
         assertEquals("G0001", dto.getOrganisateurMatricule());
+        assertTrue(dto.isPeutAjouterJoueurPrive());
     }
 
     @Test
@@ -982,6 +988,109 @@ class MatchPadelServiceTest {
 
         assertEquals(1, dto.getParticipants().size());
         assertEquals("J0001", dto.getParticipants().get(0).getMatricule());
+        assertFalse(dto.isPeutAjouterJoueurPrive());
+    }
+
+    @Test
+    void getMatchDetailDto_prive_adminGlobal_peutAjouterJoueurPrive_true() {
+        when(currentUserFacade.isAdmin()).thenReturn(true);
+        stubCurrentJoueur("X9999", TypeJoueur.GLOBAL, BigDecimal.ZERO);
+
+        MatchPadel match = mock(MatchPadel.class);
+        when(match.getId()).thenReturn(1L);
+        when(match.getVisibilite()).thenReturn(MatchVisibilite.PRIVE);
+        when(match.getStatut()).thenReturn(MatchStatut.PLANIFIE);
+        when(match.getDateDebut()).thenReturn(LocalDateTime.of(2030, 1, 1, 10, 0));
+
+        Terrain terrain = mock(Terrain.class);
+        Site site = mock(Site.class);
+        Joueur orga = mock(Joueur.class);
+
+        when(site.getId()).thenReturn(5L);
+        when(site.getNom()).thenReturn("Site Delta");
+        when(terrain.getId()).thenReturn(10L);
+        when(terrain.getNom()).thenReturn("Terrain 1");
+        when(terrain.getSite()).thenReturn(site);
+        when(orga.getMatricule()).thenReturn("G0001");
+        when(orga.getNom()).thenReturn("Orga");
+
+        when(match.getTerrain()).thenReturn(terrain);
+        when(match.getOrganisateur()).thenReturn(orga);
+        when(match.getParticipations()).thenReturn(List.of());
+        when(matchRepo.findByIdWithDetails(1L)).thenReturn(Optional.of(match));
+        when(serviceAutorisationAdmin.peutAdministrerSite(5L)).thenReturn(true);
+
+        MatchDetailDto dto = service.getMatchDetailDto(1L);
+
+        assertTrue(dto.isPeutAjouterJoueurPrive());
+    }
+
+    @Test
+    void getMatchDetailDto_prive_adminSiteBonPerimetre_peutAjouterJoueurPrive_true() {
+        when(currentUserFacade.isAdmin()).thenReturn(true);
+        stubCurrentJoueur("X9999", TypeJoueur.GLOBAL, BigDecimal.ZERO);
+
+        MatchPadel match = mock(MatchPadel.class);
+        when(match.getId()).thenReturn(1L);
+        when(match.getVisibilite()).thenReturn(MatchVisibilite.PRIVE);
+        when(match.getStatut()).thenReturn(MatchStatut.PLANIFIE);
+        when(match.getDateDebut()).thenReturn(LocalDateTime.of(2030, 1, 1, 10, 0));
+
+        Terrain terrain = mock(Terrain.class);
+        Site site = mock(Site.class);
+        Joueur orga = mock(Joueur.class);
+
+        when(site.getId()).thenReturn(5L);
+        when(site.getNom()).thenReturn("Site Delta");
+        when(terrain.getId()).thenReturn(10L);
+        when(terrain.getNom()).thenReturn("Terrain 1");
+        when(terrain.getSite()).thenReturn(site);
+        when(orga.getMatricule()).thenReturn("G0001");
+        when(orga.getNom()).thenReturn("Orga");
+
+        when(match.getTerrain()).thenReturn(terrain);
+        when(match.getOrganisateur()).thenReturn(orga);
+        when(match.getParticipations()).thenReturn(List.of());
+        when(matchRepo.findByIdWithDetails(1L)).thenReturn(Optional.of(match));
+        when(serviceAutorisationAdmin.peutAdministrerSite(5L)).thenReturn(true);
+
+        MatchDetailDto dto = service.getMatchDetailDto(1L);
+
+        assertTrue(dto.isPeutAjouterJoueurPrive());
+    }
+
+    @Test
+    void getMatchDetailDto_prive_adminSiteHorsPerimetre_peutAjouterJoueurPrive_false() {
+        when(currentUserFacade.isAdmin()).thenReturn(true);
+        stubCurrentJoueur("X9999", TypeJoueur.GLOBAL, BigDecimal.ZERO);
+
+        MatchPadel match = mock(MatchPadel.class);
+        when(match.getId()).thenReturn(1L);
+        when(match.getVisibilite()).thenReturn(MatchVisibilite.PRIVE);
+        when(match.getStatut()).thenReturn(MatchStatut.PLANIFIE);
+        when(match.getDateDebut()).thenReturn(LocalDateTime.of(2030, 1, 1, 10, 0));
+
+        Terrain terrain = mock(Terrain.class);
+        Site site = mock(Site.class);
+        Joueur orga = mock(Joueur.class);
+
+        when(site.getId()).thenReturn(5L);
+        when(site.getNom()).thenReturn("Site Delta");
+        when(terrain.getId()).thenReturn(10L);
+        when(terrain.getNom()).thenReturn("Terrain 1");
+        when(terrain.getSite()).thenReturn(site);
+        when(orga.getMatricule()).thenReturn("G0001");
+        when(orga.getNom()).thenReturn("Orga");
+
+        when(match.getTerrain()).thenReturn(terrain);
+        when(match.getOrganisateur()).thenReturn(orga);
+        when(match.getParticipations()).thenReturn(List.of());
+        when(matchRepo.findByIdWithDetails(1L)).thenReturn(Optional.of(match));
+        when(serviceAutorisationAdmin.peutAdministrerSite(5L)).thenReturn(false);
+
+        MatchDetailDto dto = service.getMatchDetailDto(1L);
+
+        assertFalse(dto.isPeutAjouterJoueurPrive());
     }
 
     @Test
@@ -1053,6 +1162,7 @@ class MatchPadelServiceTest {
         MatchDetailDto dto = service.getMatchDetailDto(1L);
 
         assertEquals(MatchStatut.ANNULE, dto.getStatut());
+        assertFalse(dto.isPeutAjouterJoueurPrive());
         assertEquals(new BigDecimal("15.00"), dto.getMontantPaye());
         assertEquals(new BigDecimal("15.00"), dto.getMontantRembourse());
         assertEquals(BigDecimal.ZERO, dto.getResteAPayer());
