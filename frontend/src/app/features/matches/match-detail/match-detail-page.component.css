@@ -231,6 +231,68 @@ dd {
   cursor: wait;
 }
 
+.private-add-section {
+  margin-bottom: 1rem;
+}
+
+.private-add-form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  align-items: end;
+  margin-bottom: 1rem;
+}
+
+.private-add-field {
+  display: grid;
+  gap: 0.4rem;
+  min-width: min(18rem, 100%);
+  flex: 1 1 16rem;
+  color: #10233f;
+  font-weight: 700;
+}
+
+.private-add-field span {
+  font-size: 0.92rem;
+}
+
+.private-add-field input {
+  width: 100%;
+  min-height: 2.9rem;
+  padding: 0.75rem 0.9rem;
+  border: 1px solid #cbd5e1;
+  border-radius: 0.85rem;
+  font: inherit;
+  color: #10233f;
+  background: #ffffff;
+}
+
+.private-add-field input:disabled {
+  background: #f8fafc;
+  cursor: wait;
+}
+
+.secondary-action-button {
+  min-height: 2.9rem;
+  border: none;
+  border-radius: 0.85rem;
+  background: #10233f;
+  color: #ffffff;
+  font: inherit;
+  font-weight: 700;
+  padding: 0.8rem 1.2rem;
+  cursor: pointer;
+}
+
+.secondary-action-button:hover:not(:disabled) {
+  background: #1f3b63;
+}
+
+.secondary-action-button:disabled {
+  opacity: 0.7;
+  cursor: wait;
+}
+
 .participants-list {
   display: grid;
   gap: 0.75rem;

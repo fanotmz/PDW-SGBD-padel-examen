@@ -141,6 +141,53 @@
 
       <article class="detail-card">
         <h2>Participants</h2>
+
+        @if (canShowPrivateAddForm()) {
+          <div class="private-add-section">
+            @if (addPrivateSuccessMessage()) {
+              <div class="action-message is-success" role="status" aria-live="polite">
+                <p>{{ addPrivateSuccessMessage() }}</p>
+              </div>
+            }
+
+            @if (addPrivateErrorMessage()) {
+              <div class="action-message is-error" role="alert" aria-live="polite">
+                <p>{{ addPrivateErrorMessage() }}</p>
+
+                @if (addPrivateErrorDetails(); as details) {
+                  <ul class="action-details">
+                    @for (detailEntry of details | keyvalue; track detailEntry.key) {
+                      <li>{{ detailEntry.value }}</li>
+                    }
+                  </ul>
+                }
+              </div>
+            }
+
+            <div class="private-add-form">
+              <label class="private-add-field">
+                <span>Matricule du joueur</span>
+                <input
+                  type="text"
+                  [value]="privatePlayerMatricule()"
+                  (input)="updatePrivatePlayerMatricule($event)"
+                  [disabled]="isAddingPrivatePlayer()"
+                  placeholder="Ex. G0002"
+                />
+              </label>
+
+              <button
+                type="button"
+                class="secondary-action-button"
+                [disabled]="isAddingPrivatePlayer()"
+                (click)="addPrivatePlayer()"
+              >
+                {{ isAddingPrivatePlayer() ? 'Ajout en cours...' : 'Ajouter le joueur' }}
+              </button>
+            </div>
+          </div>
+        }
+
         @if (detail.participants.length === 0) {
           <p class="empty-participants">Aucun participant &agrave; afficher.</p>
         } @else {

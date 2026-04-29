@@ -33,6 +33,11 @@ export class MatchDetailPageComponent implements OnInit {
   protected readonly joinSuccessMessage = signal('');
   protected readonly joinErrorMessage = signal('');
   protected readonly joinErrorDetails = signal<Record<string, string> | null>(null);
+  protected readonly privatePlayerMatricule = signal('');
+  protected readonly isAddingPrivatePlayer = signal(false);
+  protected readonly addPrivateSuccessMessage = signal('');
+  protected readonly addPrivateErrorMessage = signal('');
+  protected readonly addPrivateErrorDetails = signal<Record<string, string> | null>(null);
   protected readonly canShowJoinButton = computed(() => {
     const detail = this.match();
 
@@ -41,6 +46,7 @@ export class MatchDetailPageComponent implements OnInit {
       && detail.statut === 'PLANIFIE'
       && detail.complet === false;
   });
+  protected readonly canShowPrivateAddForm = computed(() => this.match()?.peutAjouterJoueurPrive === true);
 
   ngOnInit(): void {
     const idParam = this.route.snapshot.paramMap.get('id');
@@ -80,11 +86,50 @@ export class MatchDetailPageComponent implements OnInit {
       .pipe(finalize(() => this.isJoining.set(false)))
       .subscribe({
         next: () => {
-          this.joinSuccessMessage.set('Vous avez rejoint le match avec succès.');
+          this.joinSuccessMessage.set('Vous avez rejoint le match avec succ\u00e8s.');
           this.loadMatchDetail(detail.id);
         },
         error: (error: HttpErrorResponse) => {
           this.handleJoinError(error);
+        }
+      });
+  }
+
+  protected updatePrivatePlayerMatricule(event: Event): void {
+    const target = event.target as HTMLInputElement | null;
+    this.privatePlayerMatricule.set(target?.value ?? '');
+  }
+
+  protected addPrivatePlayer(): void {
+    const detail = this.match();
+    const matricule = this.privatePlayerMatricule().trim();
+
+    if (!detail || !this.canShowPrivateAddForm() || this.isAddingPrivatePlayer()) {
+      return;
+    }
+
+    this.addPrivateSuccessMessage.set('');
+    this.addPrivateErrorMessage.set('');
+    this.addPrivateErrorDetails.set(null);
+
+    if (!matricule) {
+      this.addPrivateErrorMessage.set('Le matricule du joueur est obligatoire.');
+      return;
+    }
+
+    this.isAddingPrivatePlayer.set(true);
+
+    this.matchParticipationService
+      .ajouterJoueurPrive(detail.id, matricule)
+      .pipe(finalize(() => this.isAddingPrivatePlayer.set(false)))
+      .subscribe({
+        next: () => {
+          this.privatePlayerMatricule.set('');
+          this.addPrivateSuccessMessage.set('Le joueur a \u00e9t\u00e9 ajout\u00e9 avec succ\u00e8s.');
+          this.loadMatchDetail(detail.id);
+        },
+        error: (error: HttpErrorResponse) => {
+          this.handleAddPrivatePlayerError(error);
         }
       });
   }
@@ -138,7 +183,7 @@ export class MatchDetailPageComponent implements OnInit {
     }
 
     if (error.status === 403) {
-      this.errorMessage.set(apiError.message ?? 'Accès refusé à ce match.');
+      this.errorMessage.set(apiError.message ?? 'Acc\u00e8s refus\u00e9 \u00e0 ce match.');
       return;
     }
 
@@ -147,7 +192,7 @@ export class MatchDetailPageComponent implements OnInit {
       return;
     }
 
-    this.errorMessage.set(apiError.message ?? 'Impossible de charger le détail du match.');
+    this.errorMessage.set(apiError.message ?? 'Impossible de charger le d\u00e9tail du match.');
   }
 
   private handleJoinError(error: HttpErrorResponse): void {
@@ -160,6 +205,18 @@ export class MatchDetailPageComponent implements OnInit {
 
     this.joinErrorMessage.set(apiError.message ?? 'Impossible de rejoindre le match.');
     this.joinErrorDetails.set(apiError.details ?? null);
+  }
+
+  private handleAddPrivatePlayerError(error: HttpErrorResponse): void {
+    const apiError = this.normalizeApiErrorBody(error.error);
+
+    if (error.status === 0) {
+      this.addPrivateErrorMessage.set('Backend inaccessible.');
+      return;
+    }
+
+    this.addPrivateErrorMessage.set(apiError.message ?? "Impossible d'ajouter le joueur.");
+    this.addPrivateErrorDetails.set(apiError.details ?? null);
   }
 
   private normalizeApiErrorBody(raw: unknown): ApiErrorBody {
