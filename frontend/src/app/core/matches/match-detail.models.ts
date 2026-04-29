@@ -18,6 +18,7 @@ export interface MatchDetail {
   nbParticipants: number;
   placesRestantes: number;
   complet: boolean;
+  peutAjouterJoueurPrive: boolean;
   montantTotal: number;
   montantPaye: number;
   resteAPayer: number;
