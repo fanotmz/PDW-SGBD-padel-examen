@@ -6,6 +6,7 @@ import be.ephec.padel.backend.model.entities.Joueur;
 import be.ephec.padel.backend.model.entities.MatchPadel;
 import be.ephec.padel.backend.model.entities.Participation;
 import be.ephec.padel.backend.model.enums.MatchVisibilite;
+import be.ephec.padel.backend.model.enums.OrigineMouvementSoldeType;
 import be.ephec.padel.backend.model.enums.TypeJoueur;
 import be.ephec.padel.backend.repository.JoueurRepository;
 import be.ephec.padel.backend.repository.MatchPadelRepository;
@@ -14,6 +15,7 @@ import be.ephec.padel.backend.security.CurrentUserFacade;
 import be.ephec.padel.backend.security.ServiceAutorisationAdmin;
 import be.ephec.padel.backend.service.PaiementService;
 import be.ephec.padel.backend.service.ParticipationService;
+import be.ephec.padel.backend.service.SoldeOriginContext;
 import be.ephec.padel.backend.service.SoldeService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -29,6 +31,7 @@ import java.util.Optional;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
@@ -73,6 +76,7 @@ class ParticipationServiceRejoindrePublicTest {
         MatchPadel match = new MatchPadel();
         match.setVisibilite(MatchVisibilite.PUBLIC);
         match.setDateDebut(LocalDateTime.now());
+        ReflectionTestUtils.setField(match, "id", matchId);
 
         Joueur joueur = new Joueur("J1", "Nom", TypeJoueur.GLOBAL);
         joueur.setSolde(new BigDecimal("15.00"));
@@ -93,7 +97,11 @@ class ParticipationServiceRejoindrePublicTest {
         Participation saved = participationService.rejoindreEtPayerMatchPublic(matchId);
 
         assertThat(saved).isNotNull();
-        verify(soldeService).debiter(eq("J1"), eq(Tarifs.PART_PAR_JOUEUR));
+        verify(soldeService).debiter(eq("J1"), eq(Tarifs.PART_PAR_JOUEUR), argThat((SoldeOriginContext context) ->
+                context.getOrigineType() == OrigineMouvementSoldeType.REJOINDRE_MATCH_PUBLIC_PART
+                        && Long.valueOf(99L).equals(context.getParticipationId())
+                        && matchId.equals(context.getMatchId())
+        ));
         verify(paiementService).payerParticipationAvecRattrapageDette(eq(99L), eq(new BigDecimal("30.00")));
     }
 

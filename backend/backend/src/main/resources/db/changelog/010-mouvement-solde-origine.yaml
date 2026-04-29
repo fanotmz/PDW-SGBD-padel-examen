@@ -1,0 +1,47 @@
+databaseChangeLog:
+  - changeSet:
+      id: 010-1-add-origine-columns-to-mouvement-solde
+      author: codex
+      changes:
+        - addColumn:
+            tableName: mouvement_solde
+            columns:
+              - column:
+                  name: participation_id
+                  type: bigint
+              - column:
+                  name: match_id
+                  type: bigint
+              - column:
+                  name: origine_type
+                  type: varchar(255)
+                  defaultValue: LEGACY
+                  constraints:
+                    nullable: false
+              - column:
+                  name: description
+                  type: varchar(255)
+  - changeSet:
+      id: 010-2-add-indexes-to-mouvement-solde
+      author: codex
+      changes:
+        - createIndex:
+            tableName: mouvement_solde
+            indexName: idx_mouvement_solde_participation_id
+            columns:
+              - column:
+                  name: participation_id
+        - createIndex:
+            tableName: mouvement_solde
+            indexName: idx_mouvement_solde_match_id
+            columns:
+              - column:
+                  name: match_id
+        - createIndex:
+            tableName: mouvement_solde
+            indexName: idx_mouvement_solde_joueur_origine_type
+            columns:
+              - column:
+                  name: joueur_matricule
+              - column:
+                  name: origine_type

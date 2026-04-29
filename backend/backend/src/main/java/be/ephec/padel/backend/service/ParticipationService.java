@@ -7,6 +7,7 @@ import be.ephec.padel.backend.exception.NotFoundException;
 import be.ephec.padel.backend.model.entities.Joueur;
 import be.ephec.padel.backend.model.entities.MatchPadel;
 import be.ephec.padel.backend.model.entities.Participation;
+import be.ephec.padel.backend.model.enums.OrigineMouvementSoldeType;
 import be.ephec.padel.backend.model.enums.MatchStatut;
 import be.ephec.padel.backend.model.enums.MatchVisibilite;
 import be.ephec.padel.backend.repository.JoueurRepository;
@@ -75,7 +76,16 @@ public class ParticipationService {
 
         Participation saved = participationRepository.save(new Participation(match, joueur));
 
-        soldeService.debiter(joueurMatricule, PART_JOUEUR);
+        soldeService.debiter(
+                joueurMatricule,
+                PART_JOUEUR,
+                new SoldeOriginContext(
+                        OrigineMouvementSoldeType.REJOINDRE_MATCH_PUBLIC_PART,
+                        saved.getId(),
+                        match.getId(),
+                        null
+                )
+        );
         paiementService.payerParticipationAvecRattrapageDette(saved.getId(), montant);
 
         return saved;
@@ -119,7 +129,16 @@ public class ParticipationService {
         verifierPlaceDisponible(matchId);
 
         Participation saved = participationRepository.save(new Participation(match, joueurAAjouter));
-        soldeService.debiter(joueurMatriculeAAjouter, PART_JOUEUR);
+        soldeService.debiter(
+                joueurMatriculeAAjouter,
+                PART_JOUEUR,
+                new SoldeOriginContext(
+                        OrigineMouvementSoldeType.AJOUT_MATCH_PRIVE,
+                        saved.getId(),
+                        match.getId(),
+                        null
+                )
+        );
 
         return saved;
     }

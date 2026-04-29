@@ -7,6 +7,7 @@ import be.ephec.padel.backend.exception.NotFoundException;
 import be.ephec.padel.backend.model.entities.Paiement;
 import be.ephec.padel.backend.model.entities.Participation;
 import be.ephec.padel.backend.model.enums.MatchStatut;
+import be.ephec.padel.backend.model.enums.OrigineMouvementSoldeType;
 import be.ephec.padel.backend.model.enums.TypePaiement;
 import be.ephec.padel.backend.repository.PaiementRepository;
 import be.ephec.padel.backend.repository.ParticipationRepository;
@@ -117,7 +118,21 @@ public class PaiementService {
         Paiement saved = paiementRepository.save(new Paiement(participation, m, typePaiement, LocalDateTime.now(clock)));
 
         String matricule = participation.getJoueur().getMatricule();
-        soldeService.crediter(matricule, m);
+        if (autoriserRattrapageDette) {
+            soldeService.crediter(matricule, m);
+        } else {
+            Long matchId = participation.getMatch() != null ? participation.getMatch().getId() : null;
+            soldeService.crediter(
+                    matricule,
+                    m,
+                    new SoldeOriginContext(
+                            OrigineMouvementSoldeType.PAIEMENT_PARTICIPATION,
+                            participation.getId(),
+                            matchId,
+                            null
+                    )
+            );
+        }
 
         return saved;
     }
