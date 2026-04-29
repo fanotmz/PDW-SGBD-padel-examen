@@ -11,12 +11,14 @@ import be.ephec.padel.backend.model.entities.Site;
 import be.ephec.padel.backend.model.entities.Terrain;
 import be.ephec.padel.backend.model.enums.MatchStatut;
 import be.ephec.padel.backend.model.enums.MatchVisibilite;
+import be.ephec.padel.backend.model.enums.OrigineMouvementSoldeType;
 import be.ephec.padel.backend.model.enums.TypeJoueur;
 import be.ephec.padel.backend.model.enums.TypePaiement;
 import be.ephec.padel.backend.repository.PaiementRepository;
 import be.ephec.padel.backend.repository.ParticipationRepository;
 import be.ephec.padel.backend.security.CurrentUserFacade;
 import be.ephec.padel.backend.service.PaiementService;
+import be.ephec.padel.backend.service.SoldeOriginContext;
 import be.ephec.padel.backend.service.SoldeService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -33,6 +35,7 @@ import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
@@ -159,6 +162,10 @@ class PaiementServiceTest {
     void payerParticipation_ok_dejaPayeNull_considererZero_et_crediter() {
         Participation participation = mock(Participation.class);
         Joueur joueur = stubCurrentJoueur("G1");
+        MatchPadel match = mock(MatchPadel.class);
+        when(match.getId()).thenReturn(50L);
+        when(participation.getId()).thenReturn(1L);
+        when(participation.getMatch()).thenReturn(match);
         when(participation.getJoueur()).thenReturn(joueur);
         when(participationRepo.findById(1L)).thenReturn(Optional.of(participation));
         when(paiementRepo.sumMontantByParticipationId(1L)).thenReturn(null);
@@ -173,13 +180,21 @@ class PaiementServiceTest {
                 paiement.getType() == TypePaiement.ENCAISSEMENT
                         && paiement.getMontant().compareTo(new BigDecimal("5.00")) == 0
         ));
-        verify(soldeService).crediter("G1", new BigDecimal("5.00").setScale(2));
+        verify(soldeService).crediter(eq("G1"), eq(new BigDecimal("5.00").setScale(2)), argThat((SoldeOriginContext context) ->
+                context.getOrigineType() == OrigineMouvementSoldeType.PAIEMENT_PARTICIPATION
+                        && Long.valueOf(1L).equals(context.getParticipationId())
+                        && Long.valueOf(50L).equals(context.getMatchId())
+        ));
     }
 
     @Test
     void payerParticipation_ok_paiementPartiel_et_crediter() {
         Participation participation = mock(Participation.class);
         Joueur joueur = stubCurrentJoueur("G1");
+        MatchPadel match = mock(MatchPadel.class);
+        when(match.getId()).thenReturn(51L);
+        when(participation.getId()).thenReturn(1L);
+        when(participation.getMatch()).thenReturn(match);
         when(participation.getJoueur()).thenReturn(joueur);
         when(participationRepo.findById(1L)).thenReturn(Optional.of(participation));
         when(paiementRepo.sumMontantByParticipationId(1L)).thenReturn(new BigDecimal("7.50"));
@@ -194,13 +209,21 @@ class PaiementServiceTest {
                 paiement.getType() == TypePaiement.ENCAISSEMENT
                         && paiement.getMontant().compareTo(new BigDecimal("7.50")) == 0
         ));
-        verify(soldeService).crediter("G1", new BigDecimal("7.50"));
+        verify(soldeService).crediter(eq("G1"), eq(new BigDecimal("7.50")), argThat((SoldeOriginContext context) ->
+                context.getOrigineType() == OrigineMouvementSoldeType.PAIEMENT_PARTICIPATION
+                        && Long.valueOf(1L).equals(context.getParticipationId())
+                        && Long.valueOf(51L).equals(context.getMatchId())
+        ));
     }
 
     @Test
     void payerParticipation_arrondi_scale2() {
         Participation participation = mock(Participation.class);
         Joueur joueur = stubCurrentJoueur("G1");
+        MatchPadel match = mock(MatchPadel.class);
+        when(match.getId()).thenReturn(52L);
+        when(participation.getId()).thenReturn(1L);
+        when(participation.getMatch()).thenReturn(match);
         when(participation.getJoueur()).thenReturn(joueur);
         when(participationRepo.findById(1L)).thenReturn(Optional.of(participation));
         when(paiementRepo.sumMontantByParticipationId(1L)).thenReturn(BigDecimal.ZERO);
@@ -215,7 +238,11 @@ class PaiementServiceTest {
                 paiement.getType() == TypePaiement.ENCAISSEMENT
                         && paiement.getMontant().compareTo(new BigDecimal("5.10")) == 0
         ));
-        verify(soldeService).crediter("G1", new BigDecimal("5.10"));
+        verify(soldeService).crediter(eq("G1"), eq(new BigDecimal("5.10")), argThat((SoldeOriginContext context) ->
+                context.getOrigineType() == OrigineMouvementSoldeType.PAIEMENT_PARTICIPATION
+                        && Long.valueOf(1L).equals(context.getParticipationId())
+                        && Long.valueOf(52L).equals(context.getMatchId())
+        ));
     }
 
     @Test

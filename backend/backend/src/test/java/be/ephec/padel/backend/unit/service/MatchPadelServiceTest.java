@@ -10,6 +10,7 @@ import be.ephec.padel.backend.exception.NotFoundException;
 import be.ephec.padel.backend.model.entities.*;
 import be.ephec.padel.backend.model.enums.MatchStatut;
 import be.ephec.padel.backend.model.enums.MatchVisibilite;
+import be.ephec.padel.backend.model.enums.OrigineMouvementSoldeType;
 import be.ephec.padel.backend.model.enums.TypePaiement;
 import be.ephec.padel.backend.model.enums.TypeJoueur;
 import be.ephec.padel.backend.repository.FermetureGlobaleRepository;
@@ -391,6 +392,7 @@ class MatchPadelServiceTest {
         when(joueurRepo.findById("G0001")).thenReturn(Optional.of(orga));
 
         MatchPadel savedMatch = mock(MatchPadel.class);
+        when(savedMatch.getId()).thenReturn(77L);
         when(matchRepo.save(any(MatchPadel.class))).thenReturn(savedMatch);
 
         Participation p = mock(Participation.class);
@@ -550,6 +552,7 @@ class MatchPadelServiceTest {
                 .thenReturn(List.of(existing));
 
         MatchPadel savedMatch = mock(MatchPadel.class);
+        when(savedMatch.getId()).thenReturn(77L);
         when(matchRepo.save(any(MatchPadel.class))).thenReturn(savedMatch);
 
         Participation p = mock(Participation.class);
@@ -558,6 +561,12 @@ class MatchPadelServiceTest {
 
         MatchPadel res = service.creerMatch(1L, date, MatchVisibilite.PUBLIC);
         assertSame(savedMatch, res);
+        verify(soldeService).debiter(eq("G0001"), eq(Tarifs.PART_PAR_JOUEUR), argThat((SoldeOriginContext context) ->
+                context.getOrigineType() == OrigineMouvementSoldeType.CREATION_MATCH_ORGANISATEUR
+                        && Long.valueOf(123L).equals(context.getParticipationId())
+                        && Long.valueOf(77L).equals(context.getMatchId())
+        ));
+        verify(paiementService).payerParticipation(123L, Tarifs.PART_PAR_JOUEUR);
     }
 
     // ----------------

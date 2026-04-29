@@ -17,4 +17,6 @@ databaseChangeLog:
       file: db/changelog/008-user-registration.yaml
   - include:
       file: db/changelog/009-registration-hardening.yaml
+  - include:
+      file: db/changelog/010-mouvement-solde-origine.yaml
 

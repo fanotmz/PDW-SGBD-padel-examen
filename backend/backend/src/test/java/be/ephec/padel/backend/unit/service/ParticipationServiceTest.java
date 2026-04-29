@@ -8,6 +8,7 @@ import be.ephec.padel.backend.model.entities.MatchPadel;
 import be.ephec.padel.backend.model.entities.Participation;
 import be.ephec.padel.backend.model.enums.MatchStatut;
 import be.ephec.padel.backend.model.enums.MatchVisibilite;
+import be.ephec.padel.backend.model.enums.OrigineMouvementSoldeType;
 import be.ephec.padel.backend.model.enums.TypeJoueur;
 import be.ephec.padel.backend.repository.JoueurRepository;
 import be.ephec.padel.backend.repository.MatchPadelRepository;
@@ -16,6 +17,7 @@ import be.ephec.padel.backend.security.CurrentUserFacade;
 import be.ephec.padel.backend.security.ServiceAutorisationAdmin;
 import be.ephec.padel.backend.service.PaiementService;
 import be.ephec.padel.backend.service.ParticipationService;
+import be.ephec.padel.backend.service.SoldeOriginContext;
 import be.ephec.padel.backend.service.SoldeService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -30,6 +32,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -223,6 +226,7 @@ class ParticipationServiceTest {
     void rejoindreEtPayerMatchPublic_ok_sansDette_paie15_et_debite15() {
         MatchPadel match = new MatchPadel();
         match.setVisibilite(MatchVisibilite.PUBLIC);
+        ReflectionTestUtils.setField(match, "id", 1L);
 
         Joueur joueur = stubCurrentJoueur("G1");
 
@@ -238,7 +242,11 @@ class ParticipationServiceTest {
         Participation result = service.rejoindreEtPayerMatchPublic(1L);
         assertNotNull(result);
 
-        verify(soldeService).debiter(eq("G1"), eq(Tarifs.PART_PAR_JOUEUR));
+        verify(soldeService).debiter(eq("G1"), eq(Tarifs.PART_PAR_JOUEUR), argThat((SoldeOriginContext context) ->
+                context.getOrigineType() == OrigineMouvementSoldeType.REJOINDRE_MATCH_PUBLIC_PART
+                        && Long.valueOf(99L).equals(context.getParticipationId())
+                        && Long.valueOf(1L).equals(context.getMatchId())
+        ));
         verify(paiementService).payerParticipationAvecRattrapageDette(eq(99L), eq(new BigDecimal("15.00")));
     }
 
@@ -246,6 +254,7 @@ class ParticipationServiceTest {
     void rejoindreEtPayerMatchPublic_ok_avecDette15_paie30_et_debite15() {
         MatchPadel match = new MatchPadel();
         match.setVisibilite(MatchVisibilite.PUBLIC);
+        ReflectionTestUtils.setField(match, "id", 1L);
 
         Joueur joueur = stubCurrentJoueur("G1");
         joueur.setSolde(new BigDecimal("15.00"));
@@ -262,7 +271,11 @@ class ParticipationServiceTest {
         Participation result = service.rejoindreEtPayerMatchPublic(1L);
         assertNotNull(result);
 
-        verify(soldeService).debiter(eq("G1"), eq(Tarifs.PART_PAR_JOUEUR));
+        verify(soldeService).debiter(eq("G1"), eq(Tarifs.PART_PAR_JOUEUR), argThat((SoldeOriginContext context) ->
+                context.getOrigineType() == OrigineMouvementSoldeType.REJOINDRE_MATCH_PUBLIC_PART
+                        && Long.valueOf(100L).equals(context.getParticipationId())
+                        && Long.valueOf(1L).equals(context.getMatchId())
+        ));
         verify(paiementService).payerParticipationAvecRattrapageDette(eq(100L), eq(new BigDecimal("30.00")));
     }
 
@@ -384,6 +397,7 @@ class ParticipationServiceTest {
         MatchPadel match = new MatchPadel();
         match.setVisibilite(MatchVisibilite.PRIVE);
         match.setStatut(MatchStatut.PLANIFIE);
+        ReflectionTestUtils.setField(match, "id", 1L);
         Joueur orga = new Joueur("G1", "Orga", TypeJoueur.GLOBAL);
         match.setOrganisateur(orga);
 
@@ -394,13 +408,18 @@ class ParticipationServiceTest {
         when(participationRepo.countByMatch_Id(1L)).thenReturn(1);
 
         Participation saved = new Participation();
+        ReflectionTestUtils.setField(saved, "id", 200L);
         when(participationRepo.save(any(Participation.class))).thenReturn(saved);
 
         Participation result = service.ajouterJoueurParOrganisateur(1L, "G2");
 
         assertSame(saved, result);
         verify(participationRepo).save(any(Participation.class));
-        verify(soldeService).debiter(eq("G2"), eq(Tarifs.PART_PAR_JOUEUR));
+        verify(soldeService).debiter(eq("G2"), eq(Tarifs.PART_PAR_JOUEUR), argThat((SoldeOriginContext context) ->
+                context.getOrigineType() == OrigineMouvementSoldeType.AJOUT_MATCH_PRIVE
+                        && Long.valueOf(200L).equals(context.getParticipationId())
+                        && Long.valueOf(1L).equals(context.getMatchId())
+        ));
         verifyNoInteractions(paiementService);
     }
 

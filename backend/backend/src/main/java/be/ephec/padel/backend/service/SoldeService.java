@@ -4,6 +4,7 @@ import be.ephec.padel.backend.exception.BusinessException;
 import be.ephec.padel.backend.exception.NotFoundException;
 import be.ephec.padel.backend.model.entities.Joueur;
 import be.ephec.padel.backend.model.entities.MouvementSolde;
+import be.ephec.padel.backend.model.enums.OrigineMouvementSoldeType;
 import be.ephec.padel.backend.model.enums.TypeMouvement;
 import be.ephec.padel.backend.repository.JoueurRepository;
 import be.ephec.padel.backend.repository.MouvementSoldeRepository;
@@ -28,7 +29,12 @@ public class SoldeService {
     }
 
     public void crediter(String matricule, BigDecimal montant) {
+        crediter(matricule, montant, SoldeOriginContext.legacy());
+    }
+
+    public void crediter(String matricule, BigDecimal montant, SoldeOriginContext context) {
         BigDecimal m = validateMontant(montant);
+        SoldeOriginContext originContext = safeContext(context);
 
         Joueur joueur = joueurRepository.findById(matricule)
                 .orElseThrow(() -> new NotFoundException("Joueur introuvable"));
@@ -42,17 +48,17 @@ public class SoldeService {
         joueur.setSolde(detteAvant.subtract(m));
         joueurRepository.save(joueur);
 
-        mouvementSoldeRepository.save(new MouvementSolde(
-                LocalDateTime.now(),
-                m,
-                TypeMouvement.CREDIT,
-                joueur
-        ));
+        mouvementSoldeRepository.save(buildMouvement(TypeMouvement.CREDIT, joueur, m, originContext));
     }
 
     // DEBIT = dette : augmente la dette
     public void debiter(String matricule, BigDecimal montant) {
+        debiter(matricule, montant, SoldeOriginContext.legacy());
+    }
+
+    public void debiter(String matricule, BigDecimal montant, SoldeOriginContext context) {
         BigDecimal m = validateMontant(montant);
+        SoldeOriginContext originContext = safeContext(context);
 
         Joueur joueur = joueurRepository.findById(matricule)
                 .orElseThrow(() -> new NotFoundException("Joueur introuvable"));
@@ -62,12 +68,7 @@ public class SoldeService {
         joueur.setSolde(detteAvant.add(m));
         joueurRepository.save(joueur);
 
-        mouvementSoldeRepository.save(new MouvementSolde(
-                LocalDateTime.now(),
-                m,
-                TypeMouvement.DEBIT,
-                joueur
-        ));
+        mouvementSoldeRepository.save(buildMouvement(TypeMouvement.DEBIT, joueur, m, originContext));
     }
 
     private BigDecimal validateMontant(BigDecimal montant) {
@@ -79,5 +80,25 @@ public class SoldeService {
 
     private BigDecimal nullSafe(BigDecimal value) {
         return (value == null ? BigDecimal.ZERO : value).setScale(2, RoundingMode.HALF_UP);
+    }
+
+    private SoldeOriginContext safeContext(SoldeOriginContext context) {
+        return context == null ? SoldeOriginContext.legacy() : context;
+    }
+
+    private MouvementSolde buildMouvement(TypeMouvement type,
+                                          Joueur joueur,
+                                          BigDecimal montant,
+                                          SoldeOriginContext context) {
+        return new MouvementSolde(
+                LocalDateTime.now(),
+                montant,
+                type,
+                joueur,
+                context.getParticipationId(),
+                context.getMatchId(),
+                context.getOrigineType() == null ? OrigineMouvementSoldeType.LEGACY : context.getOrigineType(),
+                context.getDescription()
+        );
     }
 }

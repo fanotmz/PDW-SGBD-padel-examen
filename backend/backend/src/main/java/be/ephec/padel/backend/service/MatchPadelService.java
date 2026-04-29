@@ -18,6 +18,7 @@ import be.ephec.padel.backend.model.entities.Site;
 import be.ephec.padel.backend.model.entities.Terrain;
 import be.ephec.padel.backend.model.enums.MatchStatut;
 import be.ephec.padel.backend.model.enums.MatchVisibilite;
+import be.ephec.padel.backend.model.enums.OrigineMouvementSoldeType;
 import be.ephec.padel.backend.model.enums.TypePaiement;
 import be.ephec.padel.backend.model.enums.TypeJoueur;
 import be.ephec.padel.backend.repository.FermetureGlobaleRepository;
@@ -192,7 +193,16 @@ public class MatchPadelService {
         Participation participationOrganisateur = participationRepository.save(new Participation(saved, organisateur));
 
         BigDecimal part = Tarifs.PART_PAR_JOUEUR;
-        soldeService.debiter(organisateur.getMatricule(), part);
+        soldeService.debiter(
+                organisateur.getMatricule(),
+                part,
+                new SoldeOriginContext(
+                        OrigineMouvementSoldeType.CREATION_MATCH_ORGANISATEUR,
+                        participationOrganisateur.getId(),
+                        saved.getId(),
+                        null
+                )
+        );
         paiementService.payerParticipation(participationOrganisateur.getId(), part);
 
         return saved;
