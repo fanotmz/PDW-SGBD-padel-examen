@@ -1,5 +1,6 @@
 package be.ephec.padel.backend.seed;
 
+import be.ephec.padel.backend.common.Tarifs;
 import be.ephec.padel.backend.model.entities.HoraireSite;
 import be.ephec.padel.backend.model.entities.Joueur;
 import be.ephec.padel.backend.model.entities.MatchPadel;
@@ -46,7 +47,7 @@ public class DevDataSeeder {
     private static final String EXPECTED_ADMIN_SITE_MAPPING = "admin.site.nord.dev:1";
     private static final String EXPECTED_ADMIN_SITE_LOGIN = "admin.site.nord.dev";
     private static final String PLAYER_PASSWORD = "joueur123";
-    private static final BigDecimal PART = new BigDecimal("7.50");
+    private static final BigDecimal PART = Tarifs.PART_PAR_JOUEUR;
 
     private final SiteRepository siteRepository;
     private final TerrainRepository terrainRepository;

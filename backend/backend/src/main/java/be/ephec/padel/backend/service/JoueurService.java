@@ -1,5 +1,6 @@
 package be.ephec.padel.backend.service;
 
+import be.ephec.padel.backend.common.Tarifs;
 import be.ephec.padel.backend.dto.enums.MatchTemporalStatusDto;
 import be.ephec.padel.backend.dto.enums.PlayerMatchRoleDto;
 import be.ephec.padel.backend.dto.response.OrganizerMatchSummaryDto;
@@ -8,6 +9,7 @@ import be.ephec.padel.backend.exception.BusinessException;
 import be.ephec.padel.backend.exception.NotFoundException;
 import be.ephec.padel.backend.model.entities.Joueur;
 import be.ephec.padel.backend.model.entities.MatchPadel;
+import be.ephec.padel.backend.model.entities.Paiement;
 import be.ephec.padel.backend.model.entities.Participation;
 import be.ephec.padel.backend.model.entities.Site;
 import be.ephec.padel.backend.model.enums.MatchStatut;
@@ -23,6 +25,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
@@ -32,6 +35,7 @@ import java.util.List;
 public class JoueurService {
 
     private static final int CAPACITE_MATCH = 4;
+    private static final BigDecimal PART_JOUEUR = Tarifs.PART_PAR_JOUEUR;
 
     private final JoueurRepository joueurRepository;
     private final SiteRepository siteRepository;
@@ -152,6 +156,11 @@ public class JoueurService {
         }
 
         boolean paiementJoueurEffectue = !participation.getPaiements().isEmpty();
+        BigDecimal montantPayeJoueur = getMontantPayeParticipation(participation);
+        BigDecimal montantRestantJoueur = getMontantRestantParticipation(montantPayeJoueur);
+        boolean peutPayerParticipation =
+                match.getStatut() != MatchStatut.ANNULE
+                        && montantRestantJoueur.signum() > 0;
 
         return new PlayerMatchSummaryDto(
                 match.getId(),
@@ -165,8 +174,33 @@ public class JoueurService {
                 roleJoueur,
                 statutTemporel,
                 joursAvantMatch,
-                paiementJoueurEffectue
+                paiementJoueurEffectue,
+                participation.getId(),
+                montantPayeJoueur,
+                montantRestantJoueur,
+                peutPayerParticipation
         );
+    }
+
+    private BigDecimal getMontantPayeParticipation(Participation participation) {
+        if (participation.getPaiements() == null || participation.getPaiements().isEmpty()) {
+            return BigDecimal.ZERO.setScale(2, RoundingMode.HALF_UP);
+        }
+
+        return participation.getPaiements().stream()
+                .map(Paiement::getMontant)
+                .filter(java.util.Objects::nonNull)
+                .reduce(BigDecimal.ZERO, BigDecimal::add)
+                .setScale(2, RoundingMode.HALF_UP);
+    }
+
+    private BigDecimal getMontantRestantParticipation(BigDecimal montantPayeJoueur) {
+        BigDecimal montantPaye = montantPayeJoueur == null
+                ? BigDecimal.ZERO
+                : montantPayeJoueur.setScale(2, RoundingMode.HALF_UP);
+
+        BigDecimal restant = PART_JOUEUR.subtract(montantPaye).setScale(2, RoundingMode.HALF_UP);
+        return restant.signum() < 0 ? BigDecimal.ZERO.setScale(2, RoundingMode.HALF_UP) : restant;
     }
 
     public List<PlayerMatchSummaryDto> getPlayerMatches(String matricule) {

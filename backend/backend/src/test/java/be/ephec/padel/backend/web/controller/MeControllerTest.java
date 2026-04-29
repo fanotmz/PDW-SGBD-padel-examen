@@ -25,8 +25,8 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
-import java.time.LocalDateTime;
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.List;
 
 import static org.mockito.Mockito.when;
@@ -93,7 +93,11 @@ class MeControllerTest {
                 PlayerMatchRoleDto.PARTICIPANT,
                 MatchTemporalStatusDto.FUTUR,
                 5,
-                false
+                false,
+                77L,
+                new BigDecimal("0.00"),
+                new BigDecimal("7.50"),
+                true
         );
 
         when(joueurService.getCurrentPlayerMatches()).thenReturn(List.of(dto));
@@ -112,7 +116,11 @@ class MeControllerTest {
                 .andExpect(jsonPath("$[0].roleJoueur").value("PARTICIPANT"))
                 .andExpect(jsonPath("$[0].statutTemporel").value("FUTUR"))
                 .andExpect(jsonPath("$[0].joursAvantMatch").value(5))
-                .andExpect(jsonPath("$[0].paiementJoueurEffectue").value(false));
+                .andExpect(jsonPath("$[0].paiementJoueurEffectue").value(false))
+                .andExpect(jsonPath("$[0].participationId").value(77))
+                .andExpect(jsonPath("$[0].montantPayeJoueur").value(0.00))
+                .andExpect(jsonPath("$[0].montantRestantJoueur").value(7.50))
+                .andExpect(jsonPath("$[0].peutPayerParticipation").value(true));
     }
 
     @Test

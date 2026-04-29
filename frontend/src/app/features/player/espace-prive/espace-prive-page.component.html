@@ -47,6 +47,48 @@
         </p>
       </section>
 
+      <section class="info-section">
+        <h2>Participations non totalement pay&eacute;es</h2>
+        <p class="section-note">
+          Ces montants indiquent les participations qui ne sont pas totalement pay&eacute;es. Ils ne constituent
+          pas forc&eacute;ment le d&eacute;tail exact du solde global.
+        </p>
+
+        @if (unpaidMatches().length === 0) {
+          <p class="empty-regularizations">Aucune participation non totalement pay&eacute;e.</p>
+        } @else {
+          <div class="regularization-list">
+            @for (match of unpaidMatches(); track match.participationId) {
+              <article class="regularization-card">
+                <div class="regularization-summary">
+                  <p class="regularization-site">{{ match.siteNom }}</p>
+                  <h3>{{ match.terrainNom }}</h3>
+                  <p class="regularization-datetime">
+                    {{ match.dateDebut | date:'dd/MM/yyyy' }} &agrave; {{ match.dateDebut | date:'HH:mm' }}
+                  </p>
+
+                  <div class="regularization-badges">
+                    <span class="meta-badge">{{ match.visibilite }}</span>
+                    <span class="meta-badge is-secondary">{{ match.roleJoueur }}</span>
+                  </div>
+                </div>
+
+                <div class="regularization-amounts">
+                  <p class="amount-item">
+                    <span>D&eacute;j&agrave; pay&eacute;</span>
+                    <strong>{{ formatAmount(match.montantPayeJoueur) }}</strong>
+                  </p>
+                  <p class="amount-item is-remaining">
+                    <span>Reste th&eacute;orique</span>
+                    <strong>{{ formatAmount(match.montantRestantJoueur) }}</strong>
+                  </p>
+                </div>
+              </article>
+            }
+          </div>
+        }
+      </section>
+
       <section class="info-section shortcuts-section">
         <h2>Acc&egrave;s rapides</h2>
 

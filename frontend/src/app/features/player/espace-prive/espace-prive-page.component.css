@@ -109,6 +109,101 @@
   color: #92400e;
 }
 
+.section-note {
+  margin: 0 0 1rem;
+  color: #526277;
+}
+
+.empty-regularizations {
+  margin: 0;
+  color: #526277;
+}
+
+.regularization-list {
+  display: grid;
+  gap: 0.9rem;
+}
+
+.regularization-card {
+  padding: 1rem;
+  border: 1px solid #d7e0eb;
+  border-radius: 0.75rem;
+  background: #f8fbff;
+}
+
+.regularization-site {
+  margin: 0 0 0.25rem;
+  color: #0f766e;
+  font-weight: 700;
+}
+
+.regularization-summary {
+  min-width: 0;
+  margin-bottom: 0.85rem;
+}
+
+.regularization-summary h3 {
+  margin: 0;
+  font-size: 1.1rem;
+  color: #10233f;
+}
+
+.regularization-datetime {
+  margin: 0.35rem 0 0;
+  color: #526277;
+}
+
+.regularization-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+}
+
+.meta-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.35rem 0.65rem;
+  border-radius: 999px;
+  background: #dbeafe;
+  color: #1d4ed8;
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.meta-badge.is-secondary {
+  background: #e5e7eb;
+  color: #374151;
+}
+
+.regularization-amounts {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
+  gap: 0.75rem 1rem;
+}
+
+.amount-item {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin: 0;
+  color: #526277;
+}
+
+.amount-item span {
+  font-size: 0.9rem;
+}
+
+.amount-item strong {
+  color: #10233f;
+  font-size: 1rem;
+}
+
+.amount-item.is-remaining strong {
+  color: #92400e;
+}
+
 .shortcuts {
   display: flex;
   flex-wrap: wrap;

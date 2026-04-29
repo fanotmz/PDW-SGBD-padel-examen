@@ -5,6 +5,7 @@ import be.ephec.padel.backend.dto.enums.PlayerMatchRoleDto;
 import be.ephec.padel.backend.model.enums.MatchStatut;
 import be.ephec.padel.backend.model.enums.MatchVisibilite;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 public record PlayerMatchSummaryDto(
@@ -19,6 +20,10 @@ public record PlayerMatchSummaryDto(
         PlayerMatchRoleDto roleJoueur,
         MatchTemporalStatusDto statutTemporel,
         Integer joursAvantMatch,
-        boolean paiementJoueurEffectue
+        boolean paiementJoueurEffectue,
+        Long participationId,
+        BigDecimal montantPayeJoueur,
+        BigDecimal montantRestantJoueur,
+        boolean peutPayerParticipation
 ) {
 }

@@ -15,4 +15,8 @@ export interface PlayerMatchSummary {
   statutTemporel: MatchTemporalStatus;
   joursAvantMatch: number | null;
   paiementJoueurEffectue: boolean;
+  participationId: number;
+  montantPayeJoueur: number;
+  montantRestantJoueur: number;
+  peutPayerParticipation: boolean;
 }
