@@ -17,6 +17,11 @@ interface ApiErrorBody {
   details?: Record<string, string>;
 }
 
+interface FriendlyErrorDetail {
+  key: string;
+  message: string;
+}
+
 @Component({
   selector: 'app-create-match-page',
   standalone: true,
@@ -40,6 +45,7 @@ export class CreateMatchPageComponent implements OnInit {
   protected readonly successMessage = signal('');
   protected readonly createdMatch = signal<CreatedMatch | null>(null);
   protected readonly backendFieldErrors = signal<Record<string, string>>({});
+  protected readonly friendlyErrorDetails = signal<FriendlyErrorDetail[]>([]);
   protected readonly timeSlots = this.buildTimeSlots();
 
   protected readonly form = this.fb.nonNullable.group({
@@ -58,6 +64,7 @@ export class CreateMatchPageComponent implements OnInit {
       .subscribe((siteId) => {
         this.form.controls.terrainId.reset(null);
         this.backendFieldErrors.set({});
+        this.friendlyErrorDetails.set([]);
 
         if (siteId == null) {
           this.form.controls.terrainId.disable();
@@ -85,6 +92,7 @@ export class CreateMatchPageComponent implements OnInit {
     this.successMessage.set('');
     this.createdMatch.set(null);
     this.backendFieldErrors.set({});
+    this.friendlyErrorDetails.set([]);
 
     if (this.isLoadingSites() || this.isLoadingTerrains() || this.isSubmitting()) {
       return;
@@ -193,10 +201,6 @@ export class CreateMatchPageComponent implements OnInit {
     return this.backendFieldErrors()['dateDebut'] ?? '';
   }
 
-  protected backendErrorDetails(): Array<[string, string]> {
-    return Object.entries(this.backendFieldErrors());
-  }
-
   private loadSites(): void {
     this.isLoadingSites.set(true);
     this.globalErrorMessage.set('');
@@ -267,6 +271,12 @@ export class CreateMatchPageComponent implements OnInit {
 
     if (apiError.details) {
       this.backendFieldErrors.set(apiError.details);
+      this.friendlyErrorDetails.set(this.mapFriendlyErrorDetails(apiError.details));
+
+      if (apiError.details['dateDebut']) {
+        this.globalErrorMessage.set('Impossible de créer ce match.');
+        return;
+      }
     }
 
     if (apiError.message) {
@@ -296,6 +306,19 @@ export class CreateMatchPageComponent implements OnInit {
     }
 
     return {};
+  }
+
+  private mapFriendlyErrorDetails(details: Record<string, string>): FriendlyErrorDetail[] {
+    const friendlyDetails: FriendlyErrorDetail[] = [];
+
+    if (details['dateDebut']) {
+      friendlyDetails.push({
+        key: 'dateDebut',
+        message: 'La date et l’heure du match doivent être dans le futur.'
+      });
+    }
+
+    return friendlyDetails;
   }
 
   private buildTimeSlots(): string[] {

@@ -112,8 +112,10 @@
             [disabled]="isJoining()"
             (click)="joinPublicMatch()"
           >
-            {{ isJoining() ? 'Inscription en cours...' : 'Rejoindre le match' }}
+            {{ isJoining() ? 'Inscription en cours...' : 'Rejoindre et payer' }}
           </button>
+        } @else if (isAlreadyParticipant()) {
+          <p class="already-joined-message">Déjà inscrit</p>
         }
       </article>
 

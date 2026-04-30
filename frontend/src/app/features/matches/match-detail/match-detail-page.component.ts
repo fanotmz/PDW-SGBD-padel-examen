@@ -2,10 +2,12 @@ import { CommonModule, CurrencyPipe, DatePipe, Location } from '@angular/common'
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { finalize } from 'rxjs';
+import { finalize, forkJoin } from 'rxjs';
 import { MatchParticipationService } from '../../../core/matches/match-participation.service';
 import { MatchDetail } from '../../../core/matches/match-detail.models';
 import { MatchDetailService } from '../../../core/matches/match-detail.service';
+import { MeProfile } from '../../../core/me/me.models';
+import { MeService } from '../../../core/me/me.service';
 
 interface ApiErrorBody {
   message?: string;
@@ -25,8 +27,10 @@ export class MatchDetailPageComponent implements OnInit {
   private readonly router = inject(Router);
   private readonly matchDetailService = inject(MatchDetailService);
   private readonly matchParticipationService = inject(MatchParticipationService);
+  private readonly meService = inject(MeService);
 
   protected readonly match = signal<MatchDetail | null>(null);
+  protected readonly currentProfile = signal<MeProfile | null>(null);
   protected readonly isLoading = signal(true);
   protected readonly errorMessage = signal('');
   protected readonly isJoining = signal(false);
@@ -40,11 +44,22 @@ export class MatchDetailPageComponent implements OnInit {
   protected readonly addPrivateErrorDetails = signal<Record<string, string> | null>(null);
   protected readonly canShowJoinButton = computed(() => {
     const detail = this.match();
+    const currentProfile = this.currentProfile();
 
     return !!detail
+      && !!currentProfile
       && detail.visibilite === 'PUBLIC'
       && detail.statut === 'PLANIFIE'
-      && detail.complet === false;
+      && detail.complet === false
+      && !detail.participants.some((participant) => participant.matricule === currentProfile.matricule);
+  });
+  protected readonly isAlreadyParticipant = computed(() => {
+    const detail = this.match();
+    const currentProfile = this.currentProfile();
+
+    return !!detail
+      && !!currentProfile
+      && detail.participants.some((participant) => participant.matricule === currentProfile.matricule);
   });
   protected readonly canShowPrivateAddForm = computed(() => this.match()?.peutAjouterJoueurPrive === true);
 
@@ -86,7 +101,7 @@ export class MatchDetailPageComponent implements OnInit {
       .pipe(finalize(() => this.isJoining.set(false)))
       .subscribe({
         next: () => {
-          this.joinSuccessMessage.set('Vous avez rejoint le match avec succ\u00e8s.');
+          this.joinSuccessMessage.set('Vous avez rejoint le match et pay\u00e9 votre participation avec succ\u00e8s.');
           this.loadMatchDetail(detail.id);
         },
         error: (error: HttpErrorResponse) => {
@@ -161,12 +176,15 @@ export class MatchDetailPageComponent implements OnInit {
     this.isLoading.set(true);
     this.errorMessage.set('');
 
-    this.matchDetailService
-      .getMatchDetail(id)
+    forkJoin({
+      match: this.matchDetailService.getMatchDetail(id),
+      profile: this.meService.getMe()
+    })
       .pipe(finalize(() => this.isLoading.set(false)))
       .subscribe({
-        next: (match) => {
+        next: ({ match, profile }) => {
           this.match.set(match);
+          this.currentProfile.set(profile);
         },
         error: (error: HttpErrorResponse) => {
           this.handleLoadError(error);

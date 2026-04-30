@@ -252,6 +252,7 @@ class PaiementServiceTest {
         MatchPadel match = mock(MatchPadel.class);
         when(joueur.getMatricule()).thenReturn("G1");
         when(joueur.getSolde()).thenReturn(new BigDecimal("5.00"));
+        when(match.getId()).thenReturn(70L);
         when(match.getStatut()).thenReturn(MatchStatut.PLANIFIE);
         when(participation.getId()).thenReturn(1L);
         when(participation.getJoueur()).thenReturn(joueur);
@@ -265,8 +266,45 @@ class PaiementServiceTest {
         Paiement result = service.payerParticipationAvecRattrapageDette(1L, new BigDecimal("20.00"));
 
         assertSame(saved, result);
-        verify(soldeService).crediter("G1", new BigDecimal("20.00"));
-        verify(soldeService, org.mockito.Mockito.never()).crediter(eq("G1"), eq(new BigDecimal("20.00")), any(SoldeOriginContext.class));
+        verify(soldeService).crediter(eq("G1"), eq(new BigDecimal("15.00")), argThat((SoldeOriginContext context) ->
+                context.getOrigineType() == OrigineMouvementSoldeType.PAIEMENT_PARTICIPATION
+                        && Long.valueOf(1L).equals(context.getParticipationId())
+                        && Long.valueOf(70L).equals(context.getMatchId())
+        ));
+        verify(soldeService).crediter(eq("G1"), eq(new BigDecimal("5.00")), argThat((SoldeOriginContext context) ->
+                context.getOrigineType() == OrigineMouvementSoldeType.RATTRAPAGE_DETTE
+                        && context.getParticipationId() == null
+                        && context.getMatchId() == null
+        ));
+    }
+
+    @Test
+    void payerParticipationAvecRattrapageDette_sansDetteAnterieure_trace_un_credit_cible_sur_la_participation() {
+        Participation participation = mock(Participation.class);
+        Joueur joueur = mock(Joueur.class);
+        MatchPadel match = mock(MatchPadel.class);
+        when(joueur.getMatricule()).thenReturn("G1");
+        when(joueur.getSolde()).thenReturn(new BigDecimal("0.00"));
+        when(match.getId()).thenReturn(71L);
+        when(match.getStatut()).thenReturn(MatchStatut.PLANIFIE);
+        when(participation.getId()).thenReturn(2L);
+        when(participation.getJoueur()).thenReturn(joueur);
+        when(participation.getMatch()).thenReturn(match);
+        when(participationRepo.findById(2L)).thenReturn(Optional.of(participation));
+        when(paiementRepo.sumMontantByParticipationId(2L)).thenReturn(BigDecimal.ZERO);
+
+        Paiement saved = mock(Paiement.class);
+        when(paiementRepo.save(any(Paiement.class))).thenReturn(saved);
+
+        Paiement result = service.payerParticipationAvecRattrapageDette(2L, new BigDecimal("15.00"));
+
+        assertSame(saved, result);
+        verify(soldeService).crediter(eq("G1"), eq(new BigDecimal("15.00")), argThat((SoldeOriginContext context) ->
+                context.getOrigineType() == OrigineMouvementSoldeType.PAIEMENT_PARTICIPATION
+                        && Long.valueOf(2L).equals(context.getParticipationId())
+                        && Long.valueOf(71L).equals(context.getMatchId())
+        ));
+        verify(soldeService, org.mockito.Mockito.never()).crediter(eq("G1"), eq(new BigDecimal("15.00")));
     }
 
     @Test

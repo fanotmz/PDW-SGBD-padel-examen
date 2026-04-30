@@ -119,7 +119,7 @@ public class PaiementService {
 
         String matricule = participation.getJoueur().getMatricule();
         if (autoriserRattrapageDette) {
-            soldeService.crediter(matricule, m);
+            crediterParticipationEtRattrapage(participation, m, restePart);
         } else {
             Long matchId = participation.getMatch() != null ? participation.getMatch().getId() : null;
             soldeService.crediter(
@@ -135,6 +135,41 @@ public class PaiementService {
         }
 
         return saved;
+    }
+
+    private void crediterParticipationEtRattrapage(Participation participation,
+                                                   BigDecimal montantTotal,
+                                                   BigDecimal restePart) {
+        String matricule = participation.getJoueur().getMatricule();
+        Long matchId = participation.getMatch() != null ? participation.getMatch().getId() : null;
+
+        BigDecimal montantParticipation = montantTotal.min(restePart).setScale(2, RoundingMode.HALF_UP);
+        if (montantParticipation.signum() > 0) {
+            soldeService.crediter(
+                    matricule,
+                    montantParticipation,
+                    new SoldeOriginContext(
+                            OrigineMouvementSoldeType.PAIEMENT_PARTICIPATION,
+                            participation.getId(),
+                            matchId,
+                            null
+                    )
+            );
+        }
+
+        BigDecimal montantRattrapage = montantTotal.subtract(montantParticipation).setScale(2, RoundingMode.HALF_UP);
+        if (montantRattrapage.signum() > 0) {
+            soldeService.crediter(
+                    matricule,
+                    montantRattrapage,
+                    new SoldeOriginContext(
+                            OrigineMouvementSoldeType.RATTRAPAGE_DETTE,
+                            null,
+                            null,
+                            null
+                    )
+            );
+        }
     }
 
     private Participation getParticipationByIdOrThrow(Long participationId) {

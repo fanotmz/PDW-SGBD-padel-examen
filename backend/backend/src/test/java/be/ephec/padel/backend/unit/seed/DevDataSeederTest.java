@@ -9,6 +9,7 @@ import be.ephec.padel.backend.repository.SiteRepository;
 import be.ephec.padel.backend.repository.TerrainRepository;
 import be.ephec.padel.backend.repository.UserRepository;
 import be.ephec.padel.backend.seed.DevDataSeeder;
+import be.ephec.padel.backend.service.SoldeService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -48,6 +49,8 @@ class DevDataSeederTest {
     PaiementRepository paiementRepository;
     @Mock
     PasswordEncoder passwordEncoder;
+    @Mock
+    SoldeService soldeService;
 
     DevDataSeeder seeder;
 
@@ -64,6 +67,7 @@ class DevDataSeederTest {
                 participationRepository,
                 paiementRepository,
                 passwordEncoder,
+                soldeService,
                 clock,
                 "admin.global.dev",
                 "admin.site.nord.dev:1"
@@ -96,6 +100,7 @@ class DevDataSeederTest {
                 participationRepository,
                 paiementRepository,
                 passwordEncoder,
+                soldeService,
                 clock,
                 "admin.global.dev",
                 "admin.site.nord.dev:99"

@@ -231,6 +231,16 @@ dd {
   cursor: wait;
 }
 
+.already-joined-message {
+  display: inline-flex;
+  margin: 1rem 0 0;
+  padding: 0.55rem 0.85rem;
+  border-radius: 999px;
+  background: #dcfce7;
+  color: #166534;
+  font-weight: 700;
+}
+
 .private-add-section {
   margin-bottom: 1rem;
 }
