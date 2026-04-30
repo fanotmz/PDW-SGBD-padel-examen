@@ -6,6 +6,7 @@ import be.ephec.padel.backend.model.entities.MatchPadel;
 import be.ephec.padel.backend.model.entities.Participation;
 import be.ephec.padel.backend.model.enums.MatchStatut;
 import be.ephec.padel.backend.model.enums.MatchVisibilite;
+import be.ephec.padel.backend.model.enums.OrigineMouvementSoldeType;
 import be.ephec.padel.backend.repository.MatchPadelRepository;
 import be.ephec.padel.backend.repository.PaiementRepository;
 import be.ephec.padel.backend.repository.ParticipationRepository;
@@ -83,7 +84,16 @@ public class TraitementJ1Service {
                 // Annule la dette restante de CE match pour ce joueur (on avait débité 15 à l'inscription)
                 BigDecimal resteDu = PART_JOUEUR.subtract(paye).setScale(2, RoundingMode.HALF_UP);
                 if (resteDu.signum() > 0) {
-                    soldeService.crediter(part.getJoueur().getMatricule(), resteDu);
+                    soldeService.crediter(
+                            part.getJoueur().getMatricule(),
+                            resteDu,
+                            new SoldeOriginContext(
+                                    OrigineMouvementSoldeType.TRAITEMENT_J1_NEUTRALISATION,
+                                    part.getId(),
+                                    match.getId(),
+                                    null
+                            )
+                    );
                 }
 
                 // Supprime la participation (place redevient réservable)

@@ -4,12 +4,14 @@ import be.ephec.padel.backend.common.Tarifs;
 import be.ephec.padel.backend.model.entities.Joueur;
 import be.ephec.padel.backend.model.entities.MatchPadel;
 import be.ephec.padel.backend.model.entities.Participation;
+import be.ephec.padel.backend.model.enums.OrigineMouvementSoldeType;
 import be.ephec.padel.backend.model.enums.MatchStatut;
 import be.ephec.padel.backend.model.enums.MatchVisibilite;
 import be.ephec.padel.backend.model.enums.TypeJoueur;
 import be.ephec.padel.backend.repository.MatchPadelRepository;
 import be.ephec.padel.backend.repository.PaiementRepository;
 import be.ephec.padel.backend.repository.ParticipationRepository;
+import be.ephec.padel.backend.service.SoldeOriginContext;
 import be.ephec.padel.backend.service.SoldeService;
 import be.ephec.padel.backend.service.TraitementJ1Service;
 import org.junit.jupiter.api.BeforeEach;
@@ -154,7 +156,15 @@ class TraitementJ1ServiceTest {
         assertThat(match.getParticipations().get(0).getJoueur().getMatricule()).isEqualTo("O1");
 
         // dette restante annulée = 15 - 0 = 15
-        verify(soldeService).crediter(eq("JX"), eq(new BigDecimal("15.00")));
+        verify(soldeService).crediter(
+                eq("JX"),
+                eq(new BigDecimal("15.00")),
+                argThat((SoldeOriginContext context) ->
+                        context.getOrigineType() == OrigineMouvementSoldeType.TRAITEMENT_J1_NEUTRALISATION
+                                && Long.valueOf(201L).equals(context.getParticipationId())
+                                && Long.valueOf(20L).equals(context.getMatchId())
+                )
+        );
 
         // pas de paiement solde orga à J-1 dans ce scénario non plus
         verify(soldeService, never()).debiter(eq("O1"), any());
