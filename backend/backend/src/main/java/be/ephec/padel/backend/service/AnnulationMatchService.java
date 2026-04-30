@@ -5,6 +5,7 @@ import be.ephec.padel.backend.exception.NotFoundException;
 import be.ephec.padel.backend.model.entities.Joueur;
 import be.ephec.padel.backend.model.entities.MatchPadel;
 import be.ephec.padel.backend.model.entities.Participation;
+import be.ephec.padel.backend.model.enums.OrigineMouvementSoldeType;
 import be.ephec.padel.backend.model.enums.MatchStatut;
 import be.ephec.padel.backend.repository.MatchPadelRepository;
 import be.ephec.padel.backend.repository.PaiementRepository;
@@ -99,7 +100,16 @@ public class AnnulationMatchService {
         BigDecimal montantACrediter = detteAAnnuler.min(detteActuelle).setScale(2, RoundingMode.HALF_UP);
 
         if (montantACrediter.signum() > 0) {
-            soldeService.crediter(joueur.getMatricule(), montantACrediter);
+            soldeService.crediter(
+                    joueur.getMatricule(),
+                    montantACrediter,
+                    new SoldeOriginContext(
+                            OrigineMouvementSoldeType.ANNULATION_MATCH_NEUTRALISATION,
+                            participation.getId(),
+                            participation.getMatch() != null ? participation.getMatch().getId() : null,
+                            null
+                    )
+            );
         }
 
         if (montantRembourse.signum() > 0) {

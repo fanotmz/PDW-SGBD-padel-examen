@@ -5,10 +5,12 @@ import be.ephec.padel.backend.model.entities.MatchPadel;
 import be.ephec.padel.backend.model.entities.Participation;
 import be.ephec.padel.backend.model.enums.MatchStatut;
 import be.ephec.padel.backend.model.enums.MatchVisibilite;
+import be.ephec.padel.backend.model.enums.OrigineMouvementSoldeType;
 import be.ephec.padel.backend.model.enums.TypePaiement;
 import be.ephec.padel.backend.model.enums.TypeJoueur;
 import be.ephec.padel.backend.repository.MatchPadelRepository;
 import be.ephec.padel.backend.repository.PaiementRepository;
+import be.ephec.padel.backend.service.SoldeOriginContext;
 import be.ephec.padel.backend.service.SoldeService;
 import be.ephec.padel.backend.service.TraitementDebutMatchService;
 import org.junit.jupiter.api.BeforeEach;
@@ -27,6 +29,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -81,7 +84,15 @@ class TraitementDebutMatchServiceTest {
         int treated = service.traiterDebutMatchFenetreMinutes(5);
 
         assertThat(treated).isEqualTo(1);
-        verify(soldeService).debiter(eq("O1"), eq(new BigDecimal("30.00")));
+        verify(soldeService).debiter(
+                eq("O1"),
+                eq(new BigDecimal("30.00")),
+                argThat((SoldeOriginContext context) ->
+                        context.getOrigineType() == OrigineMouvementSoldeType.TRANSFERT_ORGANISATEUR_DEBUT_MATCH
+                                && context.getParticipationId() == null
+                                && Long.valueOf(55L).equals(context.getMatchId())
+                )
+        );
         assertThat(match.getSoldeTraiteLe()).isEqualTo(now);
     }
 
@@ -135,7 +146,15 @@ class TraitementDebutMatchServiceTest {
         int treated = service.traiterDebutMatchFenetreMinutes(5);
 
         assertThat(treated).isEqualTo(1);
-        verify(soldeService).debiter(eq("O1"), eq(new BigDecimal("35.00")));
+        verify(soldeService).debiter(
+                eq("O1"),
+                eq(new BigDecimal("35.00")),
+                argThat((SoldeOriginContext context) ->
+                        context.getOrigineType() == OrigineMouvementSoldeType.TRANSFERT_ORGANISATEUR_DEBUT_MATCH
+                                && context.getParticipationId() == null
+                                && Long.valueOf(57L).equals(context.getMatchId())
+                )
+        );
     }
 
     private static void setId(Object entity, Long id) {

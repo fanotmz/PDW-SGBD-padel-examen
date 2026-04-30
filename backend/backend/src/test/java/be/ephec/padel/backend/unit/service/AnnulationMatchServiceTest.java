@@ -6,11 +6,13 @@ import be.ephec.padel.backend.model.entities.MatchPadel;
 import be.ephec.padel.backend.model.entities.Participation;
 import be.ephec.padel.backend.model.entities.Site;
 import be.ephec.padel.backend.model.entities.Terrain;
+import be.ephec.padel.backend.model.enums.OrigineMouvementSoldeType;
 import be.ephec.padel.backend.model.enums.MatchStatut;
 import be.ephec.padel.backend.model.enums.MatchVisibilite;
 import be.ephec.padel.backend.model.enums.TypeJoueur;
 import be.ephec.padel.backend.repository.MatchPadelRepository;
 import be.ephec.padel.backend.repository.PaiementRepository;
+import be.ephec.padel.backend.service.SoldeOriginContext;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.test.util.ReflectionTestUtils;
@@ -28,6 +30,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -109,7 +112,15 @@ class AnnulationMatchServiceTest {
 
         assertTrue(result);
         assertTrue(match.getStatut() == MatchStatut.ANNULE);
-        verify(soldeService).crediter("J001", new BigDecimal("5.00"));
+        verify(soldeService).crediter(
+                org.mockito.ArgumentMatchers.eq("J001"),
+                org.mockito.ArgumentMatchers.eq(new BigDecimal("5.00")),
+                argThat((SoldeOriginContext context) ->
+                        context.getOrigineType() == OrigineMouvementSoldeType.ANNULATION_MATCH_NEUTRALISATION
+                                && Long.valueOf(11L).equals(context.getParticipationId())
+                                && Long.valueOf(1L).equals(context.getMatchId())
+                )
+        );
         verify(paiementService).enregistrerRemboursementAnnulation(participation, new BigDecimal("10.00"));
         verify(matchPadelRepository).save(match);
     }

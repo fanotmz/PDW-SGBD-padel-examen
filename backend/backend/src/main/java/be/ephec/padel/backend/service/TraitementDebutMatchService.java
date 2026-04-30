@@ -4,6 +4,7 @@ import be.ephec.padel.backend.common.Tarifs;
 import be.ephec.padel.backend.model.entities.MatchPadel;
 import be.ephec.padel.backend.model.entities.Participation;
 import be.ephec.padel.backend.model.enums.MatchStatut;
+import be.ephec.padel.backend.model.enums.OrigineMouvementSoldeType;
 import be.ephec.padel.backend.model.enums.TypePaiement;
 import be.ephec.padel.backend.repository.MatchPadelRepository;
 import be.ephec.padel.backend.repository.PaiementRepository;
@@ -88,7 +89,16 @@ public class TraitementDebutMatchService {
 
         if (solde.signum() > 0) {
             String matOrga = match.getOrganisateur().getMatricule();
-            soldeService.debiter(matOrga, solde);
+            soldeService.debiter(
+                    matOrga,
+                    solde,
+                    new SoldeOriginContext(
+                            OrigineMouvementSoldeType.TRANSFERT_ORGANISATEUR_DEBUT_MATCH,
+                            null,
+                            match.getId(),
+                            null
+                    )
+            );
         }
     }
 }
