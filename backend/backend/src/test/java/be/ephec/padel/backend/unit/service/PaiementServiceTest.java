@@ -246,6 +246,30 @@ class PaiementServiceTest {
     }
 
     @Test
+    void payerParticipationAvecRattrapageDette_reste_flux_special_hors_moteur_cible() {
+        Participation participation = mock(Participation.class);
+        Joueur joueur = mock(Joueur.class);
+        MatchPadel match = mock(MatchPadel.class);
+        when(joueur.getMatricule()).thenReturn("G1");
+        when(joueur.getSolde()).thenReturn(new BigDecimal("5.00"));
+        when(match.getStatut()).thenReturn(MatchStatut.PLANIFIE);
+        when(participation.getId()).thenReturn(1L);
+        when(participation.getJoueur()).thenReturn(joueur);
+        when(participation.getMatch()).thenReturn(match);
+        when(participationRepo.findById(1L)).thenReturn(Optional.of(participation));
+        when(paiementRepo.sumMontantByParticipationId(1L)).thenReturn(BigDecimal.ZERO);
+
+        Paiement saved = mock(Paiement.class);
+        when(paiementRepo.save(any(Paiement.class))).thenReturn(saved);
+
+        Paiement result = service.payerParticipationAvecRattrapageDette(1L, new BigDecimal("20.00"));
+
+        assertSame(saved, result);
+        verify(soldeService).crediter("G1", new BigDecimal("20.00"));
+        verify(soldeService, org.mockito.Mockito.never()).crediter(eq("G1"), eq(new BigDecimal("20.00")), any(SoldeOriginContext.class));
+    }
+
+    @Test
     void validerMontant_remboursementPositifOuZero_refuse() {
         assertThrows(BusinessException.class, () ->
                 ReflectionTestUtils.invokeMethod(

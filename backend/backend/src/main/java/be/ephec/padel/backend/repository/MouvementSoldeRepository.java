@@ -9,4 +9,5 @@ import java.util.List;
 
 public interface MouvementSoldeRepository extends JpaRepository<MouvementSolde, Long> {
     List<MouvementSolde> findByJoueur_MatriculeOrderByDateMouvementDesc(String matricule);
+    List<MouvementSolde> findByJoueur_MatriculeOrderByDateMouvementAscIdAsc(String matricule);
 }
