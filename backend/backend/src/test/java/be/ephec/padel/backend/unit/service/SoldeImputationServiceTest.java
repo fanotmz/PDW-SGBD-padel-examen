@@ -151,6 +151,20 @@ class SoldeImputationServiceTest {
         assertThat(result.getOpenDebtLines().getFirst().getMontantRestant()).isEqualByComparingTo("15.00");
     }
 
+    @Test
+    void rejoindrePublic_avecPaiementImmediat_ne_laisse_aucune_dette_tracable_sur_la_participation() {
+        when(mouvementSoldeRepository.findByJoueur_MatriculeOrderByDateMouvementAscIdAsc("J1"))
+                .thenReturn(List.of(
+                        debit(1L, 300L, 30L, "15.00", OrigineMouvementSoldeType.REJOINDRE_MATCH_PUBLIC_PART, 1),
+                        credit(2L, 300L, 30L, "15.00", OrigineMouvementSoldeType.PAIEMENT_PARTICIPATION, 2)
+                ));
+
+        ImputationResult result = service.reconstruirePourJoueur("J1");
+
+        assertThat(result.getOpenDebtLines()).isEmpty();
+        assertThat(result.getTotalTrackedOpenAmount()).isEqualByComparingTo("0.00");
+    }
+
     private MouvementSolde debit(Long id,
                                  Long participationId,
                                  Long matchId,

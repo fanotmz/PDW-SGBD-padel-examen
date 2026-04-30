@@ -11,6 +11,7 @@ import be.ephec.padel.backend.model.entities.Terrain;
 import be.ephec.padel.backend.model.entities.User;
 import be.ephec.padel.backend.model.enums.MatchStatut;
 import be.ephec.padel.backend.model.enums.MatchVisibilite;
+import be.ephec.padel.backend.model.enums.OrigineMouvementSoldeType;
 import be.ephec.padel.backend.model.enums.SecurityRole;
 import be.ephec.padel.backend.model.enums.TypePaiement;
 import be.ephec.padel.backend.model.enums.TypeJoueur;
@@ -23,6 +24,8 @@ import be.ephec.padel.backend.repository.ParticipationRepository;
 import be.ephec.padel.backend.repository.SiteRepository;
 import be.ephec.padel.backend.repository.TerrainRepository;
 import be.ephec.padel.backend.repository.UserRepository;
+import be.ephec.padel.backend.service.SoldeOriginContext;
+import be.ephec.padel.backend.service.SoldeService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -59,6 +62,7 @@ public class DevDataSeeder {
     private final ParticipationRepository participationRepository;
     private final PaiementRepository paiementRepository;
     private final PasswordEncoder passwordEncoder;
+    private final SoldeService soldeService;
     private final Clock clock;
     private final String adminGlobalUsername;
     private final String adminSiteUsers;
@@ -72,6 +76,7 @@ public class DevDataSeeder {
                          ParticipationRepository participationRepository,
                          PaiementRepository paiementRepository,
                          PasswordEncoder passwordEncoder,
+                         SoldeService soldeService,
                          Clock clock,
                          @Value("${app.security.admin.global.username:}") String adminGlobalUsername,
                          @Value("${app.security.admin.site.users:}") String adminSiteUsers) {
@@ -84,6 +89,7 @@ public class DevDataSeeder {
         this.participationRepository = participationRepository;
         this.paiementRepository = paiementRepository;
         this.passwordEncoder = passwordEncoder;
+        this.soldeService = soldeService;
         this.clock = clock;
         this.adminGlobalUsername = adminGlobalUsername;
         this.adminSiteUsers = adminSiteUsers;
@@ -126,7 +132,7 @@ public class DevDataSeeder {
 
         Joueur joueurGlobal = ensureJoueur("G9001", "Joueur Global Demo", TypeJoueur.GLOBAL, null, ZERO);
         Joueur joueurSiteNord = ensureJoueur("S9001", "Joueur Site Nord Demo", TypeJoueur.SITE, siteNord, ZERO);
-        Joueur joueurLibre = ensureJoueur("L9001", "Joueur Libre Demo", TypeJoueur.LIBRE, null, PART.multiply(BigDecimal.valueOf(2)).setScale(2, RoundingMode.HALF_UP));
+        Joueur joueurLibre = ensureJoueur("L9001", "Joueur Libre Demo", TypeJoueur.LIBRE, null, ZERO);
         Joueur joueurSiteSud = ensureJoueur("S9002", "Joueur Site Sud Demo", TypeJoueur.SITE, siteSud, ZERO);
 
         ensurePlayerUser("joueur.global.dev", joueurGlobal);
@@ -157,11 +163,12 @@ public class DevDataSeeder {
         );
         ensureParticipation(publicFuturComplet, joueurSiteNord);
         ensureParticipation(publicFuturComplet, joueurGlobal);
-        ensureParticipation(publicFuturComplet, joueurLibre);
+        Participation participationLibrePublic = ensureParticipation(publicFuturComplet, joueurLibre);
         ensureParticipation(publicFuturComplet, joueurSiteSud);
         ensureEncaissement(publicFuturComplet, joueurSiteNord, PART);
         ensureEncaissement(publicFuturComplet, joueurGlobal, PART);
         ensureEncaissement(publicFuturComplet, joueurSiteSud, PART);
+        ensureSeedDebt(participationLibrePublic, OrigineMouvementSoldeType.REJOINDRE_MATCH_PUBLIC_PART);
 
         MatchPadel priveFutur = ensureMatch(
                 sudT1,
@@ -171,8 +178,9 @@ public class DevDataSeeder {
                 MatchStatut.PLANIFIE
         );
         ensureParticipation(priveFutur, joueurSiteSud);
-        ensureParticipation(priveFutur, joueurLibre);
+        Participation participationLibrePrive = ensureParticipation(priveFutur, joueurLibre);
         ensureEncaissement(priveFutur, joueurSiteSud, PART);
+        ensureSeedDebt(participationLibrePrive, OrigineMouvementSoldeType.AJOUT_MATCH_PRIVE);
 
         MatchPadel publicPasse = ensureMatch(
                 nordT1,
@@ -366,5 +374,18 @@ public class DevDataSeeder {
                 TypePaiement.REMBOURSEMENT,
                 match.getDateDebut().minusDays(1)
         ));
+    }
+
+    private void ensureSeedDebt(Participation participation, OrigineMouvementSoldeType origineType) {
+        soldeService.debiter(
+                participation.getJoueur().getMatricule(),
+                PART,
+                new SoldeOriginContext(
+                        origineType,
+                        participation.getId(),
+                        participation.getMatch().getId(),
+                        null
+                )
+        );
     }
 }

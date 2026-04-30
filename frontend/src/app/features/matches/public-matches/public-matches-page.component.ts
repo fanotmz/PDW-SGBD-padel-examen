@@ -100,7 +100,16 @@ export class PublicMatchesPageComponent implements OnInit {
   }
 
   protected getDetailLinkLabel(match: PublicMatch): string {
-    return this.isMatchJoinable(match) ? 'Voir le d\u00e9tail / rejoindre' : 'Voir le d\u00e9tail';
+    if (!this.isMatchJoinable(match)) {
+      return 'Voir le d\u00e9tail';
+    }
+
+    const montant = new Intl.NumberFormat('fr-BE', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
+    }).format(match.montantParJoueur);
+
+    return `Voir le d\u00e9tail / rejoindre et payer ${montant} \u20ac`;
   }
 
   protected getMatchBadgeLabel(match: PublicMatch): string {

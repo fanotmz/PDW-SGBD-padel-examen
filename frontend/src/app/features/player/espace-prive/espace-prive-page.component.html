@@ -48,40 +48,73 @@
       </section>
 
       <section class="info-section">
-        <h2>Participations non totalement pay&eacute;es</h2>
-        <p class="section-note">
-          Ces montants indiquent les participations qui ne sont pas totalement pay&eacute;es. Ils ne constituent
-          pas forc&eacute;ment le d&eacute;tail exact du solde global.
-        </p>
+        <h2>Matchs &agrave; payer</h2>
 
-        @if (unpaidMatches().length === 0) {
-          <p class="empty-regularizations">Aucune participation non totalement pay&eacute;e.</p>
+        @if (hasRegularisations()) {
+          <p class="section-note">Voici les matchs pour lesquels un paiement est encore attendu.</p>
+        }
+
+        @if (hasRegularisations()) {
+          <p class="traceable-total">
+            <span>Total &agrave; payer identifi&eacute;</span>
+            <strong>{{ formatAmount(totalTracable()) }}</strong>
+          </p>
+        }
+
+        @if (hasTraceableGap()) {
+          <p class="traceable-warning">
+            Une partie de votre solde peut concerner d&rsquo;anciens mouvements non d&eacute;taill&eacute;s ici.
+          </p>
+        }
+
+        @if (paymentSuccessMessage()) {
+          <p class="page-state is-success">{{ paymentSuccessMessage() }}</p>
+        }
+
+        @if (paymentErrorMessage()) {
+          <p class="page-state is-error">{{ paymentErrorMessage() }}</p>
+        }
+
+        @if (!hasRegularisations()) {
+          <p class="empty-regularizations">Tous vos paiements sont &agrave; jour.</p>
+          <p class="empty-regularizations">Aucun match ne n&eacute;cessite de paiement pour le moment.</p>
         } @else {
           <div class="regularization-list">
-            @for (match of unpaidMatches(); track match.participationId) {
+            @for (regularisation of regularisationItems(); track regularisation.participationId) {
               <article class="regularization-card">
-                <div class="regularization-summary">
-                  <p class="regularization-site">{{ match.siteNom }}</p>
-                  <h3>{{ match.terrainNom }}</h3>
-                  <p class="regularization-datetime">
-                    {{ match.dateDebut | date:'dd/MM/yyyy' }} &agrave; {{ match.dateDebut | date:'HH:mm' }}
-                  </p>
+                <div class="regularization-main">
+                  <div class="regularization-summary">
+                    <p class="regularization-site">{{ regularisation.siteNom }}</p>
+                    <h3>{{ regularisation.terrainNom }}</h3>
+                    <p class="regularization-datetime">
+                      {{ regularisation.dateMatch | date:'dd/MM/yyyy' }} &agrave;
+                      {{ regularisation.dateMatch | date:'HH:mm' }}
+                    </p>
 
-                  <div class="regularization-badges">
-                    <span class="meta-badge">{{ match.visibilite }}</span>
-                    <span class="meta-badge is-secondary">{{ match.roleJoueur }}</span>
+                    <div class="regularization-badges">
+                      <span class="meta-badge">{{ regularisation.visibilite }}</span>
+                      <span class="meta-badge is-secondary">{{ getRoleLabel(regularisation.roleJoueur) }}</span>
+                    </div>
                   </div>
-                </div>
 
-                <div class="regularization-amounts">
-                  <p class="amount-item">
-                    <span>D&eacute;j&agrave; pay&eacute;</span>
-                    <strong>{{ formatAmount(match.montantPayeJoueur) }}</strong>
-                  </p>
-                  <p class="amount-item is-remaining">
-                    <span>Reste th&eacute;orique</span>
-                    <strong>{{ formatAmount(match.montantRestantJoueur) }}</strong>
-                  </p>
+                  <div class="regularization-payment">
+                    <p class="payment-amount">
+                      <span>Montant &agrave; payer</span>
+                      <strong>{{ formatAmount(regularisation.montantRestant) }}</strong>
+                    </p>
+
+                    @if (regularisation.payable) {
+                      <button
+                        type="button"
+                        class="pay-button"
+                        [disabled]="isPaying(regularisation.participationId)"
+                        (click)="payerRegularisation(regularisation)">
+                        {{ isPaying(regularisation.participationId) ? 'Paiement en cours...' : 'Payer' }}
+                      </button>
+                    } @else {
+                      <p class="payment-unavailable">Paiement indisponible</p>
+                    }
+                  </div>
                 </div>
               </article>
             }
