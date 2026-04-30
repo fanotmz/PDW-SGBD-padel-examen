@@ -5,9 +5,11 @@ import be.ephec.padel.backend.dto.response.JoueurDto;
 import be.ephec.padel.backend.dto.response.MeStatsDto;
 import be.ephec.padel.backend.dto.response.OrganizerMatchSummaryDto;
 import be.ephec.padel.backend.dto.response.PlayerMatchSummaryDto;
+import be.ephec.padel.backend.dto.response.RegularisationsResponseDto;
 import be.ephec.padel.backend.mapper.JoueurMapper;
 import be.ephec.padel.backend.service.JoueurService;
 import be.ephec.padel.backend.service.MeStatsService;
+import be.ephec.padel.backend.service.RegularisationService;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -23,10 +25,14 @@ public class MeController {
 
     private final JoueurService joueurService;
     private final MeStatsService meStatsService;
+    private final RegularisationService regularisationService;
 
-    public MeController(JoueurService joueurService, MeStatsService meStatsService) {
+    public MeController(JoueurService joueurService,
+                        MeStatsService meStatsService,
+                        RegularisationService regularisationService) {
         this.joueurService = joueurService;
         this.meStatsService = meStatsService;
+        this.regularisationService = regularisationService;
     }
 
     @GetMapping
@@ -47,6 +53,11 @@ public class MeController {
     @GetMapping("/dette")
     public ResponseEntity<DetteDto> getMyDette() {
         return ResponseEntity.ok(new DetteDto(joueurService.currentUserADette()));
+    }
+
+    @GetMapping("/regularisations")
+    public ResponseEntity<RegularisationsResponseDto> getMyRegularisations() {
+        return ResponseEntity.ok(regularisationService.getCurrentUserRegularisations());
     }
 
     @GetMapping("/stats")

@@ -7,6 +7,8 @@ import be.ephec.padel.backend.dto.response.MeStatsDto;
 import be.ephec.padel.backend.dto.enums.PlayerMatchRoleDto;
 import be.ephec.padel.backend.dto.response.OrganizerMatchSummaryDto;
 import be.ephec.padel.backend.dto.response.PlayerMatchSummaryDto;
+import be.ephec.padel.backend.dto.response.RegularisationDto;
+import be.ephec.padel.backend.dto.response.RegularisationsResponseDto;
 import be.ephec.padel.backend.error.ApiExceptionHandler;
 import be.ephec.padel.backend.exception.ForbiddenException;
 import be.ephec.padel.backend.model.entities.Joueur;
@@ -15,6 +17,7 @@ import be.ephec.padel.backend.model.enums.MatchVisibilite;
 import be.ephec.padel.backend.model.enums.TypeJoueur;
 import be.ephec.padel.backend.service.JoueurService;
 import be.ephec.padel.backend.service.MeStatsService;
+import be.ephec.padel.backend.service.RegularisationService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
@@ -48,6 +51,9 @@ class MeControllerTest {
 
     @MockitoBean
     MeStatsService meStatsService;
+
+    @MockitoBean
+    RegularisationService regularisationService;
 
     @Test
     @WithAnonymousUser
@@ -171,6 +177,43 @@ class MeControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.dette").value(true));
+    }
+
+    @Test
+    void getMyRegularisations_ok_200() throws Exception {
+        RegularisationDto item = new RegularisationDto(
+                77L,
+                1L,
+                LocalDateTime.of(2030, 1, 10, 10, 0),
+                "Site Delta",
+                "Terrain 1",
+                MatchVisibilite.PUBLIC,
+                PlayerMatchRoleDto.PARTICIPANT,
+                be.ephec.padel.backend.model.enums.OrigineMouvementSoldeType.PAIEMENT_PARTICIPATION,
+                new BigDecimal("15.00"),
+                new BigDecimal("5.00"),
+                new BigDecimal("10.00"),
+                null,
+                true
+        );
+        when(regularisationService.getCurrentUserRegularisations())
+                .thenReturn(new RegularisationsResponseDto(new BigDecimal("10.00"), List.of(item)));
+
+        mvc.perform(get("/api/v1/me/regularisations"))
+                .andExpect(status().isOk())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.totalTracable").value(10.00))
+                .andExpect(jsonPath("$.items").isArray())
+                .andExpect(jsonPath("$.items.length()").value(1))
+                .andExpect(jsonPath("$.items[0].participationId").value(77))
+                .andExpect(jsonPath("$.items[0].matchId").value(1))
+                .andExpect(jsonPath("$.items[0].siteNom").value("Site Delta"))
+                .andExpect(jsonPath("$.items[0].terrainNom").value("Terrain 1"))
+                .andExpect(jsonPath("$.items[0].roleJoueur").value("PARTICIPANT"))
+                .andExpect(jsonPath("$.items[0].montantInitial").value(15.00))
+                .andExpect(jsonPath("$.items[0].montantDejaPaye").value(5.00))
+                .andExpect(jsonPath("$.items[0].montantRestant").value(10.00))
+                .andExpect(jsonPath("$.items[0].payable").value(true));
     }
 
     @Test
