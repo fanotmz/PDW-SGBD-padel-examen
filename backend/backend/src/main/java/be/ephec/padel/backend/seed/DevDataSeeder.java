@@ -48,6 +48,7 @@ public class DevDataSeeder {
     private static final String EXPECTED_ADMIN_SITE_LOGIN = "admin.site.nord.dev";
     private static final String PLAYER_PASSWORD = "joueur123";
     private static final BigDecimal PART = Tarifs.PART_PAR_JOUEUR;
+    private static final BigDecimal ZERO = BigDecimal.ZERO.setScale(2, RoundingMode.HALF_UP);
 
     private final SiteRepository siteRepository;
     private final TerrainRepository terrainRepository;
@@ -123,10 +124,10 @@ public class DevDataSeeder {
         Terrain sudT1 = ensureTerrain(siteSud, "Sud T1");
         Terrain sudT2 = ensureTerrain(siteSud, "Sud T2");
 
-        Joueur joueurGlobal = ensureJoueur("G9001", "Joueur Global Demo", TypeJoueur.GLOBAL, null, "0.00");
-        Joueur joueurSiteNord = ensureJoueur("S9001", "Joueur Site Nord Demo", TypeJoueur.SITE, siteNord, "0.00");
-        Joueur joueurLibre = ensureJoueur("L9001", "Joueur Libre Demo", TypeJoueur.LIBRE, null, "15.00");
-        Joueur joueurSiteSud = ensureJoueur("S9002", "Joueur Site Sud Demo", TypeJoueur.SITE, siteSud, "0.00");
+        Joueur joueurGlobal = ensureJoueur("G9001", "Joueur Global Demo", TypeJoueur.GLOBAL, null, ZERO);
+        Joueur joueurSiteNord = ensureJoueur("S9001", "Joueur Site Nord Demo", TypeJoueur.SITE, siteNord, ZERO);
+        Joueur joueurLibre = ensureJoueur("L9001", "Joueur Libre Demo", TypeJoueur.LIBRE, null, PART.multiply(BigDecimal.valueOf(2)).setScale(2, RoundingMode.HALF_UP));
+        Joueur joueurSiteSud = ensureJoueur("S9002", "Joueur Site Sud Demo", TypeJoueur.SITE, siteSud, ZERO);
 
         ensurePlayerUser("joueur.global.dev", joueurGlobal);
         ensurePlayerUser("joueur.site.dev", joueurSiteNord);
@@ -292,7 +293,7 @@ public class DevDataSeeder {
                                 String nom,
                                 TypeJoueur type,
                                 Site site,
-                                String solde) {
+                                BigDecimal solde) {
         Joueur joueur = joueurRepository.findById(matricule)
                 .orElseGet(() -> site == null
                         ? new Joueur(matricule, nom, type)
@@ -301,7 +302,7 @@ public class DevDataSeeder {
         joueur.setNom(nom);
         joueur.setType(type);
         joueur.setSite(site);
-        joueur.setSolde(amount(solde));
+        joueur.setSolde(solde == null ? ZERO : solde.setScale(2, RoundingMode.HALF_UP));
 
         return joueurRepository.save(joueur);
     }
@@ -365,9 +366,5 @@ public class DevDataSeeder {
                 TypePaiement.REMBOURSEMENT,
                 match.getDateDebut().minusDays(1)
         ));
-    }
-
-    private BigDecimal amount(String value) {
-        return new BigDecimal(value).setScale(2, RoundingMode.HALF_UP);
     }
 }
