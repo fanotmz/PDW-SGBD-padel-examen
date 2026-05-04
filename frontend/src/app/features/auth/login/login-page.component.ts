@@ -2,7 +2,7 @@ import { CommonModule } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { ActivatedRoute, Router } from '@angular/router';
+import { Router } from '@angular/router';
 import { finalize } from 'rxjs';
 import { ApiErrorResponse, LoginRequest } from '../../../core/auth/auth.models';
 import { AuthService } from '../../../core/auth/auth.service';
@@ -16,7 +16,6 @@ import { AuthService } from '../../../core/auth/auth.service';
 })
 export class LoginPageComponent {
   private readonly fb = inject(FormBuilder);
-  private readonly route = inject(ActivatedRoute);
   private readonly authService = inject(AuthService);
   private readonly router = inject(Router);
 
@@ -86,10 +85,12 @@ export class LoginPageComponent {
   }
 
   private getTargetUrl(): string {
-    const returnUrl = this.route.snapshot.queryParamMap.get('returnUrl');
+    if (this.authService.isAdmin()) {
+      return '/admin';
+    }
 
-    if (returnUrl?.startsWith('/')) {
-      return returnUrl;
+    if (this.authService.hasPlayerProfile()) {
+      return '/espace-prive';
     }
 
     return '/';

@@ -8,11 +8,17 @@
           <a routerLink="/" routerLinkActive="is-active" [routerLinkActiveOptions]="{ exact: true }">Accueil</a>
 
           @if (authService.isAuthenticatedState()) {
-            <a routerLink="/espace-prive" routerLinkActive="is-active">Mon espace</a>
-            <a routerLink="/matchs/creer" routerLinkActive="is-active">Créer un match</a>
-            <a routerLink="/me/matchs" routerLinkActive="is-active">Mes matchs</a>
-            <a routerLink="/me/matchs/organises" routerLinkActive="is-active">Matchs organisés</a>
-            <a routerLink="/matchs" routerLinkActive="is-active">Matchs</a>
+            @if (authService.isAdmin()) {
+              <a routerLink="/admin" routerLinkActive="is-active">Administration</a>
+            }
+
+            @if (!authService.isAdmin() && authService.hasPlayerProfile()) {
+              <a routerLink="/espace-prive" routerLinkActive="is-active">Mon espace</a>
+              <a routerLink="/matchs/creer" routerLinkActive="is-active">Cr&eacute;er un match</a>
+              <a routerLink="/me/matchs" routerLinkActive="is-active">Mes matchs</a>
+              <a routerLink="/me/matchs/organises" routerLinkActive="is-active">Matchs organis&eacute;s</a>
+              <a routerLink="/matchs" routerLinkActive="is-active">Matchs</a>
+            }
           } @else {
             <a routerLink="/login" routerLinkActive="is-active">Connexion</a>
           }
@@ -21,8 +27,8 @@
 
       <div class="header-actions">
         @if (authService.isAuthenticatedState()) {
-          <span class="session-badge">Connecté</span>
-          <button type="button" class="logout-button" (click)="logout()">Se déconnecter</button>
+          <span class="session-badge">Connect&eacute;</span>
+          <button type="button" class="logout-button" (click)="logout()">Se d&eacute;connecter</button>
         }
       </div>
     </div>

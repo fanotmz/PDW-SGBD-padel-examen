@@ -13,6 +13,8 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+
 @Service
 public class AuthenticationService {
 
@@ -40,7 +42,15 @@ public class AuthenticationService {
 
         UserDetails userDetails = (UserDetails) authentication.getPrincipal();
         String token = jwtService.generateToken(userDetails);
-        return new LoginResponse(token, "Bearer");
+        User authenticatedUser = userRepository.findByLogin(userDetails.getUsername())
+                .orElseThrow(() -> new ForbiddenException("Utilisateur authentifie introuvable."));
+
+        List<String> roles = authenticatedUser.getRoles().stream()
+                .map(Enum::name)
+                .toList();
+        boolean hasPlayerProfile = authenticatedUser.getJoueur() != null;
+
+        return new LoginResponse(token, "Bearer", roles, hasPlayerProfile);
     }
 
     private void precheckUserStatus(String username) {
