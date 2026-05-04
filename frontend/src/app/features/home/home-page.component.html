@@ -1,11 +1,65 @@
 <section class="home-page">
   <div class="home-card">
     <p class="eyebrow">Padel Manager</p>
-    <h1>Accueil</h1>
-    <p>Frontend Angular de démonstration pour le projet PDW / SGBD padel.</p>
-    <p>
-      La navigation principale est maintenant portée par le layout global. Les pages métiers seront
-      branchées progressivement derrière cette structure.
-    </p>
+
+    @if (isAdminView()) {
+      <h1>Bienvenue dans Padel Manager</h1>
+      <p class="home-intro">
+        Accédez à l’espace d’administration pour gérer l’activité de la plateforme.
+      </p>
+
+      <div class="action-group">
+        <a routerLink="/admin" class="primary-action">Administration</a>
+      </div>
+    } @else if (isPlayerView()) {
+      <h1>Bienvenue sur Padel Manager</h1>
+      <p class="home-intro">
+        Retrouvez vos matchs, créez une réservation selon votre profil joueur, rejoignez un match
+        public disponible et suivez vos paiements depuis votre espace.
+      </p>
+
+      <div class="action-group">
+        <a routerLink="/espace-prive" class="primary-action">Mon espace</a>
+        <a routerLink="/matchs" class="secondary-action">Voir les matchs</a>
+        <a routerLink="/matchs/creer" class="secondary-action">Créer un match</a>
+      </div>
+    } @else if (isVisitorView()) {
+      <h1>Bienvenue sur Padel Manager</h1>
+      <p class="home-intro">
+        Organisez vos matchs privés avec vos amis, rejoignez des matchs publics disponibles et
+        réservez selon votre profil joueur, sur les sites accessibles à votre compte.
+      </p>
+
+      <div class="action-group">
+        <a routerLink="/login" class="primary-action">Se connecter</a>
+        <button type="button" class="disabled-action" disabled>Demander une inscription</button>
+      </div>
+
+      <p class="availability-note">
+        L’accès aux matchs et aux réservations est réservé aux joueurs dont l’inscription a été validée.
+      </p>
+
+      <div class="info-grid">
+        <article class="info-item">
+          <h2>Organiser</h2>
+          <p>Créez un match privé avec vos amis ou organisez un match public ouvert aux autres joueurs.</p>
+        </article>
+
+        <article class="info-item">
+          <h2>Rejoindre</h2>
+          <p>Trouvez un match public disponible une fois votre compte validé.</p>
+        </article>
+
+        <article class="info-item">
+          <h2>Suivre</h2>
+          <p>Consultez vos matchs, vos paiements et votre solde depuis votre espace joueur.</p>
+        </article>
+
+        <article class="info-item">
+          <h2>Profil joueur</h2>
+          <p>Global, site ou libre : votre profil définit les sites accessibles et les règles de réservation.</p>
+        </article>
+      </div>
+    }
   </div>
 </section>
