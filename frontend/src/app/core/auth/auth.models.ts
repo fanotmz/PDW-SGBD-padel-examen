@@ -1,3 +1,5 @@
+export type AuthRole = 'ROLE_JOUEUR' | 'ROLE_ADMIN_SITE' | 'ROLE_ADMIN_GLOBAL';
+
 export interface LoginRequest {
   username: string;
   password: string;
@@ -6,6 +8,13 @@ export interface LoginRequest {
 export interface LoginResponse {
   token: string;
   type: string;
+  roles: AuthRole[];
+  hasPlayerProfile: boolean;
+}
+
+export interface StoredAuthContext {
+  roles: AuthRole[];
+  hasPlayerProfile: boolean;
 }
 
 export interface ApiErrorResponse {

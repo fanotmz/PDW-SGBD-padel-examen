@@ -1,0 +1,51 @@
+<section class="admin-page">
+  <header class="page-header">
+    <p class="page-eyebrow">Administration</p>
+    <h1>Administration</h1>
+  </header>
+
+  @if (isLoading()) {
+    <p class="page-state">Chargement en cours...</p>
+  } @else if (errorMessage()) {
+    <p class="page-state is-error">{{ errorMessage() }}</p>
+  } @else if (adminInfo(); as adminInfo) {
+    <div class="page-grid">
+      <section class="top-grid">
+        <article class="info-card">
+          <h2>Espace administrateur</h2>
+          <p class="card-label">{{ scopeLabel() }}</p>
+          <p class="card-text">
+            Premi&egrave;re zone administrateur connect&eacute;e au backend via <code>GET /api/v1/admin/info</code>.
+          </p>
+        </article>
+
+        <article class="info-card">
+          <p class="card-label">Statut API admin</p>
+          <p class="status-value" [class.is-ok]="isApiOperational()">{{ adminInfo.status }}</p>
+          <p class="page-state" [class.is-success]="isApiOperational()">
+            {{ apiStatusMessage() }}
+          </p>
+        </article>
+      </section>
+
+      <section class="future-section">
+        <div class="section-heading">
+          <h2>Acc&egrave;s rapides</h2>
+          <p>Modules pr&eacute;paratoires non fonctionnels dans cette issue.</p>
+        </div>
+
+        <div class="future-grid">
+          @for (card of shortcutCards; track card.title) {
+            <article class="future-card">
+              <div class="future-card-content">
+                <h3>{{ card.title }}</h3>
+                <p>{{ card.description }}</p>
+              </div>
+              <span class="future-badge">À venir</span>
+            </article>
+          }
+        </div>
+      </section>
+    </div>
+  }
+</section>

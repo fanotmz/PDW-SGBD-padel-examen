@@ -3,6 +3,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { finalize, forkJoin } from 'rxjs';
+import { AuthService } from '../../../core/auth/auth.service';
 import { MeProfile } from '../../../core/me/me.models';
 import { MeService } from '../../../core/me/me.service';
 import { PaiementService } from '../../../core/payments/paiement.service';
@@ -18,6 +19,7 @@ import { RegularisationService } from '../../../core/regularisations/regularisat
   styleUrl: './espace-prive-page.component.css'
 })
 export class EspacePrivePageComponent implements OnInit {
+  private readonly authService = inject(AuthService);
   private readonly meService = inject(MeService);
   private readonly regularisationService = inject(RegularisationService);
   private readonly paiementService = inject(PaiementService);
@@ -113,6 +115,12 @@ export class EspacePrivePageComponent implements OnInit {
   }
 
   private loadPageData(): void {
+    if (this.authService.isAdmin() && !this.authService.hasPlayerProfile()) {
+      this.isLoading.set(false);
+      this.errorMessage.set('Cet espace est r\u00e9serv\u00e9 aux joueurs.');
+      return;
+    }
+
     this.isLoading.set(true);
     this.errorMessage.set('');
     this.paymentSuccessMessage.set('');
@@ -131,6 +139,11 @@ export class EspacePrivePageComponent implements OnInit {
         error: (error: HttpErrorResponse) => {
           if (error.status === 0) {
             this.errorMessage.set('Backend inaccessible.');
+            return;
+          }
+
+          if (error.status === 403 && this.authService.isAdmin() && !this.authService.hasPlayerProfile()) {
+            this.errorMessage.set('Cet espace est r\u00e9serv\u00e9 aux joueurs.');
             return;
           }
 

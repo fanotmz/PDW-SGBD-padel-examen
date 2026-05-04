@@ -1,6 +1,7 @@
 import { Routes } from '@angular/router';
 import { authGuard } from './core/auth/auth.guard';
 import { LoginPageComponent } from './features/auth/login/login-page.component';
+import { AdminPageComponent } from './features/admin/admin-page.component';
 import { HomePageComponent } from './features/home/home-page.component';
 import { CreateMatchPageComponent } from './features/matches/create-match/create-match-page.component';
 import { MatchDetailPageComponent } from './features/matches/match-detail/match-detail-page.component';
@@ -8,7 +9,6 @@ import { MyMatchesPageComponent } from './features/matches/my-matches/my-matches
 import { OrganizedMatchesPageComponent } from './features/matches/organized-matches/organized-matches-page.component';
 import { PublicMatchesPageComponent } from './features/matches/public-matches/public-matches-page.component';
 import { EspacePrivePageComponent } from './features/player/espace-prive/espace-prive-page.component';
-import { AdminPageComponent } from './features/placeholders/admin-page.component';
 import { MainLayoutComponent } from './layout/main-layout.component';
 
 export const routes: Routes = [

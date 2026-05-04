@@ -175,13 +175,15 @@ class RegistrationLifecycleIntegrationTest extends SqlServerTestContainerConfig 
         String adminToken = extractStringField(
                 mvc.perform(post("/api/v1/auth/login")
                                 .contentType(MediaType.APPLICATION_JSON)
-                                .content("""
+                        .content("""
                                         {
                                           "username": "adminGlobal",
                                           "password": "test123"
                                         }
                                         """))
                         .andExpect(status().isOk())
+                        .andExpect(jsonPath("$.roles[0]").value("ROLE_ADMIN_GLOBAL"))
+                        .andExpect(jsonPath("$.hasPlayerProfile").value(false))
                         .andReturn()
                         .getResponse()
                         .getContentAsString(),
@@ -215,13 +217,15 @@ class RegistrationLifecycleIntegrationTest extends SqlServerTestContainerConfig 
         String playerToken = extractStringField(
                 mvc.perform(post("/api/v1/auth/login")
                                 .contentType(MediaType.APPLICATION_JSON)
-                                .content("""
+                        .content("""
                                         {
                                           "username": "alice",
                                           "password": "secret123"
                                         }
                                         """))
                         .andExpect(status().isOk())
+                        .andExpect(jsonPath("$.roles[0]").value("ROLE_JOUEUR"))
+                        .andExpect(jsonPath("$.hasPlayerProfile").value(true))
                         .andReturn()
                         .getResponse()
                         .getContentAsString(),
