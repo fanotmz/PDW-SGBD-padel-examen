@@ -2,7 +2,7 @@ import { HttpClient } from '@angular/common/http';
 import { computed, inject, Injectable, signal } from '@angular/core';
 import { Observable, tap } from 'rxjs';
 import { environment } from '../../../environments/environment';
-import { AuthRole, LoginRequest, LoginResponse, StoredAuthContext } from './auth.models';
+import { AuthRole, LoginRequest, LoginResponse, RegisterRequest, RegisterResponse, StoredAuthContext } from './auth.models';
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
@@ -18,6 +18,10 @@ export class AuthService {
     return this.http
       .post<LoginResponse>(`${environment.apiBaseUrl}/auth/login`, payload)
       .pipe(tap((response) => this.storeSession(response)));
+  }
+
+  register(payload: RegisterRequest): Observable<RegisterResponse> {
+    return this.http.post<RegisterResponse>(`${environment.apiBaseUrl}/auth/register`, payload);
   }
 
   getToken(): string | null {
