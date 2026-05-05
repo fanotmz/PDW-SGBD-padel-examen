@@ -1,8 +1,35 @@
 export interface AdminInfoResponse {
   status: string;
+  adminType: 'GLOBAL' | 'SITE';
+  siteId: number | null;
+  siteNom: string | null;
 }
 
 export type RegistrationSubscriptionType = 'GLOBAL' | 'SITE' | 'LIBRE';
+
+export interface AdminPlayerResponse {
+  matricule: string;
+  nom: string;
+  type: RegistrationSubscriptionType;
+  siteId: number | null;
+  solde: number | null;
+}
+
+export interface AdminSitePlayerResponse {
+  matricule: string;
+  nom: string;
+  type: RegistrationSubscriptionType;
+  solde: number | null;
+}
+
+export interface AdminPlayerListItem {
+  matricule: string;
+  nom: string;
+  type: RegistrationSubscriptionType;
+  siteId: number | null;
+  siteNom: string | null;
+  solde: number | null;
+}
 
 export interface PendingRegistrationItem {
   userId: number;

@@ -1,15 +1,16 @@
 package be.ephec.padel.backend.controller;
 
+import be.ephec.padel.backend.dto.response.AdminInfoDto;
 import be.ephec.padel.backend.dto.response.AdminCaStatsDto;
 import be.ephec.padel.backend.dto.response.AdminDettesStatsDto;
 import be.ephec.padel.backend.dto.response.AdminMatchsStatsDto;
+import be.ephec.padel.backend.service.AdminInfoService;
 import be.ephec.padel.backend.service.AdminStatsService;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
-import java.util.Map;
 
 @SecurityRequirement(name = "bearerAuth")
 @RestController
@@ -17,15 +18,18 @@ import java.util.Map;
 public class AdminGlobalController {
 
     private final AdminStatsService adminStatsService;
+    private final AdminInfoService adminInfoService;
 
-    public AdminGlobalController(AdminStatsService adminStatsService) {
+    public AdminGlobalController(AdminStatsService adminStatsService,
+                                 AdminInfoService adminInfoService) {
         this.adminStatsService = adminStatsService;
+        this.adminInfoService = adminInfoService;
     }
 
     // ex AdminController
     @GetMapping("/info")
-    public Map<String, Object> adminInfo() {
-        return Map.of("status", "ok");
+    public AdminInfoDto adminInfo() {
+        return adminInfoService.getAdminInfo();
     }
 
     // ex AdminStatsController (on garde les routes pour éviter de casser)

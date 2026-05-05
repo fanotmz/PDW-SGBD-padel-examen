@@ -62,6 +62,25 @@ public class ServiceAutorisationAdmin {
         return false;
     }
 
+    public Long getSiteAdministreId() {
+        if (currentUserFacade.hasRole(SecurityRole.ROLE_ADMIN_GLOBAL)) {
+            return null;
+        }
+
+        if (currentUserFacade.hasRole(SecurityRole.ROLE_ADMIN_SITE)) {
+            String login = currentUserFacade.getCurrentUser().getLogin();
+            Long siteAutoriseId = perimetreAdminsSiteParLogin.get(login);
+
+            if (siteAutoriseId == null) {
+                throw new AccessDeniedException("ADMIN_SITE sans site associe");
+            }
+
+            return siteAutoriseId;
+        }
+
+        throw new AccessDeniedException("Acces refuse");
+    }
+
     private Map<String, Long> parserAdminsSite(String adminsSite) {
         Map<String, Long> map = new HashMap<>();
         if (adminsSite == null || adminsSite.isBlank()) {

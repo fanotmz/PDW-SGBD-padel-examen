@@ -3,6 +3,8 @@ import { inject, Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import {
+  AdminPlayerResponse,
+  AdminSitePlayerResponse,
   AdminInfoResponse,
   PendingRegistrationItem,
   RegistrationDecisionResponse,
@@ -19,6 +21,14 @@ export class AdminService {
 
   getPendingRegistrations(): Observable<PendingRegistrationItem[]> {
     return this.http.get<PendingRegistrationItem[]>(`${environment.apiBaseUrl}/admin/inscriptions`);
+  }
+
+  getPlayers(): Observable<AdminPlayerResponse[]> {
+    return this.http.get<AdminPlayerResponse[]>(`${environment.apiBaseUrl}/joueurs`);
+  }
+
+  getPlayersBySite(siteId: number): Observable<AdminSitePlayerResponse[]> {
+    return this.http.get<AdminSitePlayerResponse[]>(`${environment.apiBaseUrl}/admin/sites/${siteId}/joueurs`);
   }
 
   validateRegistration(
