@@ -68,6 +68,13 @@ export class LoginPageComponent {
     }
 
     if (error.status === 403 && apiError?.message) {
+      if (
+        apiError.message.toLowerCase().includes('attente') &&
+        apiError.message.toLowerCase().includes('validation')
+      ) {
+        return 'Votre compte est en attente de validation par un administrateur.';
+      }
+
       return apiError.message;
     }
 

@@ -39,6 +39,7 @@ class SiteControllerTest {
     SiteService siteService;
 
     @Test
+    @WithAnonymousUser
     void list_ok_200_jsonArray() throws Exception {
         Site s1 = org.mockito.Mockito.mock(Site.class);
         when(s1.getId()).thenReturn(1L);
@@ -64,6 +65,7 @@ class SiteControllerTest {
     }
 
     @Test
+    @WithAnonymousUser
     void getOne_ok_200_json() throws Exception {
         Site s = org.mockito.Mockito.mock(Site.class);
         when(s.getId()).thenReturn(10L);

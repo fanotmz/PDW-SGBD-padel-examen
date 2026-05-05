@@ -1,6 +1,7 @@
 import { Routes } from '@angular/router';
 import { authGuard } from './core/auth/auth.guard';
 import { LoginPageComponent } from './features/auth/login/login-page.component';
+import { RegisterPageComponent } from './features/auth/register/register-page.component';
 import { AdminPageComponent } from './features/admin/admin-page.component';
 import { HomePageComponent } from './features/home/home-page.component';
 import { CreateMatchPageComponent } from './features/matches/create-match/create-match-page.component';
@@ -18,6 +19,7 @@ export const routes: Routes = [
     children: [
       { path: '', component: HomePageComponent },
       { path: 'login', component: LoginPageComponent },
+      { path: 'inscription', component: RegisterPageComponent },
       { path: 'espace-prive', component: EspacePrivePageComponent, canActivate: [authGuard] },
       { path: 'matchs/creer', component: CreateMatchPageComponent, canActivate: [authGuard] },
       { path: 'matchs/:id', component: MatchDetailPageComponent, canActivate: [authGuard] },
