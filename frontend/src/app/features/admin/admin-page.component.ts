@@ -43,8 +43,14 @@ export class AdminPageComponent implements OnInit {
   });
 
   protected readonly scopeLabel = computed(() => {
-    if (this.authService.hasRole('ROLE_ADMIN_GLOBAL')) {
+    const adminInfo = this.adminInfo();
+
+    if (adminInfo?.adminType === 'GLOBAL') {
       return 'P\u00e9rim\u00e8tre : tous les sites';
+    }
+
+    if (adminInfo?.adminType === 'SITE' && adminInfo.siteNom) {
+      return `P\u00e9rim\u00e8tre : ${adminInfo.siteNom}`;
     }
 
     if (this.authService.hasRole('ROLE_ADMIN_SITE')) {
@@ -92,7 +98,7 @@ export class AdminPageComponent implements OnInit {
     }
 
     cards.push(
-      { title: 'Joueurs', description: 'Module \u00e0 venir.' },
+      { title: 'Joueurs', description: 'Consultez les joueurs enregistr\u00e9s dans votre p\u00e9rim\u00e8tre.', route: '/admin/joueurs' },
       { title: 'Fermetures', description: 'Module \u00e0 venir.' },
       { title: 'Statistiques', description: 'Module \u00e0 venir.' },
       { title: 'Horaires', description: 'Module \u00e0 venir.' }

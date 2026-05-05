@@ -4,8 +4,10 @@ import be.ephec.padel.backend.config.SecurityConfig;
 import be.ephec.padel.backend.controller.AdminGlobalController;
 import be.ephec.padel.backend.dto.response.AdminCaStatsDto;
 import be.ephec.padel.backend.dto.response.AdminDettesStatsDto;
+import be.ephec.padel.backend.dto.response.AdminInfoDto;
 import be.ephec.padel.backend.dto.response.AdminMatchsStatsDto;
 import be.ephec.padel.backend.exception.BusinessException;
+import be.ephec.padel.backend.service.AdminInfoService;
 import be.ephec.padel.backend.service.AdminStatsService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,6 +21,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 
+import static org.hamcrest.Matchers.nullValue;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -33,6 +36,9 @@ class AdminGlobalControllerTest {
     @MockitoBean
     private AdminStatsService adminStatsService;
 
+    @MockitoBean
+    private AdminInfoService adminInfoService;
+
     // -----------------------------
     // /api/v1/admin/info
     // -----------------------------
@@ -46,18 +52,30 @@ class AdminGlobalControllerTest {
     @Test
     @WithMockUser(username = "adminSite1", roles = {"ADMIN_SITE"})
     void adminInfo_adminSite_200() throws Exception {
+        when(adminInfoService.getAdminInfo())
+                .thenReturn(new AdminInfoDto("ok", "SITE", 1L, "Site Nord"));
+
         mvc.perform(get("/api/v1/admin/info"))
                 .andExpect(status().isOk())
                 .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
-                .andExpect(jsonPath("$.status").value("ok"));
+                .andExpect(jsonPath("$.status").value("ok"))
+                .andExpect(jsonPath("$.adminType").value("SITE"))
+                .andExpect(jsonPath("$.siteId").value(1))
+                .andExpect(jsonPath("$.siteNom").value("Site Nord"));
     }
 
     @Test
     @WithMockUser(username = "adminGlobal", roles = {"ADMIN_GLOBAL"})
     void adminInfo_adminGlobal_200() throws Exception {
+        when(adminInfoService.getAdminInfo())
+                .thenReturn(new AdminInfoDto("ok", "GLOBAL", null, null));
+
         mvc.perform(get("/api/v1/admin/info"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.status").value("ok"));
+                .andExpect(jsonPath("$.status").value("ok"))
+                .andExpect(jsonPath("$.adminType").value("GLOBAL"))
+                .andExpect(jsonPath("$.siteId").value(nullValue()))
+                .andExpect(jsonPath("$.siteNom").value(nullValue()));
     }
 
     // -----------------------------
