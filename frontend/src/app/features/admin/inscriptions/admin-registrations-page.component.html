@@ -6,6 +6,12 @@
     <p class="page-intro">Consultez les comptes en attente de validation.</p>
   </header>
 
+  @if (feedbackMessage()) {
+    <p class="page-state" [class.is-success]="feedbackTone() === 'success'" [class.is-error]="feedbackTone() === 'error'">
+      {{ feedbackMessage() }}
+    </p>
+  }
+
   @if (isLoading()) {
     <p class="page-state">Chargement en cours...</p>
   } @else if (errorMessage()) {
@@ -34,6 +40,135 @@
                 <strong><span class="status-badge">{{ getStatusLabel(registration.status) }}</span></strong>
               </p>
             </div>
+
+            <div class="registration-actions">
+              <button
+                type="button"
+                class="primary-action"
+                (click)="openDirectValidationConfirmation(registration)"
+                [disabled]="isProcessing(registration.userId)"
+              >
+                Valider la demande
+              </button>
+
+              <button
+                type="button"
+                class="secondary-action"
+                (click)="openValidationForm(registration)"
+                [disabled]="isProcessing(registration.userId)"
+              >
+                Corriger avant validation
+              </button>
+
+              <button
+                type="button"
+                class="danger-action"
+                (click)="openRejectConfirmation(registration)"
+                [disabled]="isProcessing(registration.userId)"
+              >
+                Refuser
+              </button>
+            </div>
+
+            @if (isValidationOpen(registration.userId)) {
+              <form class="validation-panel" [formGroup]="validationForm" (ngSubmit)="submitValidation(registration)">
+                <label class="field">
+                  <span>Type final</span>
+                  <select formControlName="typeAbonnementFinal" [disabled]="isProcessing(registration.userId)">
+                    @for (subscriptionType of subscriptionTypes; track subscriptionType.value) {
+                      <option [value]="subscriptionType.value">{{ subscriptionType.label }}</option>
+                    }
+                  </select>
+                </label>
+
+                @if (isSiteTypeSelected()) {
+                  <label class="field">
+                    <span>Site final</span>
+                    <select
+                      formControlName="siteIdFinal"
+                      [disabled]="isLoadingSites() || sites().length === 0 || isProcessing(registration.userId)"
+                    >
+                      <option [ngValue]="null">Selectionnez un site</option>
+                      @for (site of sites(); track site.id) {
+                        <option [ngValue]="site.id">{{ site.nom }} - {{ site.ville }}</option>
+                      }
+                    </select>
+
+                    @if (isLoadingSites()) {
+                      <small class="field-hint">Chargement des sites...</small>
+                    } @else if (sitesErrorMessage()) {
+                      <small class="field-error">{{ sitesErrorMessage() }}</small>
+                    } @else if (sites().length === 0) {
+                      <small class="field-error">Aucun site disponible.</small>
+                    } @else if (hasSiteFieldError()) {
+                      <small class="field-error">Veuillez selectionner un site.</small>
+                    }
+                  </label>
+                }
+
+                <div class="validation-actions">
+                  <button type="submit" class="primary-action" [disabled]="isProcessing(registration.userId)">
+                    {{ isProcessing(registration.userId) ? 'Validation...' : 'Confirmer la validation' }}
+                  </button>
+                  <button
+                    type="button"
+                    class="secondary-action"
+                    (click)="cancelValidationForm()"
+                    [disabled]="isProcessing(registration.userId)"
+                  >
+                    Annuler
+                  </button>
+                </div>
+              </form>
+            }
+
+            @if (isDirectValidationConfirmationOpen(registration.userId)) {
+              <div class="confirm-panel">
+                <p class="confirm-message">Confirmer la validation de cette demande ?</p>
+                <div class="validation-actions">
+                  <button
+                    type="button"
+                    class="primary-action"
+                    (click)="validateRequestedRegistration(registration)"
+                    [disabled]="isProcessing(registration.userId)"
+                  >
+                    {{ isProcessing(registration.userId) ? 'Validation...' : 'Confirmer la validation' }}
+                  </button>
+                  <button
+                    type="button"
+                    class="secondary-action"
+                    (click)="cancelDirectValidationConfirmation()"
+                    [disabled]="isProcessing(registration.userId)"
+                  >
+                    Annuler
+                  </button>
+                </div>
+              </div>
+            }
+
+            @if (isRejectConfirmationOpen(registration.userId)) {
+              <div class="confirm-panel confirm-panel-danger">
+                <p class="confirm-message confirm-message-danger">Confirmer le refus de cette demande ?</p>
+                <div class="validation-actions">
+                  <button
+                    type="button"
+                    class="danger-action"
+                    (click)="confirmRejectRegistration(registration)"
+                    [disabled]="isProcessing(registration.userId)"
+                  >
+                    {{ isProcessing(registration.userId) ? 'Refus...' : 'Confirmer le refus' }}
+                  </button>
+                  <button
+                    type="button"
+                    class="secondary-action"
+                    (click)="cancelRejectConfirmation()"
+                    [disabled]="isProcessing(registration.userId)"
+                  >
+                    Annuler
+                  </button>
+                </div>
+              </div>
+            }
           </div>
         </article>
       }
