@@ -35,14 +35,27 @@
         </div>
 
         <div class="future-grid">
-          @for (card of shortcutCards; track card.title) {
-            <article class="future-card">
-              <div class="future-card-content">
-                <h3>{{ card.title }}</h3>
-                <p>{{ card.description }}</p>
-              </div>
-              <span class="future-badge">À venir</span>
-            </article>
+          @for (card of shortcutCards(); track card.title) {
+            @if (card.route) {
+              <a [routerLink]="card.route" class="future-card future-card-link">
+                <div class="future-card-content">
+                  <h3>{{ card.title }}</h3>
+                  <p>{{ card.description }}</p>
+                  @if (card.route === '/admin/inscriptions') {
+                    <p class="future-summary">{{ registrationSummary() }}</p>
+                  }
+                </div>
+                <span class="future-badge is-active">Ouvrir</span>
+              </a>
+            } @else {
+              <article class="future-card">
+                <div class="future-card-content">
+                  <h3>{{ card.title }}</h3>
+                  <p>{{ card.description }}</p>
+                </div>
+                <span class="future-badge">&Agrave; venir</span>
+              </article>
+            }
           }
         </div>
       </section>

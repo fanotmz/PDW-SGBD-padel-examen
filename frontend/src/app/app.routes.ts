@@ -2,6 +2,7 @@ import { Routes } from '@angular/router';
 import { authGuard } from './core/auth/auth.guard';
 import { LoginPageComponent } from './features/auth/login/login-page.component';
 import { RegisterPageComponent } from './features/auth/register/register-page.component';
+import { AdminRegistrationsPageComponent } from './features/admin/inscriptions/admin-registrations-page.component';
 import { AdminPageComponent } from './features/admin/admin-page.component';
 import { HomePageComponent } from './features/home/home-page.component';
 import { CreateMatchPageComponent } from './features/matches/create-match/create-match-page.component';
@@ -26,7 +27,8 @@ export const routes: Routes = [
       { path: 'me/matchs', component: MyMatchesPageComponent, canActivate: [authGuard] },
       { path: 'me/matchs/organises', component: OrganizedMatchesPageComponent, canActivate: [authGuard] },
       { path: 'matchs', component: PublicMatchesPageComponent, canActivate: [authGuard] },
-      { path: 'admin', component: AdminPageComponent, canActivate: [authGuard] }
+      { path: 'admin', component: AdminPageComponent, canActivate: [authGuard] },
+      { path: 'admin/inscriptions', component: AdminRegistrationsPageComponent, canActivate: [authGuard] }
     ]
   },
   { path: '**', redirectTo: '' }

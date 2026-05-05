@@ -131,9 +131,28 @@
   background: #f8fbff;
 }
 
+.future-card-link {
+  text-decoration: none;
+}
+
+.future-card-link:hover {
+  border-color: #8fd3c1;
+  background: #f0fdf4;
+}
+
+.future-card-link:focus-visible {
+  outline: 2px solid #8fd3c1;
+  outline-offset: 2px;
+}
+
 .future-card-content {
   display: grid;
   gap: 0.5rem;
+}
+
+.future-summary {
+  font-weight: 700;
+  color: #10233f;
 }
 
 .future-badge {
@@ -148,6 +167,11 @@
   color: #374151;
   font-size: 0.82rem;
   font-weight: 700;
+}
+
+.future-badge.is-active {
+  background: #dcfce7;
+  color: #166534;
 }
 
 code {
