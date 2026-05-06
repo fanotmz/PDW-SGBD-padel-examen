@@ -1,0 +1,170 @@
+.admin-closures-page {
+  width: min(100%, 64rem);
+  margin: 0 auto;
+  display: grid;
+  gap: 1.5rem;
+  padding: 3rem 0;
+}
+
+.page-header {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.back-link {
+  width: fit-content;
+  color: #0f766e;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.back-link:hover {
+  text-decoration: underline;
+}
+
+.back-link:focus-visible,
+.site-picker select:focus-visible {
+  outline: 2px solid #8fd3c1;
+  outline-offset: 2px;
+}
+
+.page-eyebrow {
+  margin: 0;
+  color: #0f766e;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.page-header h1 {
+  margin: 0;
+  font-size: 2.2rem;
+  color: #10233f;
+}
+
+.page-intro,
+.site-scope {
+  margin: 0;
+  color: #526277;
+}
+
+.page-state {
+  margin: 0;
+  padding: 1rem 1.25rem;
+  border: 1px solid #d7e0eb;
+  border-radius: 0.5rem;
+  background: #ffffff;
+  color: #2c3a4b;
+}
+
+.page-state.is-error {
+  border-color: #ef4444;
+  background: #fef2f2;
+  color: #b91c1c;
+}
+
+.closures-layout,
+.closures-section,
+.closures-list,
+.section-heading {
+  display: grid;
+}
+
+.closures-layout {
+  gap: 2rem;
+}
+
+.closures-section {
+  gap: 1rem;
+}
+
+.section-heading {
+  gap: 0.75rem;
+}
+
+.section-heading h2 {
+  margin: 0;
+  color: #10233f;
+  font-size: 1.45rem;
+}
+
+.site-picker {
+  width: min(100%, 22rem);
+  display: grid;
+  gap: 0.35rem;
+}
+
+.site-picker span {
+  color: #526277;
+  font-size: 0.86rem;
+  font-weight: 700;
+}
+
+.site-picker select {
+  min-height: 2.75rem;
+  padding: 0.55rem 0.8rem;
+  border: 1px solid #bac7d6;
+  border-radius: 0.5rem;
+  background: #ffffff;
+  color: #10233f;
+  font: inherit;
+}
+
+.closures-list {
+  gap: 1rem;
+}
+
+.closure-card {
+  display: grid;
+  gap: 0.8rem;
+  padding: 1.25rem;
+  border: 1px solid #d7e0eb;
+  border-radius: 0.5rem;
+  background: #ffffff;
+  box-shadow: 0 18px 38px rgba(15, 23, 42, 0.06);
+}
+
+.closure-heading {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.closure-heading h3 {
+  margin: 0;
+  color: #10233f;
+  font-size: 1.15rem;
+}
+
+.closure-badge {
+  display: inline-flex;
+  align-items: center;
+  min-height: 2rem;
+  padding: 0.3rem 0.7rem;
+  border-radius: 999px;
+  background: #e0f2fe;
+  color: #075985;
+  font-size: 0.82rem;
+  font-weight: 800;
+}
+
+.closure-motif {
+  margin: 0;
+  color: #526277;
+}
+
+@media (max-width: 760px) {
+  .admin-closures-page {
+    gap: 1rem;
+    padding: 2rem 0;
+  }
+
+  .closures-layout {
+    gap: 1.5rem;
+  }
+
+  .closure-card {
+    padding: 1.1rem;
+  }
+}

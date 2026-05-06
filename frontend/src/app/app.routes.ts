@@ -2,6 +2,7 @@ import { Routes } from '@angular/router';
 import { authGuard } from './core/auth/auth.guard';
 import { LoginPageComponent } from './features/auth/login/login-page.component';
 import { RegisterPageComponent } from './features/auth/register/register-page.component';
+import { AdminClosuresPageComponent } from './features/admin/fermetures/admin-closures-page.component';
 import { AdminPlayersPageComponent } from './features/admin/joueurs/admin-players-page.component';
 import { AdminRegistrationsPageComponent } from './features/admin/inscriptions/admin-registrations-page.component';
 import { AdminPageComponent } from './features/admin/admin-page.component';
@@ -29,6 +30,7 @@ export const routes: Routes = [
       { path: 'me/matchs/organises', component: OrganizedMatchesPageComponent, canActivate: [authGuard] },
       { path: 'matchs', component: PublicMatchesPageComponent, canActivate: [authGuard] },
       { path: 'admin', component: AdminPageComponent, canActivate: [authGuard] },
+      { path: 'admin/fermetures', component: AdminClosuresPageComponent, canActivate: [authGuard] },
       { path: 'admin/joueurs', component: AdminPlayersPageComponent, canActivate: [authGuard] },
       { path: 'admin/inscriptions', component: AdminRegistrationsPageComponent, canActivate: [authGuard] }
     ]

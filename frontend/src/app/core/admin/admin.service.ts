@@ -3,8 +3,10 @@ import { inject, Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import {
+  AdminGlobalClosureResponse,
   AdminPlayerResponse,
   AdminSitePlayerResponse,
+  AdminSiteClosureResponse,
   AdminInfoResponse,
   PendingRegistrationItem,
   RegistrationDecisionResponse,
@@ -29,6 +31,16 @@ export class AdminService {
 
   getPlayersBySite(siteId: number): Observable<AdminSitePlayerResponse[]> {
     return this.http.get<AdminSitePlayerResponse[]>(`${environment.apiBaseUrl}/admin/sites/${siteId}/joueurs`);
+  }
+
+  getGlobalClosures(): Observable<AdminGlobalClosureResponse[]> {
+    return this.http.get<AdminGlobalClosureResponse[]>(`${environment.apiBaseUrl}/fermetures-globales`);
+  }
+
+  getSiteClosures(siteId: number): Observable<AdminSiteClosureResponse[]> {
+    return this.http.get<AdminSiteClosureResponse[]>(
+      `${environment.apiBaseUrl}/admin/sites/${siteId}/fermetures`
+    );
   }
 
   validateRegistration(
