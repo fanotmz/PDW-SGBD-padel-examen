@@ -1,0 +1,83 @@
+<section class="admin-closures-page">
+  <header class="page-header">
+    <p class="page-eyebrow">Administration</p>
+    <a routerLink="/admin" class="back-link">&larr; Retour &agrave; l&rsquo;administration</a>
+    <h1>Fermetures</h1>
+    <p class="page-intro">Consultez les fermetures globales et les fermetures de site.</p>
+  </header>
+
+  @if (isLoading()) {
+    <p class="page-state">Chargement en cours...</p>
+  } @else if (errorMessage()) {
+    <p class="page-state is-error">{{ errorMessage() }}</p>
+  } @else {
+    <div class="closures-layout">
+      <section class="closures-section">
+        <div class="section-heading">
+          <h2>Fermetures globales</h2>
+        </div>
+
+        @if (globalClosuresError()) {
+          <p class="page-state is-error">{{ globalClosuresError() }}</p>
+        } @else if (hasNoGlobalClosures()) {
+          <p class="page-state">Aucune fermeture globale enregistr&eacute;e.</p>
+        } @else {
+          <div class="closures-list">
+            @for (closure of globalClosures(); track getGlobalClosureTrack(closure)) {
+              <article class="closure-card">
+                <div class="closure-heading">
+                  <span class="closure-badge">Date unique</span>
+                  <h3>{{ formatDate(closure.date) }}</h3>
+                </div>
+                <p class="closure-motif">{{ getMotifLabel(closure.motif) }}</p>
+              </article>
+            }
+          </div>
+        }
+      </section>
+
+      <section class="closures-section">
+        <div class="section-heading">
+          <h2>Fermetures du site</h2>
+
+          @if (isAdminGlobal()) {
+            @if (sites().length > 0) {
+              <label class="site-picker">
+                <span>Site</span>
+                <select [value]="selectedSiteId() ?? ''" (change)="onSiteChange($any($event.target).value)">
+                  @for (site of sites(); track site.id) {
+                    <option [value]="site.id">{{ site.nom }}</option>
+                  }
+                </select>
+              </label>
+            }
+          } @else {
+            <p class="site-scope">{{ siteScopeLabel() }}</p>
+          }
+        </div>
+
+        @if (isAdminGlobal() && sites().length === 0) {
+          <p class="page-state">Aucun site disponible.</p>
+        } @else if (isLoadingSiteClosures()) {
+          <p class="page-state">Chargement des fermetures du site...</p>
+        } @else if (siteClosuresError()) {
+          <p class="page-state is-error">{{ siteClosuresError() }}</p>
+        } @else if (hasNoSiteClosures()) {
+          <p class="page-state">Aucune fermeture enregistr&eacute;e pour ce site.</p>
+        } @else {
+          <div class="closures-list">
+            @for (closure of siteClosures(); track getSiteClosureTrack(closure)) {
+              <article class="closure-card">
+                <div class="closure-heading">
+                  <span class="closure-badge">{{ getSiteClosureTypeLabel(closure) }}</span>
+                  <h3>{{ getSiteClosureDateLabel(closure) }}</h3>
+                </div>
+                <p class="closure-motif">{{ getMotifLabel(closure.motif) }}</p>
+              </article>
+            }
+          </div>
+        }
+      </section>
+    </div>
+  }
+</section>

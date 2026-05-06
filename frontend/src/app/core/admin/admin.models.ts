@@ -56,3 +56,18 @@ export interface RegistrationDecisionResponse {
   joueurType: RegistrationSubscriptionType | null;
   joueurSiteId: number | null;
 }
+
+export interface AdminGlobalClosureResponse {
+  id: number;
+  date: string;
+  motif: string | null;
+}
+
+export interface AdminSiteClosureResponse {
+  id: number;
+  siteId: number;
+  date: string | null;
+  dateDebut: string | null;
+  dateFin: string | null;
+  motif: string | null;
+}
