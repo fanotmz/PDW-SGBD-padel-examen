@@ -13,6 +13,8 @@ import {
   CreateGlobalClosureRequest,
   CreateSiteDateClosureRequest,
   CreateSitePeriodClosureRequest,
+  UpdateSiteDateClosureRequest,
+  UpdateSitePeriodClosureRequest,
   ValidateRegistrationRequest
 } from './admin.models';
 
@@ -77,6 +79,28 @@ export class AdminService {
   deleteSiteClosure(siteId: number, closureId: number): Observable<void> {
     return this.http.delete<void>(
       `${environment.apiBaseUrl}/admin/sites/${siteId}/fermetures/${closureId}`
+    );
+  }
+
+  updateSiteDateClosure(
+    siteId: number,
+    closureId: number,
+    payload: UpdateSiteDateClosureRequest
+  ): Observable<AdminSiteClosureResponse> {
+    return this.http.put<AdminSiteClosureResponse>(
+      `${environment.apiBaseUrl}/admin/sites/${siteId}/fermetures/${closureId}/date`,
+      payload
+    );
+  }
+
+  updateSitePeriodClosure(
+    siteId: number,
+    closureId: number,
+    payload: UpdateSitePeriodClosureRequest
+  ): Observable<AdminSiteClosureResponse> {
+    return this.http.put<AdminSiteClosureResponse>(
+      `${environment.apiBaseUrl}/admin/sites/${siteId}/fermetures/${closureId}/periode`,
+      payload
     );
   }
 
