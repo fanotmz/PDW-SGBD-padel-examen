@@ -70,6 +70,16 @@ export class AdminService {
     );
   }
 
+  deleteGlobalClosure(id: number): Observable<void> {
+    return this.http.delete<void>(`${environment.apiBaseUrl}/fermetures-globales/${id}`);
+  }
+
+  deleteSiteClosure(siteId: number, closureId: number): Observable<void> {
+    return this.http.delete<void>(
+      `${environment.apiBaseUrl}/admin/sites/${siteId}/fermetures/${closureId}`
+    );
+  }
+
   validateRegistration(
     userId: number,
     payload: ValidateRegistrationRequest
