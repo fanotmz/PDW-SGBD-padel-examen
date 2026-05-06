@@ -23,7 +23,10 @@
 }
 
 .back-link:focus-visible,
-.site-picker select:focus-visible {
+.site-picker select:focus-visible,
+.form-field input:focus-visible,
+.form-field select:focus-visible,
+.button:focus-visible {
   outline: 2px solid #8fd3c1;
   outline-offset: 2px;
 }
@@ -63,10 +66,20 @@
   color: #b91c1c;
 }
 
+.page-state.is-success {
+  border-color: #86efac;
+  background: #f0fdf4;
+  color: #166534;
+}
+
 .closures-layout,
 .closures-section,
 .closures-list,
-.section-heading {
+.section-heading,
+.closure-form,
+.form-header,
+.form-field,
+.confirmation-box {
   display: grid;
 }
 
@@ -108,6 +121,120 @@
   background: #ffffff;
   color: #10233f;
   font: inherit;
+}
+
+.closure-form {
+  gap: 0.9rem;
+  padding: 1.25rem;
+  border: 1px solid #d7e0eb;
+  border-radius: 0.5rem;
+  background: #f8fbff;
+}
+
+.form-header {
+  gap: 0.25rem;
+}
+
+.form-header h3 {
+  margin: 0;
+  color: #10233f;
+  font-size: 1.05rem;
+}
+
+.form-header p {
+  margin: 0;
+  color: #526277;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr));
+  gap: 0.85rem;
+}
+
+.form-field {
+  gap: 0.35rem;
+}
+
+.form-field span {
+  color: #526277;
+  font-size: 0.86rem;
+  font-weight: 700;
+}
+
+.form-field input,
+.form-field select {
+  min-height: 2.65rem;
+  padding: 0.55rem 0.75rem;
+  border: 1px solid #bac7d6;
+  border-radius: 0.5rem;
+  background: #ffffff;
+  color: #10233f;
+  font: inherit;
+}
+
+.form-field small,
+.form-message {
+  color: #b91c1c;
+  font-size: 0.86rem;
+}
+
+.form-message {
+  margin: 0;
+}
+
+.confirmation-box {
+  gap: 0.75rem;
+  padding: 1rem;
+  border: 1px solid #facc15;
+  border-radius: 0.5rem;
+  background: #fffbeb;
+}
+
+.confirmation-box p {
+  margin: 0;
+  color: #713f12;
+  font-weight: 700;
+}
+
+.form-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+}
+
+.button {
+  min-height: 2.5rem;
+  padding: 0.55rem 0.9rem;
+  border: 1px solid transparent;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  font: inherit;
+  font-weight: 800;
+}
+
+.button:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.button-primary {
+  background: #0f766e;
+  color: #ffffff;
+}
+
+.button-primary:hover:not(:disabled) {
+  background: #115e59;
+}
+
+.button-secondary {
+  border-color: #bac7d6;
+  background: #ffffff;
+  color: #10233f;
+}
+
+.button-secondary:hover:not(:disabled) {
+  background: #eef4fb;
 }
 
 .closures-list {
@@ -166,5 +293,9 @@
 
   .closure-card {
     padding: 1.1rem;
+  }
+
+  .form-grid {
+    grid-template-columns: 1fr;
   }
 }
