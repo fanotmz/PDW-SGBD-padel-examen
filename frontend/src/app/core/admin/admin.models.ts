@@ -87,3 +87,14 @@ export interface CreateSitePeriodClosureRequest {
   dateFin: string;
   motif?: string | null;
 }
+
+export interface UpdateSiteDateClosureRequest {
+  date: string;
+  motif?: string | null;
+}
+
+export interface UpdateSitePeriodClosureRequest {
+  dateDebut: string;
+  dateFin: string;
+  motif?: string | null;
+}

@@ -131,6 +131,10 @@
   background: #f8fbff;
 }
 
+.closure-form.edit-form {
+  background: #ffffff;
+}
+
 .form-header {
   gap: 0.25rem;
 }
