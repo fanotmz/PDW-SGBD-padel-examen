@@ -71,20 +71,63 @@
 
         @if (globalClosuresError()) {
           <p class="page-state is-error">{{ globalClosuresError() }}</p>
-        } @else if (hasNoGlobalClosures()) {
-          <p class="page-state">Aucune fermeture globale enregistr&eacute;e.</p>
         } @else {
-          <div class="closures-list">
-            @for (closure of globalClosures(); track getGlobalClosureTrack(closure)) {
-              <article class="closure-card">
-                <div class="closure-heading">
-                  <span class="closure-badge">Date unique</span>
-                  <h3>{{ formatDate(closure.date) }}</h3>
-                </div>
-                <p class="closure-motif">{{ getMotifLabel(closure.motif) }}</p>
-              </article>
-            }
-          </div>
+          @if (globalDeleteError()) {
+            <p class="page-state is-error">{{ globalDeleteError() }}</p>
+          }
+
+          @if (hasNoGlobalClosures()) {
+            <p class="page-state">Aucune fermeture globale enregistr&eacute;e.</p>
+          } @else {
+            <div class="closures-list">
+              @for (closure of globalClosures(); track getGlobalClosureTrack(closure)) {
+                <article class="closure-card">
+                  <div class="closure-heading">
+                    <span class="closure-badge">Date unique</span>
+                    <h3>{{ formatDate(closure.date) }}</h3>
+                  </div>
+                  <p class="closure-motif">{{ getMotifLabel(closure.motif) }}</p>
+
+                  @if (canDeleteGlobalClosure()) {
+                    <div class="closure-actions">
+                      <button
+                        type="button"
+                        class="button button-danger"
+                        (click)="requestGlobalClosureDeletion(closure)"
+                        [disabled]="deletingGlobalClosureId() === closure.id"
+                      >
+                        Supprimer
+                      </button>
+                    </div>
+                  }
+
+                  @if (isPendingGlobalDelete(closure.id)) {
+                    <div class="confirmation-box is-danger">
+                      <p>Confirmer la suppression de cette fermeture ?</p>
+                      <div class="form-actions">
+                        <button
+                          type="button"
+                          class="button button-danger"
+                          (click)="confirmDeleteAction()"
+                          [disabled]="deletingGlobalClosureId() === closure.id"
+                        >
+                          Confirmer
+                        </button>
+                        <button
+                          type="button"
+                          class="button button-secondary"
+                          (click)="cancelDeleteConfirmation()"
+                          [disabled]="deletingGlobalClosureId() === closure.id"
+                        >
+                          Annuler
+                        </button>
+                      </div>
+                    </div>
+                  }
+                </article>
+              }
+            </div>
+          }
         }
       </section>
 
@@ -189,20 +232,63 @@
           <p class="page-state">Chargement des fermetures du site...</p>
         } @else if (siteClosuresError()) {
           <p class="page-state is-error">{{ siteClosuresError() }}</p>
-        } @else if (hasNoSiteClosures()) {
-          <p class="page-state">Aucune fermeture enregistr&eacute;e pour ce site.</p>
         } @else {
-          <div class="closures-list">
-            @for (closure of siteClosures(); track getSiteClosureTrack(closure)) {
-              <article class="closure-card">
-                <div class="closure-heading">
-                  <span class="closure-badge">{{ getSiteClosureTypeLabel(closure) }}</span>
-                  <h3>{{ getSiteClosureDateLabel(closure) }}</h3>
-                </div>
-                <p class="closure-motif">{{ getMotifLabel(closure.motif) }}</p>
-              </article>
-            }
-          </div>
+          @if (siteDeleteError()) {
+            <p class="page-state is-error">{{ siteDeleteError() }}</p>
+          }
+
+          @if (hasNoSiteClosures()) {
+            <p class="page-state">Aucune fermeture enregistr&eacute;e pour ce site.</p>
+          } @else {
+            <div class="closures-list">
+              @for (closure of siteClosures(); track getSiteClosureTrack(closure)) {
+                <article class="closure-card">
+                  <div class="closure-heading">
+                    <span class="closure-badge">{{ getSiteClosureTypeLabel(closure) }}</span>
+                    <h3>{{ getSiteClosureDateLabel(closure) }}</h3>
+                  </div>
+                  <p class="closure-motif">{{ getMotifLabel(closure.motif) }}</p>
+
+                  @if (canDeleteSiteClosure()) {
+                    <div class="closure-actions">
+                      <button
+                        type="button"
+                        class="button button-danger"
+                        (click)="requestSiteClosureDeletion(closure)"
+                        [disabled]="deletingSiteClosureId() === closure.id"
+                      >
+                        Supprimer
+                      </button>
+                    </div>
+                  }
+
+                  @if (isPendingSiteDelete(closure.id)) {
+                    <div class="confirmation-box is-danger">
+                      <p>Confirmer la suppression de cette fermeture ?</p>
+                      <div class="form-actions">
+                        <button
+                          type="button"
+                          class="button button-danger"
+                          (click)="confirmDeleteAction()"
+                          [disabled]="deletingSiteClosureId() === closure.id"
+                        >
+                          Confirmer
+                        </button>
+                        <button
+                          type="button"
+                          class="button button-secondary"
+                          (click)="cancelDeleteConfirmation()"
+                          [disabled]="deletingSiteClosureId() === closure.id"
+                        >
+                          Annuler
+                        </button>
+                      </div>
+                    </div>
+                  }
+                </article>
+              }
+            </div>
+          }
         }
       </section>
     </div>

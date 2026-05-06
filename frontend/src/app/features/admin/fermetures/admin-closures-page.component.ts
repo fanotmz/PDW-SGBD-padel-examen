@@ -19,6 +19,10 @@ import { SitesService } from '../../../core/sites/sites.service';
 
 type SiteClosureMode = 'date' | 'period';
 type PendingClosureAction = 'global' | 'site-date' | 'site-period' | null;
+type PendingDeleteAction =
+  | { type: 'global'; id: number }
+  | { type: 'site'; id: number }
+  | null;
 
 @Component({
   selector: 'app-admin-closures-page',
@@ -46,9 +50,14 @@ export class AdminClosuresPageComponent implements OnInit {
   protected readonly successMessage = signal('');
   protected readonly globalCreateError = signal('');
   protected readonly siteCreateError = signal('');
+  protected readonly globalDeleteError = signal('');
+  protected readonly siteDeleteError = signal('');
   protected readonly pendingAction = signal<PendingClosureAction>(null);
+  protected readonly pendingDeleteAction = signal<PendingDeleteAction>(null);
   protected readonly isSubmittingGlobalClosure = signal(false);
   protected readonly isSubmittingSiteClosure = signal(false);
+  protected readonly deletingGlobalClosureId = signal<number | null>(null);
+  protected readonly deletingSiteClosureId = signal<number | null>(null);
 
   protected readonly siteClosureModes: Array<{ value: SiteClosureMode; label: string }> = [
     { value: 'date', label: 'Date unique' },
@@ -74,6 +83,7 @@ export class AdminClosuresPageComponent implements OnInit {
     () => !this.siteClosuresError() && !this.isLoadingSiteClosures() && this.siteClosures().length === 0
   );
   protected readonly canCreateSiteClosure = computed(() => this.getCurrentSiteId() != null);
+  protected readonly canDeleteSiteClosure = computed(() => this.getCurrentSiteId() != null);
 
   protected readonly selectedSiteName = computed(() => {
     const selectedSiteId = this.selectedSiteId();
@@ -114,12 +124,15 @@ export class AdminClosuresPageComponent implements OnInit {
       this.selectedSiteId.set(null);
       this.siteClosures.set([]);
       this.pendingAction.set(null);
+      this.pendingDeleteAction.set(null);
       return;
     }
 
     this.selectedSiteId.set(siteId);
     this.pendingAction.set(null);
+    this.pendingDeleteAction.set(null);
     this.siteCreateError.set('');
+    this.siteDeleteError.set('');
     this.loadSiteClosures(siteId);
   }
 
@@ -127,10 +140,10 @@ export class AdminClosuresPageComponent implements OnInit {
     this.successMessage.set('');
     this.globalCreateError.set('');
     this.pendingAction.set(null);
+    this.pendingDeleteAction.set(null);
 
     if (this.globalClosureForm.invalid) {
       this.globalClosureForm.markAllAsTouched();
-      this.globalCreateError.set('La date est obligatoire.');
       return;
     }
 
@@ -141,6 +154,7 @@ export class AdminClosuresPageComponent implements OnInit {
     this.successMessage.set('');
     this.siteCreateError.set('');
     this.pendingAction.set(null);
+    this.pendingDeleteAction.set(null);
     this.applySiteModeValidators(this.siteClosureForm.controls.mode.value);
 
     if (this.getCurrentSiteId() == null) {
@@ -150,7 +164,6 @@ export class AdminClosuresPageComponent implements OnInit {
 
     if (this.siteClosureForm.invalid) {
       this.siteClosureForm.markAllAsTouched();
-      this.siteCreateError.set(this.getSiteFormValidationMessage());
       return;
     }
 
@@ -181,6 +194,51 @@ export class AdminClosuresPageComponent implements OnInit {
 
   protected isPendingAction(action: PendingClosureAction): boolean {
     return this.pendingAction() === action;
+  }
+
+  protected requestGlobalClosureDeletion(closure: AdminGlobalClosureResponse): void {
+    this.successMessage.set('');
+    this.globalDeleteError.set('');
+    this.pendingAction.set(null);
+    this.pendingDeleteAction.set({ type: 'global', id: closure.id });
+  }
+
+  protected requestSiteClosureDeletion(closure: AdminSiteClosureResponse): void {
+    this.successMessage.set('');
+    this.siteDeleteError.set('');
+    this.pendingAction.set(null);
+    this.pendingDeleteAction.set({ type: 'site', id: closure.id });
+  }
+
+  protected cancelDeleteConfirmation(): void {
+    this.pendingDeleteAction.set(null);
+  }
+
+  protected confirmDeleteAction(): void {
+    const action = this.pendingDeleteAction();
+
+    if (action?.type === 'global') {
+      this.deleteGlobalClosure(action.id);
+      return;
+    }
+
+    if (action?.type === 'site') {
+      this.deleteSiteClosure(action.id);
+    }
+  }
+
+  protected isPendingGlobalDelete(id: number): boolean {
+    const action = this.pendingDeleteAction();
+    return action?.type === 'global' && action.id === id;
+  }
+
+  protected isPendingSiteDelete(id: number): boolean {
+    const action = this.pendingDeleteAction();
+    return action?.type === 'site' && action.id === id;
+  }
+
+  protected canDeleteGlobalClosure(): boolean {
+    return this.isAdminGlobal();
   }
 
   protected showGlobalDateError(): boolean {
@@ -253,7 +311,6 @@ export class AdminClosuresPageComponent implements OnInit {
   private confirmGlobalClosureCreation(): void {
     if (this.globalClosureForm.invalid) {
       this.globalClosureForm.markAllAsTouched();
-      this.globalCreateError.set('La date est obligatoire.');
       this.pendingAction.set(null);
       return;
     }
@@ -295,7 +352,6 @@ export class AdminClosuresPageComponent implements OnInit {
 
     if (!date) {
       this.siteClosureForm.controls.date.markAsTouched();
-      this.siteCreateError.set('La date est obligatoire.');
       this.pendingAction.set(null);
       return;
     }
@@ -321,7 +377,6 @@ export class AdminClosuresPageComponent implements OnInit {
 
     if (!dateDebut || !dateFin) {
       this.siteClosureForm.markAllAsTouched();
-      this.siteCreateError.set('La p\u00e9riode doit contenir une date de d\u00e9but et une date de fin.');
       this.pendingAction.set(null);
       return;
     }
@@ -377,6 +432,52 @@ export class AdminClosuresPageComponent implements OnInit {
       });
   }
 
+  private deleteGlobalClosure(id: number): void {
+    this.deletingGlobalClosureId.set(id);
+    this.globalDeleteError.set('');
+
+    this.adminService
+      .deleteGlobalClosure(id)
+      .pipe(finalize(() => this.deletingGlobalClosureId.set(null)))
+      .subscribe({
+        next: () => {
+          this.pendingDeleteAction.set(null);
+          this.successMessage.set('Fermeture globale supprim\u00e9e.');
+          this.loadGlobalClosures();
+        },
+        error: (error: HttpErrorResponse) => {
+          this.globalDeleteError.set(this.getDeleteErrorMessage(error, 'Impossible de supprimer la fermeture globale.'));
+        }
+      });
+  }
+
+  private deleteSiteClosure(id: number): void {
+    const siteId = this.getCurrentSiteId();
+
+    if (siteId == null) {
+      this.siteDeleteError.set('Aucun site disponible pour cette suppression.');
+      this.pendingDeleteAction.set(null);
+      return;
+    }
+
+    this.deletingSiteClosureId.set(id);
+    this.siteDeleteError.set('');
+
+    this.adminService
+      .deleteSiteClosure(siteId, id)
+      .pipe(finalize(() => this.deletingSiteClosureId.set(null)))
+      .subscribe({
+        next: () => {
+          this.pendingDeleteAction.set(null);
+          this.successMessage.set('Fermeture du site supprim\u00e9e.');
+          this.loadSiteClosures(siteId);
+        },
+        error: (error: HttpErrorResponse) => {
+          this.siteDeleteError.set(this.getDeleteErrorMessage(error, 'Impossible de supprimer la fermeture du site.'));
+        }
+      });
+  }
+
   private applySiteModeValidators(mode: SiteClosureMode): void {
     const dateControl = this.siteClosureForm.controls.date;
     const dateDebutControl = this.siteClosureForm.controls.dateDebut;
@@ -410,14 +511,6 @@ export class AdminClosuresPageComponent implements OnInit {
   private normalizeMotif(value: string | null | undefined): string | null {
     const trimmedValue = value?.trim();
     return trimmedValue ? trimmedValue : null;
-  }
-
-  private getSiteFormValidationMessage(): string {
-    if (this.siteClosureForm.controls.mode.value === 'date') {
-      return 'La date est obligatoire.';
-    }
-
-    return 'La p\u00e9riode doit contenir une date de d\u00e9but et une date de fin.';
   }
 
   private loadClosures(): void {
@@ -521,6 +614,32 @@ export class AdminClosuresPageComponent implements OnInit {
 
     if (error.status === 404) {
       return apiError.message || 'Site introuvable.';
+    }
+
+    if (apiError.details) {
+      return Object.values(apiError.details).join(' ');
+    }
+
+    return apiError.message || fallbackMessage;
+  }
+
+  private getDeleteErrorMessage(error: HttpErrorResponse, fallbackMessage: string): string {
+    const apiError = this.normalizeApiErrorBody(error.error);
+
+    if (error.status === 0) {
+      return 'Backend inaccessible.';
+    }
+
+    if (error.status === 401) {
+      return 'Authentification requise.';
+    }
+
+    if (error.status === 403) {
+      return 'Acc\u00e8s refus\u00e9.';
+    }
+
+    if (error.status === 404) {
+      return apiError.message || 'Fermeture introuvable.';
     }
 
     if (apiError.details) {
