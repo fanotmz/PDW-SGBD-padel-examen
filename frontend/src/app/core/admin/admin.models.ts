@@ -71,3 +71,19 @@ export interface AdminSiteClosureResponse {
   dateFin: string | null;
   motif: string | null;
 }
+
+export interface CreateGlobalClosureRequest {
+  date: string;
+  motif?: string | null;
+}
+
+export interface CreateSiteDateClosureRequest {
+  date: string;
+  motif?: string | null;
+}
+
+export interface CreateSitePeriodClosureRequest {
+  dateDebut: string;
+  dateFin: string;
+  motif?: string | null;
+}

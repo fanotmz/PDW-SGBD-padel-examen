@@ -10,6 +10,9 @@ import {
   AdminInfoResponse,
   PendingRegistrationItem,
   RegistrationDecisionResponse,
+  CreateGlobalClosureRequest,
+  CreateSiteDateClosureRequest,
+  CreateSitePeriodClosureRequest,
   ValidateRegistrationRequest
 } from './admin.models';
 
@@ -40,6 +43,30 @@ export class AdminService {
   getSiteClosures(siteId: number): Observable<AdminSiteClosureResponse[]> {
     return this.http.get<AdminSiteClosureResponse[]>(
       `${environment.apiBaseUrl}/admin/sites/${siteId}/fermetures`
+    );
+  }
+
+  createGlobalClosure(payload: CreateGlobalClosureRequest): Observable<AdminGlobalClosureResponse> {
+    return this.http.post<AdminGlobalClosureResponse>(`${environment.apiBaseUrl}/fermetures-globales`, payload);
+  }
+
+  createSiteDateClosure(
+    siteId: number,
+    payload: CreateSiteDateClosureRequest
+  ): Observable<AdminSiteClosureResponse> {
+    return this.http.post<AdminSiteClosureResponse>(
+      `${environment.apiBaseUrl}/admin/sites/${siteId}/fermetures/date`,
+      payload
+    );
+  }
+
+  createSitePeriodClosure(
+    siteId: number,
+    payload: CreateSitePeriodClosureRequest
+  ): Observable<AdminSiteClosureResponse> {
+    return this.http.post<AdminSiteClosureResponse>(
+      `${environment.apiBaseUrl}/admin/sites/${siteId}/fermetures/periode`,
+      payload
     );
   }
 

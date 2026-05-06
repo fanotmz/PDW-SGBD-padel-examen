@@ -11,11 +11,63 @@
   } @else if (errorMessage()) {
     <p class="page-state is-error">{{ errorMessage() }}</p>
   } @else {
+    @if (successMessage()) {
+      <p class="page-state is-success" role="status" aria-live="polite">{{ successMessage() }}</p>
+    }
+
     <div class="closures-layout">
       <section class="closures-section">
         <div class="section-heading">
           <h2>Fermetures globales</h2>
         </div>
+
+        @if (isAdminGlobal()) {
+          <form class="closure-form" [formGroup]="globalClosureForm" (ngSubmit)="requestGlobalClosureCreation()">
+            <div class="form-header">
+              <h3>Cr&eacute;er une fermeture globale</h3>
+              <p>Une fermeture globale concerne tous les sites.</p>
+            </div>
+
+            <div class="form-grid">
+              <label class="form-field">
+                <span>Date</span>
+                <input type="date" formControlName="date">
+                @if (showGlobalDateError()) {
+                  <small>La date est obligatoire.</small>
+                }
+              </label>
+
+              <label class="form-field">
+                <span>Motif</span>
+                <input type="text" formControlName="motif" placeholder="Optionnel">
+              </label>
+            </div>
+
+            @if (globalCreateError()) {
+              <p class="form-message is-error" role="alert">{{ globalCreateError() }}</p>
+            }
+
+            @if (isPendingAction('global')) {
+              <div class="confirmation-box">
+                <p>Confirmer la cr&eacute;ation de cette fermeture ? Des matchs futurs peuvent &ecirc;tre annul&eacute;s.</p>
+                <div class="form-actions">
+                  <button type="button" class="button button-primary" (click)="confirmPendingAction()" [disabled]="isSubmittingGlobalClosure()">
+                    Confirmer
+                  </button>
+                  <button type="button" class="button button-secondary" (click)="cancelPendingAction()" [disabled]="isSubmittingGlobalClosure()">
+                    Annuler
+                  </button>
+                </div>
+              </div>
+            } @else {
+              <div class="form-actions">
+                <button type="submit" class="button button-primary" [disabled]="isSubmittingGlobalClosure()">
+                  Cr&eacute;er une fermeture globale
+                </button>
+              </div>
+            }
+          </form>
+        }
 
         @if (globalClosuresError()) {
           <p class="page-state is-error">{{ globalClosuresError() }}</p>
@@ -55,6 +107,81 @@
             <p class="site-scope">{{ siteScopeLabel() }}</p>
           }
         </div>
+
+        @if (canCreateSiteClosure()) {
+          <form class="closure-form" [formGroup]="siteClosureForm" (ngSubmit)="requestSiteClosureCreation()">
+            <div class="form-header">
+              <h3>Cr&eacute;er une fermeture de site</h3>
+              <p>La fermeture sera appliqu&eacute;e au site affich&eacute; dans cette section.</p>
+            </div>
+
+            <div class="form-grid">
+              <label class="form-field">
+                <span>Type</span>
+                <select formControlName="mode">
+                  @for (mode of siteClosureModes; track mode.value) {
+                    <option [value]="mode.value">{{ mode.label }}</option>
+                  }
+                </select>
+              </label>
+
+              @if (isSiteClosureMode('date')) {
+                <label class="form-field">
+                  <span>Date</span>
+                  <input type="date" formControlName="date">
+                  @if (showSiteDateError()) {
+                    <small>La date est obligatoire.</small>
+                  }
+                </label>
+              } @else {
+                <label class="form-field">
+                  <span>Date de d&eacute;but</span>
+                  <input type="date" formControlName="dateDebut">
+                  @if (showSiteDateDebutError()) {
+                    <small>La date de d&eacute;but est obligatoire.</small>
+                  }
+                </label>
+
+                <label class="form-field">
+                  <span>Date de fin</span>
+                  <input type="date" formControlName="dateFin">
+                  @if (showSiteDateFinError()) {
+                    <small>La date de fin est obligatoire.</small>
+                  }
+                </label>
+              }
+
+              <label class="form-field">
+                <span>Motif</span>
+                <input type="text" formControlName="motif" placeholder="Optionnel">
+              </label>
+            </div>
+
+            @if (siteCreateError()) {
+              <p class="form-message is-error" role="alert">{{ siteCreateError() }}</p>
+            }
+
+            @if (isPendingAction('site-date') || isPendingAction('site-period')) {
+              <div class="confirmation-box">
+                <p>Confirmer la cr&eacute;ation de cette fermeture ? Des matchs futurs peuvent &ecirc;tre annul&eacute;s.</p>
+                <div class="form-actions">
+                  <button type="button" class="button button-primary" (click)="confirmPendingAction()" [disabled]="isSubmittingSiteClosure()">
+                    Confirmer
+                  </button>
+                  <button type="button" class="button button-secondary" (click)="cancelPendingAction()" [disabled]="isSubmittingSiteClosure()">
+                    Annuler
+                  </button>
+                </div>
+              </div>
+            } @else {
+              <div class="form-actions">
+                <button type="submit" class="button button-primary" [disabled]="isSubmittingSiteClosure()">
+                  Cr&eacute;er la fermeture
+                </button>
+              </div>
+            }
+          </form>
+        }
 
         @if (isAdminGlobal() && sites().length === 0) {
           <p class="page-state">Aucun site disponible.</p>
