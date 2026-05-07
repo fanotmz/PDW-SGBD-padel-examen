@@ -37,6 +37,12 @@ export const routes: Routes = [
           .then((m) => m.AdminSchedulesPageComponent),
         canActivate: [authGuard]
       },
+      {
+        path: 'admin/statistiques',
+        loadComponent: () => import('./features/admin/statistiques/admin-statistics-page.component')
+          .then((m) => m.AdminStatisticsPageComponent),
+        canActivate: [authGuard]
+      },
       { path: 'admin/joueurs', component: AdminPlayersPageComponent, canActivate: [authGuard] },
       { path: 'admin/inscriptions', component: AdminRegistrationsPageComponent, canActivate: [authGuard] }
     ]

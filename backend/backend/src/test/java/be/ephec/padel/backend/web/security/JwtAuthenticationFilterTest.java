@@ -7,6 +7,7 @@ import be.ephec.padel.backend.model.entities.User;
 import be.ephec.padel.backend.model.enums.SecurityRole;
 import be.ephec.padel.backend.repository.UserRepository;
 import be.ephec.padel.backend.security.JwtService;
+import be.ephec.padel.backend.service.AdminInfoService;
 import be.ephec.padel.backend.service.AdminStatsService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -44,6 +45,9 @@ class JwtAuthenticationFilterTest {
 
     @MockitoBean
     AdminStatsService adminStatsService;
+
+    @MockitoBean
+    AdminInfoService adminInfoService;
 
     @MockitoBean
     UserRepository userRepository;

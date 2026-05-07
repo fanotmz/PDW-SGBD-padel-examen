@@ -1,0 +1,87 @@
+<section class="admin-statistics-page">
+  <header class="page-header">
+    <p class="page-eyebrow">Administration</p>
+    <a routerLink="/admin" class="back-link">&larr; Retour &agrave; l&rsquo;administration</a>
+    <h1>Statistiques</h1>
+    <p class="page-intro">Consultez les statistiques disponibles dans votre p&eacute;rim&egrave;tre.</p>
+  </header>
+
+  @if (isLoading()) {
+    <p class="page-state">Chargement en cours...</p>
+  } @else if (errorMessage()) {
+    <p class="page-state is-error">{{ errorMessage() }}</p>
+  } @else {
+    <section class="filters-panel">
+      <div class="scope-block">
+        <span>P&eacute;rim&egrave;tre</span>
+        <strong>{{ selectedScopeLabel() }}</strong>
+      </div>
+
+      @if (isAdminGlobal()) {
+        <label class="form-field scope-select">
+          <span>Vue</span>
+          <select [value]="selectedSiteId() ?? 'global'" (change)="onScopeChange($any($event.target).value)">
+            <option value="global">Tous les sites</option>
+            @for (site of sites(); track trackSite(site)) {
+              <option [value]="site.id">{{ site.nom }}</option>
+            }
+          </select>
+        </label>
+      }
+
+      <form class="period-form" [formGroup]="periodForm" (ngSubmit)="refreshStats()">
+        <p class="period-help">
+          La p&eacute;riode s&rsquo;applique au chiffre d&rsquo;affaires et au nombre de matchs. Les dettes affichent l&rsquo;&eacute;tat actuel.
+        </p>
+
+        <label class="form-field">
+          <span>Du</span>
+          <input type="date" formControlName="from">
+        </label>
+
+        <label class="form-field">
+          <span>Au</span>
+          <input type="date" formControlName="to">
+        </label>
+
+        <button type="submit" class="button button-primary" [disabled]="isLoadingStats()">
+          Actualiser
+        </button>
+      </form>
+    </section>
+
+    @if (isLoadingStats()) {
+      <p class="page-state">Chargement des statistiques...</p>
+    } @else if (statsError()) {
+      <p class="page-state is-error">{{ statsError() }}</p>
+    } @else if (hasStats()) {
+      <div class="stats-grid">
+        <article class="stat-card">
+          <span>Chiffre d&rsquo;affaires</span>
+          <strong>{{ formatCurrency(caStats()?.caTotal) }}</strong>
+          <p>Encaissements sur la p&eacute;riode.</p>
+        </article>
+
+        <article class="stat-card">
+          <span>Matchs</span>
+          <strong>{{ formatNumber(matchsStats()?.nbMatchs) }}</strong>
+          <p>Matchs sur la p&eacute;riode.</p>
+        </article>
+
+        <article class="stat-card">
+          <span>Dette totale</span>
+          <strong>{{ formatCurrency(dettesStats()?.detteTotale) }}</strong>
+          <p>Solde total restant d&ucirc;.</p>
+        </article>
+
+        <article class="stat-card">
+          <span>Joueurs en dette</span>
+          <strong>{{ formatNumber(dettesStats()?.nbJoueursEnDette) }}</strong>
+          <p>Joueurs avec un solde ouvert.</p>
+        </article>
+      </div>
+    } @else {
+      <p class="page-state">Aucune statistique charg&eacute;e.</p>
+    }
+  }
+</section>

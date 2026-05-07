@@ -3,11 +3,14 @@ import { inject, Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import {
+  AdminCaStatsResponse,
+  AdminDettesStatsResponse,
   AdminGlobalClosureResponse,
   AdminPlayerResponse,
   AdminSitePlayerResponse,
   AdminSiteClosureResponse,
   AdminSiteScheduleResponse,
+  AdminMatchsStatsResponse,
   AdminInfoResponse,
   PendingRegistrationItem,
   RegistrationDecisionResponse,
@@ -53,6 +56,46 @@ export class AdminService {
   getSiteSchedules(siteId: number): Observable<AdminSiteScheduleResponse[]> {
     return this.http.get<AdminSiteScheduleResponse[]>(
       `${environment.apiBaseUrl}/admin/sites/${siteId}/horaires`
+    );
+  }
+
+  getGlobalCaStats(from: string, to: string): Observable<AdminCaStatsResponse> {
+    return this.http.get<AdminCaStatsResponse>(`${environment.apiBaseUrl}/admin/stats/ca`, {
+      params: { from, to }
+    });
+  }
+
+  getGlobalMatchsStats(from: string, to: string): Observable<AdminMatchsStatsResponse> {
+    return this.http.get<AdminMatchsStatsResponse>(`${environment.apiBaseUrl}/admin/stats/matchs`, {
+      params: { from, to }
+    });
+  }
+
+  getGlobalDettesStats(): Observable<AdminDettesStatsResponse> {
+    return this.http.get<AdminDettesStatsResponse>(`${environment.apiBaseUrl}/admin/stats/dettes`);
+  }
+
+  getSiteCaStats(siteId: number, from: string, to: string): Observable<AdminCaStatsResponse> {
+    return this.http.get<AdminCaStatsResponse>(
+      `${environment.apiBaseUrl}/admin/sites/${siteId}/stats/ca`,
+      { params: { from, to } }
+    );
+  }
+
+  getSiteMatchsStats(
+    siteId: number,
+    from: string,
+    to: string
+  ): Observable<AdminMatchsStatsResponse> {
+    return this.http.get<AdminMatchsStatsResponse>(
+      `${environment.apiBaseUrl}/admin/sites/${siteId}/stats/matchs`,
+      { params: { from, to } }
+    );
+  }
+
+  getSiteDettesStats(siteId: number): Observable<AdminDettesStatsResponse> {
+    return this.http.get<AdminDettesStatsResponse>(
+      `${environment.apiBaseUrl}/admin/sites/${siteId}/stats/dettes`
     );
   }
 

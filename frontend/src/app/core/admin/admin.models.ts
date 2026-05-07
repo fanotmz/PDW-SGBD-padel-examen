@@ -80,6 +80,23 @@ export interface AdminSiteScheduleResponse {
   heureFermeture: string;
 }
 
+export interface AdminCaStatsResponse {
+  caTotal: number;
+  from: string;
+  to: string;
+}
+
+export interface AdminMatchsStatsResponse {
+  nbMatchs: number;
+  from: string;
+  to: string;
+}
+
+export interface AdminDettesStatsResponse {
+  detteTotale: number;
+  nbJoueursEnDette: number;
+}
+
 export interface UpsertSiteScheduleRequest {
   annee: number;
   heureOuverture: string;
