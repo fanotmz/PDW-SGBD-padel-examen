@@ -1,0 +1,245 @@
+<section class="admin-schedules-page">
+  <header class="page-header">
+    <p class="page-eyebrow">Administration</p>
+    <a routerLink="/admin" class="back-link">&larr; Retour &agrave; l&rsquo;administration</a>
+    <h1>Horaires</h1>
+    <p class="page-intro">Consultez et g&eacute;rez les horaires configur&eacute;s par site.</p>
+  </header>
+
+  @if (isLoading()) {
+    <p class="page-state">Chargement en cours...</p>
+  } @else if (errorMessage()) {
+    <p class="page-state is-error">{{ errorMessage() }}</p>
+  } @else {
+    @if (successMessage()) {
+      <p class="page-state is-success" role="status" aria-live="polite">{{ successMessage() }}</p>
+    }
+
+    <section class="site-panel">
+      <div>
+        <h2>Site</h2>
+        @if (selectedSiteName()) {
+          <p>{{ selectedSiteName() }}</p>
+        }
+      </div>
+
+      @if (isAdminGlobal()) {
+        <label class="site-select">
+          <span>Choisir un site</span>
+          <select [value]="selectedSiteId() ?? ''" (change)="onSiteChange($any($event.target).value)">
+            @for (site of sites(); track site.id) {
+              <option [value]="site.id">{{ site.nom }}</option>
+            }
+          </select>
+        </label>
+      }
+
+    </section>
+
+    @if (canManageSchedules()) {
+      <form class="schedule-form" [formGroup]="createScheduleForm" (ngSubmit)="requestCreateSchedule()">
+        <div class="form-header">
+          <h2>Cr&eacute;er un horaire</h2>
+          <p>Ajoutez une configuration annuelle pour le site courant.</p>
+        </div>
+
+        <div class="form-grid">
+          <label class="form-field">
+            <span>Ann&eacute;e</span>
+            <input type="number" formControlName="annee" inputmode="numeric">
+            @if (showCreateYearError()) {
+              <small>L&rsquo;ann&eacute;e est obligatoire.</small>
+            }
+          </label>
+
+          <label class="form-field">
+            <span>Heure d&rsquo;ouverture</span>
+            <input type="time" formControlName="heureOuverture">
+            @if (showCreateOpeningError()) {
+              <small>L&rsquo;heure d&rsquo;ouverture est obligatoire.</small>
+            }
+          </label>
+
+          <label class="form-field">
+            <span>Heure de fermeture</span>
+            <input type="time" formControlName="heureFermeture">
+            @if (showCreateClosingError()) {
+              <small>L&rsquo;heure de fermeture est obligatoire.</small>
+            }
+          </label>
+        </div>
+
+        @if (createError()) {
+          <p class="form-message is-error" role="alert">{{ createError() }}</p>
+        }
+
+        @if (pendingCreateConfirmation()) {
+          <div class="confirmation-box">
+            <p>Confirmer la cr&eacute;ation de cet horaire ?</p>
+            <div class="form-actions">
+              <button type="button" class="button button-primary" (click)="confirmCreateSchedule()" [disabled]="isSubmittingCreate()">
+                Confirmer
+              </button>
+              <button type="button" class="button button-secondary" (click)="cancelCreateConfirmation()" [disabled]="isSubmittingCreate()">
+                Annuler
+              </button>
+            </div>
+          </div>
+        } @else {
+          <div class="form-actions">
+            <button type="submit" class="button button-primary" [disabled]="isSubmittingCreate()">
+              Cr&eacute;er un horaire
+            </button>
+          </div>
+        }
+      </form>
+    }
+
+    @if (isLoadingSchedules()) {
+      <p class="page-state">Chargement des horaires...</p>
+    } @else if (schedulesError()) {
+      <p class="page-state is-error">{{ schedulesError() }}</p>
+    } @else if (hasNoSchedules()) {
+      <p class="page-state">Aucun horaire enregistr&eacute; pour ce site.</p>
+    } @else {
+      <div class="schedules-list">
+        @for (schedule of schedules(); track trackSchedule(schedule)) {
+          <article class="schedule-card">
+            <div class="schedule-heading">
+              <div>
+                <span>Ann&eacute;e</span>
+                <h2>{{ schedule.annee }}</h2>
+              </div>
+
+              <div class="schedule-actions">
+                <button
+                  type="button"
+                  class="button button-secondary"
+                  (click)="startEditSchedule(schedule)"
+                  [disabled]="isSubmittingUpdate() || deletingScheduleId() === schedule.id"
+                >
+                  Modifier
+                </button>
+                <button
+                  type="button"
+                  class="button button-danger"
+                  (click)="requestDeleteSchedule(schedule)"
+                  [disabled]="deletingScheduleId() === schedule.id"
+                >
+                  Supprimer
+                </button>
+              </div>
+            </div>
+
+            <div class="schedule-meta">
+              <p>
+                <span>Ouverture</span>
+                <strong>{{ formatTime(schedule.heureOuverture) }}</strong>
+              </p>
+
+              <p>
+                <span>Fermeture</span>
+                <strong>{{ formatTime(schedule.heureFermeture) }}</strong>
+              </p>
+            </div>
+
+            @if (isEditingSchedule(schedule.id)) {
+              <form class="schedule-form is-inline" [formGroup]="editScheduleForm" (ngSubmit)="requestUpdateSchedule(schedule)">
+                <div class="form-header">
+                  <h3>Modifier l&rsquo;horaire</h3>
+                </div>
+
+                <div class="form-grid">
+                  <label class="form-field">
+                    <span>Ann&eacute;e</span>
+                    <input type="number" formControlName="annee" inputmode="numeric">
+                    @if (showEditYearError()) {
+                      <small>L&rsquo;ann&eacute;e est obligatoire.</small>
+                    }
+                  </label>
+
+                  <label class="form-field">
+                    <span>Heure d&rsquo;ouverture</span>
+                    <input type="time" formControlName="heureOuverture">
+                    @if (showEditOpeningError()) {
+                      <small>L&rsquo;heure d&rsquo;ouverture est obligatoire.</small>
+                    }
+                  </label>
+
+                  <label class="form-field">
+                    <span>Heure de fermeture</span>
+                    <input type="time" formControlName="heureFermeture">
+                    @if (showEditClosingError()) {
+                      <small>L&rsquo;heure de fermeture est obligatoire.</small>
+                    }
+                  </label>
+                </div>
+
+                @if (updateError()) {
+                  <p class="form-message is-error" role="alert">{{ updateError() }}</p>
+                }
+
+                @if (isPendingUpdate(schedule.id)) {
+                  <div class="confirmation-box">
+                    <p>Confirmer la modification de cet horaire ?</p>
+                    <div class="form-actions">
+                      <button
+                        type="button"
+                        class="button button-primary"
+                        (click)="confirmUpdateSchedule(schedule)"
+                        [disabled]="isSubmittingUpdate()"
+                      >
+                        Confirmer
+                      </button>
+                      <button type="button" class="button button-secondary" (click)="cancelEditSchedule()" [disabled]="isSubmittingUpdate()">
+                        Annuler
+                      </button>
+                    </div>
+                  </div>
+                } @else {
+                  <div class="form-actions">
+                    <button type="submit" class="button button-primary" [disabled]="isSubmittingUpdate()">
+                      Enregistrer
+                    </button>
+                    <button type="button" class="button button-secondary" (click)="cancelEditSchedule()" [disabled]="isSubmittingUpdate()">
+                      Annuler
+                    </button>
+                  </div>
+                }
+              </form>
+            }
+
+            @if (isPendingDelete(schedule.id)) {
+              <div class="confirmation-box is-danger">
+                <p>{{ getDeleteConfirmationMessage(schedule) }}</p>
+
+                @if (deleteError()) {
+                  <p class="form-message is-error" role="alert">{{ deleteError() }}</p>
+                }
+
+                <div class="form-actions">
+                  <button
+                    type="button"
+                    class="button button-danger"
+                    (click)="confirmDeleteSchedule(schedule)"
+                    [disabled]="deletingScheduleId() === schedule.id"
+                  >
+                    Confirmer
+                  </button>
+                  <button
+                    type="button"
+                    class="button button-secondary"
+                    (click)="cancelDeleteConfirmation()"
+                    [disabled]="deletingScheduleId() === schedule.id"
+                  >
+                    Annuler
+                  </button>
+                </div>
+              </div>
+            }
+          </article>
+        }
+      </div>
+    }
+  }
+</section>

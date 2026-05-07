@@ -31,6 +31,12 @@ export const routes: Routes = [
       { path: 'matchs', component: PublicMatchesPageComponent, canActivate: [authGuard] },
       { path: 'admin', component: AdminPageComponent, canActivate: [authGuard] },
       { path: 'admin/fermetures', component: AdminClosuresPageComponent, canActivate: [authGuard] },
+      {
+        path: 'admin/horaires',
+        loadComponent: () => import('./features/admin/horaires/admin-schedules-page.component')
+          .then((m) => m.AdminSchedulesPageComponent),
+        canActivate: [authGuard]
+      },
       { path: 'admin/joueurs', component: AdminPlayersPageComponent, canActivate: [authGuard] },
       { path: 'admin/inscriptions', component: AdminRegistrationsPageComponent, canActivate: [authGuard] }
     ]
