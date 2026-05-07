@@ -72,6 +72,20 @@ export interface AdminSiteClosureResponse {
   motif: string | null;
 }
 
+export interface AdminSiteScheduleResponse {
+  id: number;
+  siteId: number;
+  annee: number;
+  heureOuverture: string;
+  heureFermeture: string;
+}
+
+export interface UpsertSiteScheduleRequest {
+  annee: number;
+  heureOuverture: string;
+  heureFermeture: string;
+}
+
 export interface CreateGlobalClosureRequest {
   date: string;
   motif?: string | null;

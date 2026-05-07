@@ -100,8 +100,8 @@ export class AdminPageComponent implements OnInit {
     cards.push(
       { title: 'Joueurs', description: 'Consultez les joueurs enregistr\u00e9s dans votre p\u00e9rim\u00e8tre.', route: '/admin/joueurs' },
       { title: 'Fermetures', description: 'Consultez les fermetures globales et les fermetures de site.', route: '/admin/fermetures' },
-      { title: 'Statistiques', description: 'Module \u00e0 venir.' },
-      { title: 'Horaires', description: 'Module \u00e0 venir.' }
+      { title: 'Horaires', description: 'Consultez les horaires configur\u00e9s par site.', route: '/admin/horaires' },
+      { title: 'Statistiques', description: 'Module \u00e0 venir.' }
     );
 
     return cards;

@@ -7,6 +7,7 @@ import {
   AdminPlayerResponse,
   AdminSitePlayerResponse,
   AdminSiteClosureResponse,
+  AdminSiteScheduleResponse,
   AdminInfoResponse,
   PendingRegistrationItem,
   RegistrationDecisionResponse,
@@ -15,6 +16,7 @@ import {
   CreateSitePeriodClosureRequest,
   UpdateSiteDateClosureRequest,
   UpdateSitePeriodClosureRequest,
+  UpsertSiteScheduleRequest,
   ValidateRegistrationRequest
 } from './admin.models';
 
@@ -45,6 +47,39 @@ export class AdminService {
   getSiteClosures(siteId: number): Observable<AdminSiteClosureResponse[]> {
     return this.http.get<AdminSiteClosureResponse[]>(
       `${environment.apiBaseUrl}/admin/sites/${siteId}/fermetures`
+    );
+  }
+
+  getSiteSchedules(siteId: number): Observable<AdminSiteScheduleResponse[]> {
+    return this.http.get<AdminSiteScheduleResponse[]>(
+      `${environment.apiBaseUrl}/admin/sites/${siteId}/horaires`
+    );
+  }
+
+  createSiteSchedule(
+    siteId: number,
+    payload: UpsertSiteScheduleRequest
+  ): Observable<AdminSiteScheduleResponse> {
+    return this.http.post<AdminSiteScheduleResponse>(
+      `${environment.apiBaseUrl}/admin/sites/${siteId}/horaires`,
+      payload
+    );
+  }
+
+  updateSiteSchedule(
+    siteId: number,
+    scheduleId: number,
+    payload: UpsertSiteScheduleRequest
+  ): Observable<AdminSiteScheduleResponse> {
+    return this.http.put<AdminSiteScheduleResponse>(
+      `${environment.apiBaseUrl}/admin/sites/${siteId}/horaires/${scheduleId}`,
+      payload
+    );
+  }
+
+  deleteSiteSchedule(siteId: number, scheduleId: number): Observable<void> {
+    return this.http.delete<void>(
+      `${environment.apiBaseUrl}/admin/sites/${siteId}/horaires/${scheduleId}`
     );
   }
 
