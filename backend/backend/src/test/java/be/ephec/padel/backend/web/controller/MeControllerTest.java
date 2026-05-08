@@ -32,6 +32,7 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 
+import static org.hamcrest.Matchers.nullValue;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
@@ -72,7 +73,23 @@ class MeControllerTest {
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.matricule").value("G0001"))
                 .andExpect(jsonPath("$.nom").value("Alice"))
-                .andExpect(jsonPath("$.type").value("GLOBAL"));
+                .andExpect(jsonPath("$.type").value("GLOBAL"))
+                .andExpect(jsonPath("$.penaliteJusqua").value(nullValue()));
+    }
+
+    @Test
+    void getMe_expose_penalite_jusqua_si_presente() throws Exception {
+        Joueur joueur = new Joueur("G0001", "Alice", TypeJoueur.GLOBAL);
+        joueur.setPenaliteJusqua(LocalDateTime.of(2030, 1, 10, 12, 30));
+
+        when(joueurService.getCurrentJoueurProfile())
+                .thenReturn(joueur);
+
+        mvc.perform(get("/api/v1/me"))
+                .andExpect(status().isOk())
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.matricule").value("G0001"))
+                .andExpect(jsonPath("$.penaliteJusqua").value("2030-01-10T12:30:00"));
     }
 
     @Test
