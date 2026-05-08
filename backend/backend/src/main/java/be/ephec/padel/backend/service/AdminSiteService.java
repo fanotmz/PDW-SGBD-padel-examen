@@ -48,7 +48,8 @@ public class AdminSiteService {
                 joueur.getMatricule(),
                 joueur.getNom(),
                 joueur.getType(),
-                joueur.getSolde()
+                joueur.getSolde(),
+                joueur.getPenaliteJusqua()
         );
     }
 }
