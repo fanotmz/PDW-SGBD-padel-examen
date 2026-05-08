@@ -39,6 +39,15 @@ export class EspacePrivePageComponent implements OnInit {
     const profile = this.profile();
     return profile != null && profile.solde > 0;
   });
+  protected readonly hasActivePenalty = computed(() => {
+    const penaliteJusqua = this.profile()?.penaliteJusqua;
+
+    if (!penaliteJusqua) {
+      return false;
+    }
+
+    return new Date(penaliteJusqua).getTime() > Date.now();
+  });
   protected readonly regularisationItems = computed(() => this.regularisations().items);
   protected readonly totalTracable = computed(() => this.regularisations().totalTracable);
   protected readonly hasTraceableGap = computed(() => {

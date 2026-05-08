@@ -59,6 +59,23 @@
   gap: 1rem;
 }
 
+.penalty-alert {
+  padding: 1rem 1.25rem;
+  border: 1px solid #f59e0b;
+  border-radius: 0.5rem;
+  background: #fffbeb;
+  color: #92400e;
+}
+
+.penalty-alert h2 {
+  margin: 0 0 0.35rem;
+  font-size: 1rem;
+}
+
+.penalty-alert p {
+  margin: 0;
+}
+
 .info-section {
   padding: 1.5rem;
   border: 1px solid #d7e0eb;

@@ -6,4 +6,5 @@ export interface MeProfile {
   type: PlayerType;
   siteId: number | null;
   solde: number;
+  penaliteJusqua?: string | null;
 }
