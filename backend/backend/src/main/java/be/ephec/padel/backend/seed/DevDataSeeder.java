@@ -134,11 +134,15 @@ public class DevDataSeeder {
         Joueur joueurSiteNord = ensureJoueur("S9001", "Joueur Site Nord Demo", TypeJoueur.SITE, siteNord, ZERO);
         Joueur joueurLibre = ensureJoueur("L9001", "Joueur Libre Demo", TypeJoueur.LIBRE, null, ZERO);
         Joueur joueurSiteSud = ensureJoueur("S9002", "Joueur Site Sud Demo", TypeJoueur.SITE, siteSud, ZERO);
+        Joueur joueurPenalise = ensureJoueur("S9003", "Joueur Penalise Demo", TypeJoueur.SITE, siteNord, ZERO);
+        joueurPenalise.setPenaliteJusqua(LocalDate.now(clock).plusDays(7).atTime(23, 59));
+        joueurRepository.save(joueurPenalise);
 
         ensurePlayerUser("joueur.global.dev", joueurGlobal);
         ensurePlayerUser("joueur.site.dev", joueurSiteNord);
         ensurePlayerUser("joueur.libre.dev", joueurLibre);
         ensurePlayerUser("joueur.site.sud.dev", joueurSiteSud);
+        ensurePlayerUser("joueur.penalise.dev", joueurPenalise);
 
         LocalDate today = LocalDate.now(clock);
 
@@ -221,8 +225,9 @@ public class DevDataSeeder {
                 - joueur.site.dev / {}
                 - joueur.libre.dev / {}
                 - joueur.site.sud.dev / {}
+                - joueur.penalise.dev / {}
                 Support ADMIN_SITE garanti uniquement sur DB locale propre / vide.
-                """, PLAYER_PASSWORD, PLAYER_PASSWORD, PLAYER_PASSWORD, PLAYER_PASSWORD);
+                """, PLAYER_PASSWORD, PLAYER_PASSWORD, PLAYER_PASSWORD, PLAYER_PASSWORD, PLAYER_PASSWORD);
     }
 
     private void validateAdminBootstrapOrderAndConfiguration() {

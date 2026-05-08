@@ -327,6 +327,11 @@ export class CreateMatchPageComponent implements OnInit {
 
   private normalizeForSearch(value: string): string {
     return value
+      .replace(/ÃƒÂ©|Ã©/g, 'e')
+      .replace(/ÃƒÂ¨|Ã¨/g, 'e')
+      .replace(/ÃƒÂª|Ãª/g, 'e')
+      .replace(/ÃƒÂ |Ã /g, 'a')
+      .replace(/ÃƒÂ§|Ã§/g, 'c')
       .normalize('NFD')
       .replace(/[\u0300-\u036f]/g, '')
       .toLowerCase();
