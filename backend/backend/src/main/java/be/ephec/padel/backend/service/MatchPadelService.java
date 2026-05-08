@@ -175,7 +175,7 @@ public class MatchPadelService {
 
         if (organisateur.getPenaliteJusqua() != null && organisateur.getPenaliteJusqua().isAfter(now)) {
             throw new BusinessException(
-                    "RÃ©servation impossible : pÃ©nalitÃ© activÃ© jusqu'au "
+                    "Reservation impossible : penalite active jusqu'au "
                             + organisateur.getPenaliteJusqua().toLocalDate()
                             + " inclus."
             );
