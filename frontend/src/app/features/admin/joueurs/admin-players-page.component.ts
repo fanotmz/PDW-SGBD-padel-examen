@@ -36,6 +36,10 @@ export class AdminPlayersPageComponent implements OnInit {
 
   protected readonly isEmpty = computed(() => !this.isLoading() && !this.errorMessage() && this.players().length === 0);
 
+  protected readonly penalizedPlayers = computed(() =>
+    this.players().filter((player) => this.hasActivePenalty(player))
+  );
+
   protected readonly playersCountMessage = computed(() => {
     const count = this.players().length;
 
@@ -80,6 +84,14 @@ export class AdminPlayersPageComponent implements OnInit {
     }
 
     return `${this.currencyFormatter.format(solde)} \u20ac`;
+  }
+
+  protected hasActivePenalty(player: AdminPlayerListItem): boolean {
+    if (!player.penaliteJusqua) {
+      return false;
+    }
+
+    return new Date(player.penaliteJusqua).getTime() > Date.now();
   }
 
   private loadPlayers(): void {
@@ -129,7 +141,8 @@ export class AdminPlayersPageComponent implements OnInit {
       type: player.type,
       siteId: player.siteId,
       siteNom: player.siteId == null ? null : siteNames.get(player.siteId) ?? null,
-      solde: player.solde
+      solde: player.solde,
+      penaliteJusqua: player.penaliteJusqua ?? null
     }));
   }
 
@@ -140,7 +153,8 @@ export class AdminPlayersPageComponent implements OnInit {
       type: player.type,
       siteId: adminInfo.siteId,
       siteNom: adminInfo.siteNom,
-      solde: player.solde
+      solde: player.solde,
+      penaliteJusqua: player.penaliteJusqua ?? null
     }));
   }
 

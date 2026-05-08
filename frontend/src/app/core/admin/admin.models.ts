@@ -13,6 +13,7 @@ export interface AdminPlayerResponse {
   type: RegistrationSubscriptionType;
   siteId: number | null;
   solde: number | null;
+  penaliteJusqua?: string | null;
 }
 
 export interface AdminSitePlayerResponse {
@@ -20,6 +21,7 @@ export interface AdminSitePlayerResponse {
   nom: string;
   type: RegistrationSubscriptionType;
   solde: number | null;
+  penaliteJusqua?: string | null;
 }
 
 export interface AdminPlayerListItem {
@@ -29,6 +31,7 @@ export interface AdminPlayerListItem {
   siteId: number | null;
   siteNom: string | null;
   solde: number | null;
+  penaliteJusqua?: string | null;
 }
 
 export interface PendingRegistrationItem {

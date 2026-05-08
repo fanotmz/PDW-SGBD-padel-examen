@@ -66,6 +66,32 @@
   gap: 1rem;
 }
 
+.penalized-section {
+  display: grid;
+  gap: 1rem;
+}
+
+.section-heading {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.section-heading h2 {
+  margin: 0;
+  color: #10233f;
+  font-size: 1.35rem;
+}
+
+.section-heading p {
+  margin: 0;
+  color: #526277;
+}
+
+.penalized-list {
+  display: grid;
+  gap: 0.9rem;
+}
+
 .player-card {
   display: grid;
   gap: 1rem;
@@ -76,12 +102,22 @@
   box-shadow: 0 18px 38px rgba(15, 23, 42, 0.06);
 }
 
+.penalized-card {
+  display: grid;
+  gap: 1rem;
+  padding: 1.25rem;
+  border: 1px solid #f59e0b;
+  border-radius: 0.5rem;
+  background: #fffbeb;
+}
+
 .player-heading {
   display: grid;
   gap: 0.35rem;
 }
 
-.player-heading h2 {
+.player-heading h2,
+.player-heading h3 {
   margin: 0;
   color: #10233f;
   font-size: 1.25rem;
@@ -117,6 +153,15 @@
 
 .player-meta strong {
   color: #10233f;
+}
+
+.player-meta .penalty-date {
+  border-color: #fbbf24;
+  background: #fff7ed;
+}
+
+.penalty-date strong {
+  color: #92400e;
 }
 
 @media (max-width: 760px) {

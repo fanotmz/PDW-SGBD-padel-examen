@@ -17,8 +17,11 @@ import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 
+import static org.hamcrest.Matchers.nullValue;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @SpringBootTest
@@ -65,6 +68,7 @@ class AdminPerimetreSiteIntegrationTest extends SqlServerTestContainerConfig {
         // Joueurs (constructeurs car pas de setMatricule)
         Joueur j1 = new Joueur("J001", "Dupont", TypeJoueur.SITE, site1);
         j1.setSolde(new BigDecimal("15.00"));
+        j1.setPenaliteJusqua(LocalDateTime.of(2030, 1, 10, 12, 30));
         joueurRepository.save(j1);
 
         Joueur j2 = new Joueur("J002", "Martin", TypeJoueur.SITE, site2);
@@ -76,7 +80,10 @@ class AdminPerimetreSiteIntegrationTest extends SqlServerTestContainerConfig {
     @WithMockUser(username = "adminSite1", roles = {"ADMIN_SITE"})
     void adminSite1_peutAcceder_aSonSite_200() throws Exception {
         mockMvc.perform(get("/api/v1/admin/sites/1/joueurs"))
-                .andExpect(status().isOk());
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(1))
+                .andExpect(jsonPath("$[0].matricule").value("J001"))
+                .andExpect(jsonPath("$[0].penaliteJusqua").value("2030-01-10T12:30:00"));
     }
 
     @Test
@@ -90,6 +97,9 @@ class AdminPerimetreSiteIntegrationTest extends SqlServerTestContainerConfig {
     @WithMockUser(username = "adminGlobal", roles = {"ADMIN_GLOBAL"})
     void adminGlobal_peutAcceder_aTousLesSites_200() throws Exception {
         mockMvc.perform(get("/api/v1/admin/sites/2/joueurs"))
-                .andExpect(status().isOk());
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(1))
+                .andExpect(jsonPath("$[0].matricule").value("J002"))
+                .andExpect(jsonPath("$[0].penaliteJusqua").value(nullValue()));
     }
 }

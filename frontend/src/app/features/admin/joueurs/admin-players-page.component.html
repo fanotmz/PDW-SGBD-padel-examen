@@ -17,6 +17,51 @@
       <p class="page-state">Aucun joueur trouv&eacute; dans votre p&eacute;rim&egrave;tre.</p>
     }
 
+    <section class="penalized-section">
+      <div class="section-heading">
+        <h2>Joueurs actuellement p&eacute;nalis&eacute;s</h2>
+        <p>Consultez les joueurs dont la p&eacute;nalit&eacute; est active.</p>
+      </div>
+
+      @if (penalizedPlayers().length === 0) {
+        <p class="page-state">Aucun joueur actuellement p&eacute;nalis&eacute;.</p>
+      } @else {
+        <div class="penalized-list">
+          @for (player of penalizedPlayers(); track player.matricule) {
+            <article class="penalized-card">
+              <div class="player-heading">
+                <h3>{{ player.nom }}</h3>
+                <p class="player-id">{{ player.matricule }}</p>
+              </div>
+
+              <div class="player-meta">
+                <p>
+                  <span>Type</span>
+                  <strong>{{ getTypeLabel(player.type) }}</strong>
+                </p>
+
+                @if (hasSite(player)) {
+                  <p>
+                    <span>Site</span>
+                    <strong>{{ player.siteNom }}</strong>
+                  </p>
+                }
+
+                <p class="penalty-date">
+                  <span>P&eacute;nalit&eacute;</span>
+                  <strong>
+                    P&eacute;nalis&eacute; jusqu&rsquo;au
+                    {{ player.penaliteJusqua | date:'dd/MM/yyyy' }}
+                    &agrave; {{ player.penaliteJusqua | date:'HH:mm' }}
+                  </strong>
+                </p>
+              </div>
+            </article>
+          }
+        </div>
+      }
+    </section>
+
     <div class="players-list">
       @for (player of players(); track player.matricule) {
         <article class="player-card">
