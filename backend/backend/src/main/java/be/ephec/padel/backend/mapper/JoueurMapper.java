@@ -26,7 +26,8 @@ public final class JoueurMapper {
                 joueur.getNom(),
                 joueur.getType(),
                 siteId,
-                solde
+                solde,
+                joueur.getPenaliteJusqua()
         );
     }
 
