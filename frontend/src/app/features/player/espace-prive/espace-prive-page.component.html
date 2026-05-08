@@ -11,6 +11,18 @@
     <p class="page-state is-error">{{ errorMessage() }}</p>
   } @else if (profile(); as profile) {
     <div class="page-grid">
+      @if (hasActivePenalty() && profile.penaliteJusqua) {
+        <section class="penalty-alert" role="alert">
+          <h2>P&eacute;nalit&eacute; active</h2>
+          <p>
+            Vous &ecirc;tes p&eacute;nalis&eacute; jusqu&rsquo;au
+            {{ profile.penaliteJusqua | date:'dd/MM/yyyy' }} &agrave;
+            {{ profile.penaliteJusqua | date:'HH:mm' }}.
+            Vous ne pouvez pas cr&eacute;er de nouveau match pendant cette p&eacute;riode.
+          </p>
+        </section>
+      }
+
       <section class="info-section">
         <h2>Informations personnelles</h2>
 
