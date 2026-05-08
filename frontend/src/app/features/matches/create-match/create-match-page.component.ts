@@ -280,6 +280,11 @@ export class CreateMatchPageComponent implements OnInit {
     }
 
     if (apiError.message) {
+      if (this.isPenaltyCreationError(apiError.message)) {
+        this.globalErrorMessage.set(this.buildPenaltyCreationMessage(apiError.message));
+        return;
+      }
+
       this.globalErrorMessage.set(apiError.message);
       return;
     }
@@ -290,6 +295,41 @@ export class CreateMatchPageComponent implements OnInit {
     }
 
     this.globalErrorMessage.set('Impossible de créer le match.');
+  }
+
+  private isPenaltyCreationError(message: string): boolean {
+    const normalizedMessage = this.normalizeForSearch(message);
+
+    return normalizedMessage.includes('penalite') && normalizedMessage.includes('active');
+  }
+
+  private buildPenaltyCreationMessage(message: string): string {
+    const date = this.extractIsoDateFromMessage(message);
+
+    if (date) {
+      return `Vous \u00eates actuellement p\u00e9nalis\u00e9 et ne pouvez pas cr\u00e9er de nouveau match jusqu\u2019au ${date} inclus.`;
+    }
+
+    return 'Vous \u00eates actuellement p\u00e9nalis\u00e9 et ne pouvez pas cr\u00e9er de nouveau match pour le moment.';
+  }
+
+  private extractIsoDateFromMessage(message: string): string | null {
+    const match = message.match(/\b(\d{4})-(\d{2})-(\d{2})\b/);
+
+    if (!match) {
+      return null;
+    }
+
+    const [, year, month, day] = match;
+
+    return `${day}/${month}/${year}`;
+  }
+
+  private normalizeForSearch(value: string): string {
+    return value
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .toLowerCase();
   }
 
   private normalizeApiErrorBody(raw: unknown): ApiErrorBody {
