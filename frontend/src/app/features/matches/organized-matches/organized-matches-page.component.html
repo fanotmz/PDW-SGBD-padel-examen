@@ -78,7 +78,10 @@
           </dl>
 
           @if (match.risquePenaliteJ1) {
-            <p class="risk-message">Risque de p&eacute;nalit&eacute; J-1</p>
+            <p class="risk-message">
+              Attention : ce match priv&eacute; est incomplet. S&rsquo;il reste incomplet &agrave; J-1,
+              il pourra devenir public et une p&eacute;nalit&eacute; pourra &ecirc;tre appliqu&eacute;e.
+            </p>
           }
 
           <a [routerLink]="['/matchs', match.id]" class="detail-link">Voir le d&eacute;tail</a>
