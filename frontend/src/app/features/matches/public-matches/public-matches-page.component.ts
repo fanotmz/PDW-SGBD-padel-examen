@@ -35,9 +35,9 @@ export class PublicMatchesPageComponent implements OnInit {
   protected readonly errorMessage = signal('');
   protected readonly displayFilterOptions = DISPLAY_FILTER_OPTIONS;
   protected readonly filters = signal({
-    from: '2026-01-01',
-    to: '2026-04-30',
-    siteId: '1'
+    from: '',
+    to: '',
+    siteId: ''
   });
   protected readonly selectedDisplayFilter = signal<PublicMatchDisplayFilter>('TOUS');
   protected readonly filteredMatches = computed(() => {

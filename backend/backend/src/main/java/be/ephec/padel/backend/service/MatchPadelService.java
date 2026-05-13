@@ -1,6 +1,7 @@
 package be.ephec.padel.backend.service;
 
 import be.ephec.padel.backend.common.Tarifs;
+import be.ephec.padel.backend.dto.response.CreneauxMatchResponseDto;
 import be.ephec.padel.backend.dto.response.MatchDetailDto;
 import be.ephec.padel.backend.dto.response.MatchDto;
 import be.ephec.padel.backend.dto.response.PublicMatchSummaryDto;
@@ -40,7 +41,10 @@ import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 @Service
 @Transactional
@@ -49,6 +53,16 @@ public class MatchPadelService {
     private static final long DUREE_MATCH_MIN = 90;
     private static final long BUFFER_MIN = 15;
     private static final long SLOT_MIN = DUREE_MATCH_MIN + BUFFER_MIN;
+    private static final long PAS_CRENEAU_MIN = 15;
+    private static final DateTimeFormatter CRENEAU_FORMATTER = DateTimeFormatter.ofPattern("HH:mm");
+    private static final String MESSAGE_HORAIRE_MANQUANT =
+            "Aucun horaire n'est configure pour ce site et cette annee.";
+    private static final String MESSAGE_SITE_FERME =
+            "Aucun creneau disponible : le site est ferme a cette date.";
+    private static final String MESSAGE_AUCUN_CRENEAU =
+            "Aucun creneau disponible pour ce terrain et cette date.";
+    private static final String MESSAGE_RESERVATION_NON_AUTORISEE =
+            "Aucun creneau disponible : votre situation ne permet pas de reserver.";
 
     private final MatchPadelRepository matchPadelRepository;
     private final TerrainRepository terrainRepository;
@@ -123,7 +137,7 @@ public class MatchPadelService {
 
         Site site = terrain.getSite();
         DayOfWeek jour = dateDebut.getDayOfWeek();
-        if (site.getJoursFermeture().contains(jour)) {
+        if (estJourFermetureSite(site, jour)) {
             throw new BusinessException("Reservation impossible : site ferme ce jour-la.");
         }
 
@@ -169,11 +183,11 @@ public class MatchPadelService {
         Terrain terrain = terrainRepository.findById(terrainId)
                 .orElseThrow(() -> new NotFoundException("Terrain introuvable"));
 
-        if (organisateur.getSolde() != null && organisateur.getSolde().signum() > 0) {
+        if (aDette(organisateur)) {
             throw new BusinessException("Reservation impossible : dette en cours (" + organisateur.getSolde() + ").");
         }
 
-        if (organisateur.getPenaliteJusqua() != null && organisateur.getPenaliteJusqua().isAfter(now)) {
+        if (aPenaliteActive(organisateur, now)) {
             throw new BusinessException(
                     "Reservation impossible : penalite active jusqu'au "
                             + organisateur.getPenaliteJusqua().toLocalDate()
@@ -208,6 +222,113 @@ public class MatchPadelService {
         return saved;
     }
 
+    @Transactional(readOnly = true)
+    public CreneauxMatchResponseDto getCreneauxDisponibles(Long terrainId, LocalDate date) {
+        if (terrainId == null) {
+            throw new BusinessException("Terrain obligatoire");
+        }
+        if (date == null) {
+            throw new BusinessException("Date obligatoire");
+        }
+
+        Joueur joueur = currentUserFacade.getCurrentJoueur();
+        if (joueur == null) {
+            throw new BusinessException("Joueur obligatoire");
+        }
+
+        Terrain terrain = terrainRepository.findById(terrainId)
+                .orElseThrow(() -> new NotFoundException("Terrain introuvable"));
+
+        if (terrain.getSite() == null || terrain.getSite().getId() == null) {
+            throw new BusinessException("Terrain sans site associe.");
+        }
+
+        LocalDateTime now = LocalDateTime.now(clock);
+        if (aDette(joueur) || aPenaliteActive(joueur, now)) {
+            return new CreneauxMatchResponseDto(List.of(), MESSAGE_RESERVATION_NON_AUTORISEE);
+        }
+
+        Site site = terrain.getSite();
+        Long siteId = site.getId();
+
+        HoraireSite horaire;
+        try {
+            horaire = horaireSiteService.getApplicable(siteId, date.atStartOfDay());
+        } catch (BusinessException exception) {
+            return new CreneauxMatchResponseDto(List.of(), MESSAGE_HORAIRE_MANQUANT);
+        }
+
+        if (estJourFermetureSite(site, date.getDayOfWeek())
+                || fermetureGlobaleRepository.existsByDate(date)
+                || fermetureSiteService.isDateFermeePourSite(siteId, date)) {
+            return new CreneauxMatchResponseDto(List.of(), MESSAGE_SITE_FERME);
+        }
+
+        LocalTime ouverture = horaire.getHeureOuverture();
+        LocalTime fermeture = horaire.getHeureFermeture();
+        LocalTime dernierDebut = fermeture.minusMinutes(SLOT_MIN);
+
+        if (dernierDebut.isBefore(ouverture)) {
+            return new CreneauxMatchResponseDto(List.of(), MESSAGE_AUCUN_CRENEAU);
+        }
+
+        LocalDateTime debutRecherche = date.atStartOfDay().minusMinutes(SLOT_MIN);
+        LocalDateTime finRecherche = date.plusDays(1).atStartOfDay().plusMinutes(SLOT_MIN);
+        List<MatchPadel> matchsProches = matchPadelRepository.findByTerrainIdAndDateDebutBetween(
+                terrainId,
+                debutRecherche,
+                finRecherche
+        );
+
+        List<String> creneaux = new ArrayList<>();
+
+        for (LocalTime heure = ouverture;
+             !heure.isAfter(dernierDebut);
+             heure = heure.plusMinutes(PAS_CRENEAU_MIN)) {
+
+            LocalDateTime dateDebut = date.atTime(heure);
+
+            if (!dateDebut.isAfter(now)) {
+                continue;
+            }
+
+            if (!peutReserverSurCreneau(joueur, terrain, dateDebut, now)) {
+                continue;
+            }
+
+            if (!estTerrainDisponible(matchsProches, dateDebut)) {
+                continue;
+            }
+
+            creneaux.add(heure.format(CRENEAU_FORMATTER));
+        }
+
+        return new CreneauxMatchResponseDto(
+                creneaux,
+                creneaux.isEmpty() ? MESSAGE_AUCUN_CRENEAU : null
+        );
+    }
+
+    private boolean aDette(Joueur joueur) {
+        return joueur.getSolde() != null && joueur.getSolde().signum() > 0;
+    }
+
+    private boolean aPenaliteActive(Joueur joueur, LocalDateTime now) {
+        return joueur.getPenaliteJusqua() != null && joueur.getPenaliteJusqua().isAfter(now);
+    }
+
+    private boolean peutReserverSurCreneau(Joueur joueur,
+                                           Terrain terrain,
+                                           LocalDateTime dateDebut,
+                                           LocalDateTime now) {
+        try {
+            verifierDroitReservation(joueur, terrain, dateDebut, now);
+            return true;
+        } catch (BusinessException exception) {
+            return false;
+        }
+    }
+
     private void verifierTerrainDisponible(Long terrainId, LocalDateTime newStart) {
         if (terrainId == null) {
             throw new BusinessException("Terrain obligatoire");
@@ -222,6 +343,14 @@ public class MatchPadelService {
         List<MatchPadel> candidats =
                 matchPadelRepository.findByTerrainIdAndDateDebutBetween(terrainId, from, to);
 
+        if (!estTerrainDisponible(candidats, newStart)) {
+            throw new BusinessException(
+                    "Terrain indisponible : un match est deja prevu sur ce terrain (1h30 + 15 minutes de battement)."
+            );
+        }
+    }
+
+    private boolean estTerrainDisponible(List<MatchPadel> candidats, LocalDateTime newStart) {
         LocalDateTime newEndBuffer = newStart.plusMinutes(SLOT_MIN);
 
         for (MatchPadel existing : candidats) {
@@ -234,11 +363,16 @@ public class MatchPadelService {
             boolean overlap = existingStart.isBefore(newEndBuffer) && newStart.isBefore(existingEndBuffer);
 
             if (overlap) {
-                throw new BusinessException(
-                        "Terrain indisponible : un match est deja prevu sur ce terrain (1h30 + 15 minutes de battement)."
-                );
+                return false;
             }
         }
+
+        return true;
+    }
+
+    private boolean estJourFermetureSite(Site site, DayOfWeek jour) {
+        Set<DayOfWeek> joursFermeture = site.getJoursFermeture();
+        return joursFermeture != null && joursFermeture.contains(jour);
     }
 
     private void verifierDroitReservation(Joueur organisateur,

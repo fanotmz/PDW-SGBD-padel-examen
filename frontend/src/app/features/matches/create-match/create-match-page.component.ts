@@ -5,7 +5,12 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { finalize } from 'rxjs';
-import { CreatedMatch, CreateMatchPayload, MatchVisibility } from '../../../core/matches/create-match.models';
+import {
+  CreatedMatch,
+  CreateMatchPayload,
+  MatchSlotsResponse,
+  MatchVisibility
+} from '../../../core/matches/create-match.models';
 import { MatchCreationService } from '../../../core/matches/match-creation.service';
 import { SiteOption } from '../../../core/sites/site.models';
 import { SitesService } from '../../../core/sites/sites.service';
@@ -40,19 +45,21 @@ export class CreateMatchPageComponent implements OnInit {
   protected readonly terrains = signal<TerrainOption[]>([]);
   protected readonly isLoadingSites = signal(true);
   protected readonly isLoadingTerrains = signal(false);
+  protected readonly isLoadingSlots = signal(false);
   protected readonly isSubmitting = signal(false);
   protected readonly globalErrorMessage = signal('');
+  protected readonly slotsMessage = signal('');
   protected readonly successMessage = signal('');
   protected readonly createdMatch = signal<CreatedMatch | null>(null);
   protected readonly backendFieldErrors = signal<Record<string, string>>({});
   protected readonly friendlyErrorDetails = signal<FriendlyErrorDetail[]>([]);
-  protected readonly timeSlots = this.buildTimeSlots();
+  protected readonly availableSlots = signal<string[]>([]);
 
   protected readonly form = this.fb.nonNullable.group({
     siteId: [null as number | null, Validators.required],
     terrainId: [{ value: null as number | null, disabled: true }, Validators.required],
     date: ['', Validators.required],
-    heure: ['', Validators.required],
+    heure: [{ value: '', disabled: true }, Validators.required],
     visibilite: ['PUBLIC' as MatchVisibility, Validators.required]
   });
 
@@ -63,6 +70,7 @@ export class CreateMatchPageComponent implements OnInit {
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((siteId) => {
         this.form.controls.terrainId.reset(null);
+        this.resetSlots();
         this.backendFieldErrors.set({});
         this.friendlyErrorDetails.set([]);
 
@@ -75,13 +83,29 @@ export class CreateMatchPageComponent implements OnInit {
         this.form.controls.terrainId.disable();
         this.loadTerrains(siteId);
       });
+
+    this.form.controls.terrainId.valueChanges
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => {
+        this.resetSelectedHour();
+        this.refreshSlots();
+      });
+
+    this.form.controls.date.valueChanges
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => {
+        this.resetSelectedHour();
+        this.refreshSlots();
+      });
   }
 
   protected canSubmit(): boolean {
     return (
       this.form.valid &&
+      this.form.controls.heure.enabled &&
       !this.isLoadingSites() &&
       !this.isLoadingTerrains() &&
+      !this.isLoadingSlots() &&
       !this.isSubmitting()
     );
   }
@@ -94,7 +118,7 @@ export class CreateMatchPageComponent implements OnInit {
     this.backendFieldErrors.set({});
     this.friendlyErrorDetails.set([]);
 
-    if (this.isLoadingSites() || this.isLoadingTerrains() || this.isSubmitting()) {
+    if (this.isLoadingSites() || this.isLoadingTerrains() || this.isLoadingSlots() || this.isSubmitting()) {
       return;
     }
 
@@ -118,7 +142,7 @@ export class CreateMatchPageComponent implements OnInit {
           this.createdMatch.set(createdMatch);
           this.successMessage.set('Match créé avec succès.');
           this.form.controls.date.reset('');
-          this.form.controls.heure.reset('');
+          this.resetSlots();
           this.form.controls.visibilite.setValue('PUBLIC');
           this.form.controls.terrainId.reset(null);
         },
@@ -164,6 +188,10 @@ export class CreateMatchPageComponent implements OnInit {
       hints.push('Chargement des terrains en cours.');
     }
 
+    if (this.isLoadingSlots()) {
+      hints.push('Chargement des creneaux en cours.');
+    }
+
     if (this.isSubmitting()) {
       hints.push('Création en cours...');
     }
@@ -184,6 +212,17 @@ export class CreateMatchPageComponent implements OnInit {
 
     if (this.form.controls.date.hasError('required')) {
       hints.push('Sélectionnez une date.');
+    }
+
+    if (
+      this.form.controls.terrainId.value != null &&
+      this.form.controls.date.value &&
+      this.form.controls.heure.disabled &&
+      !this.isLoadingSlots()
+    ) {
+      hints.push('Aucun creneau disponible.');
+    } else if (this.form.controls.heure.disabled) {
+      hints.push('Selectionnez un terrain et une date pour charger les creneaux.');
     }
 
     if (this.form.controls.heure.hasError('required')) {
@@ -235,6 +274,7 @@ export class CreateMatchPageComponent implements OnInit {
             this.form.controls.terrainId.enable();
           } else {
             this.form.controls.terrainId.disable();
+            this.resetSlots();
           }
         },
         error: (error: HttpErrorResponse) => {
@@ -243,6 +283,7 @@ export class CreateMatchPageComponent implements OnInit {
           );
           this.terrains.set([]);
           this.form.controls.terrainId.disable();
+          this.resetSlots();
         }
       });
   }
@@ -259,6 +300,74 @@ export class CreateMatchPageComponent implements OnInit {
       dateDebut: `${date}T${heure}:00`,
       visibilite
     };
+  }
+
+  private refreshSlots(): void {
+    const { terrainId, date } = this.form.getRawValue();
+
+    if (terrainId == null || !date) {
+      this.resetSlots();
+      return;
+    }
+
+    this.availableSlots.set([]);
+    this.slotsMessage.set('');
+    this.form.controls.heure.disable();
+    this.isLoadingSlots.set(true);
+
+    const requestTerrainId = terrainId;
+    const requestDate = date;
+
+    this.matchCreationService
+      .getCreneaux(requestTerrainId, requestDate)
+      .pipe(finalize(() => this.isLoadingSlots.set(false)))
+      .subscribe({
+        next: (response) => {
+          const current = this.form.getRawValue();
+          if (current.terrainId !== requestTerrainId || current.date !== requestDate) {
+            return;
+          }
+
+          this.applySlotsResponse(response);
+        },
+        error: (error: HttpErrorResponse) => {
+          const current = this.form.getRawValue();
+          if (current.terrainId !== requestTerrainId || current.date !== requestDate) {
+            return;
+          }
+
+          this.availableSlots.set([]);
+          this.form.controls.heure.disable();
+          this.slotsMessage.set(
+            error.status === 0 ? 'Backend inaccessible.' : 'Impossible de charger les creneaux.'
+          );
+        }
+      });
+  }
+
+  private applySlotsResponse(response: MatchSlotsResponse): void {
+    const slots = response.creneaux ?? [];
+
+    this.availableSlots.set(slots);
+    this.slotsMessage.set(response.message ?? '');
+
+    if (slots.length > 0) {
+      this.form.controls.heure.enable();
+    } else {
+      this.form.controls.heure.disable();
+    }
+  }
+
+  private resetSelectedHour(): void {
+    this.form.controls.heure.reset('');
+  }
+
+  private resetSlots(): void {
+    this.availableSlots.set([]);
+    this.slotsMessage.set('');
+    this.isLoadingSlots.set(false);
+    this.form.controls.heure.reset('');
+    this.form.controls.heure.disable();
   }
 
   private handleSubmitError(error: HttpErrorResponse): void {
@@ -366,21 +475,4 @@ export class CreateMatchPageComponent implements OnInit {
     return friendlyDetails;
   }
 
-  private buildTimeSlots(): string[] {
-    const slots: string[] = [];
-    const openingHour = 8;
-    const closingHour = 22;
-
-    for (let hour = openingHour; hour < closingHour; hour += 1) {
-      for (let minute = 0; minute < 60; minute += 15) {
-        const hh = hour.toString().padStart(2, '0');
-        const mm = minute.toString().padStart(2, '0');
-        slots.push(`${hh}:${mm}`);
-      }
-    }
-
-    slots.push(`${closingHour.toString().padStart(2, '0')}:00`);
-
-    return slots;
-  }
 }
