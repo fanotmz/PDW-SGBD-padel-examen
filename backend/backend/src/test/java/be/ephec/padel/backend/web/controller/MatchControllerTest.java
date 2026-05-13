@@ -2,6 +2,7 @@ package be.ephec.padel.backend.web.controller;
 
 import be.ephec.padel.backend.config.SecurityConfig;
 import be.ephec.padel.backend.controller.MatchController;
+import be.ephec.padel.backend.dto.response.CreneauxMatchResponseDto;
 import be.ephec.padel.backend.dto.response.MatchDetailDto;
 import be.ephec.padel.backend.dto.response.MatchDto;
 import be.ephec.padel.backend.dto.response.ParticipantDto;
@@ -30,6 +31,7 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.List;
 
+import static org.hamcrest.Matchers.nullValue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
@@ -162,6 +164,51 @@ class MatchControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{}"))
                 .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @WithAnonymousUser
+    void getCreneaux_sansAuth_401() throws Exception {
+        mvc.perform(get("/api/v1/matchs/creneaux")
+                        .param("terrainId", "1")
+                        .param("date", "2030-01-01"))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void getCreneaux_auth_200_et_json() throws Exception {
+        LocalDate date = LocalDate.of(2030, 1, 1);
+        when(matchPadelService.getCreneauxDisponibles(1L, date))
+                .thenReturn(new CreneauxMatchResponseDto(List.of("08:00", "08:15", "20:15"), null));
+
+        mvc.perform(get("/api/v1/matchs/creneaux")
+                        .param("terrainId", "1")
+                        .param("date", "2030-01-01"))
+                .andExpect(status().isOk())
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.creneaux[0]").value("08:00"))
+                .andExpect(jsonPath("$.creneaux[2]").value("20:15"))
+                .andExpect(jsonPath("$.message").value(nullValue()));
+
+        verify(matchPadelService).getCreneauxDisponibles(1L, date);
+    }
+
+    @Test
+    void getCreneaux_horaire_manquant_200_liste_vide_message() throws Exception {
+        LocalDate date = LocalDate.of(2030, 1, 1);
+        when(matchPadelService.getCreneauxDisponibles(1L, date))
+                .thenReturn(new CreneauxMatchResponseDto(
+                        List.of(),
+                        "Aucun horaire n'est configure pour ce site et cette annee."
+                ));
+
+        mvc.perform(get("/api/v1/matchs/creneaux")
+                        .param("terrainId", "1")
+                        .param("date", "2030-01-01"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.creneaux").isArray())
+                .andExpect(jsonPath("$.creneaux").isEmpty())
+                .andExpect(jsonPath("$.message").value("Aucun horaire n'est configure pour ce site et cette annee."));
     }
 
     @Test

@@ -2,6 +2,7 @@ package be.ephec.padel.backend.controller;
 
 import be.ephec.padel.backend.dto.request.CreateMatchRequest;
 import be.ephec.padel.backend.dto.response.ApiErrorDto;
+import be.ephec.padel.backend.dto.response.CreneauxMatchResponseDto;
 import be.ephec.padel.backend.dto.response.MatchDetailDto;
 import be.ephec.padel.backend.dto.response.MatchDto;
 import be.ephec.padel.backend.dto.response.PublicMatchSummaryDto;
@@ -39,6 +40,27 @@ public class MatchController {
 
     public MatchController(MatchPadelService matchPadelService) {
         this.matchPadelService = matchPadelService;
+    }
+
+    @Operation(
+            summary = "Lister les creneaux reservables",
+            description = "Retourne les creneaux reservables pour un terrain et une date, selon l'utilisateur authentifie."
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Creneaux recuperes"),
+            @ApiResponse(responseCode = "400", description = "Parametres invalides",
+                    content = @Content(schema = @Schema(implementation = ApiErrorDto.class))),
+            @ApiResponse(responseCode = "404", description = "Terrain introuvable",
+                    content = @Content(schema = @Schema(implementation = ApiErrorDto.class)))
+    })
+    @GetMapping("/creneaux")
+    public ResponseEntity<CreneauxMatchResponseDto> getCreneaux(
+            @RequestParam Long terrainId,
+            @RequestParam
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+            LocalDate date) {
+
+        return ResponseEntity.ok(matchPadelService.getCreneauxDisponibles(terrainId, date));
     }
 
     @Operation(

@@ -106,10 +106,16 @@
             <span>Heure</span>
             <select formControlName="heure">
               <option value="">Sélectionner une heure</option>
-              @for (slot of timeSlots; track slot) {
+              @if (isLoadingSlots()) {
+                <option value="" disabled>Chargement des creneaux...</option>
+              }
+              @for (slot of availableSlots(); track slot) {
                 <option [value]="slot">{{ slot }}</option>
               }
             </select>
+            @if (slotsMessage()) {
+              <small class="field-error">{{ slotsMessage() }}</small>
+            }
             @if (getFieldError('heure')) {
               <small class="field-error">{{ getFieldError('heure') }}</small>
             }

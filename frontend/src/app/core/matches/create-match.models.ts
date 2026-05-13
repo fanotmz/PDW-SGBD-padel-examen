@@ -20,3 +20,8 @@ export interface CreatedMatch {
   montantPaye: number;
   resteAPayer: number;
 }
+
+export interface MatchSlotsResponse {
+  creneaux: string[];
+  message: string | null;
+}

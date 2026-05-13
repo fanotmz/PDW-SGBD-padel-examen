@@ -1,8 +1,8 @@
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
-import { CreateMatchPayload, CreatedMatch } from './create-match.models';
+import { CreateMatchPayload, CreatedMatch, MatchSlotsResponse } from './create-match.models';
 
 @Injectable({ providedIn: 'root' })
 export class MatchCreationService {
@@ -10,5 +10,13 @@ export class MatchCreationService {
 
   createMatch(payload: CreateMatchPayload): Observable<CreatedMatch> {
     return this.http.post<CreatedMatch>(`${environment.apiBaseUrl}/matchs`, payload);
+  }
+
+  getCreneaux(terrainId: number, date: string): Observable<MatchSlotsResponse> {
+    const params = new HttpParams()
+      .set('terrainId', terrainId)
+      .set('date', date);
+
+    return this.http.get<MatchSlotsResponse>(`${environment.apiBaseUrl}/matchs/creneaux`, { params });
   }
 }
