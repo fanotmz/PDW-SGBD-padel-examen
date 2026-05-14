@@ -58,7 +58,7 @@ public class SecurityConfig {
                             .requestMatchers(HttpMethod.GET, "/api/v1/sites/**").permitAll()
                             .requestMatchers("/api/v1/admin/inscriptions/**").hasRole("ADMIN_GLOBAL")
                             .requestMatchers("/api/v1/admin/stats/**").hasRole("ADMIN_GLOBAL")
-                            .requestMatchers("/api/v1/admin/sites/**").hasAnyRole("ADMIN_GLOBAL", "ADMIN_SITE")
+                            .requestMatchers("/api/v1/admin/sites", "/api/v1/admin/sites/**").hasAnyRole("ADMIN_GLOBAL", "ADMIN_SITE")
                             .requestMatchers("/api/v1/admin/**").hasAnyRole("ADMIN_GLOBAL", "ADMIN_SITE")
                             .requestMatchers(HttpMethod.GET, "/api/v1/joueurs").hasRole("ADMIN_GLOBAL")
                             .requestMatchers(HttpMethod.POST, "/api/v1/joueurs").hasRole("ADMIN_GLOBAL")

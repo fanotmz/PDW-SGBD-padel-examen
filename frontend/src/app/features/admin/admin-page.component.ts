@@ -31,6 +31,9 @@ export class AdminPageComponent implements OnInit {
   protected readonly isLoadingRegistrations = signal(false);
   protected readonly registrationsError = signal(false);
   protected readonly canViewRegistrationRequests = computed(() => this.authService.hasRole('ROLE_ADMIN_GLOBAL'));
+  protected readonly isSiteScopedAdmin = computed(
+    () => this.adminInfo()?.adminType === 'SITE' || this.authService.hasRole('ROLE_ADMIN_SITE')
+  );
 
   protected readonly apiStatusMessage = computed(() => {
     const status = this.adminInfo()?.status;
@@ -99,6 +102,13 @@ export class AdminPageComponent implements OnInit {
 
     cards.push(
       { title: 'Joueurs', description: 'Consultez les joueurs enregistr\u00e9s dans votre p\u00e9rim\u00e8tre.', route: '/admin/joueurs' },
+      {
+        title: this.isSiteScopedAdmin() ? 'Site' : 'Sites',
+        description: this.isSiteScopedAdmin()
+          ? 'Consultez le site, ses terrains, ses jours de fermeture et ses horaires.'
+          : 'Consultez les sites, leurs terrains, leurs jours de fermeture et leurs horaires.',
+        route: '/admin/sites'
+      },
       { title: 'Fermetures', description: 'Consultez les fermetures globales et les fermetures de site.', route: '/admin/fermetures' },
       { title: 'Horaires', description: 'Consultez les horaires configur\u00e9s par site.', route: '/admin/horaires' },
       { title: 'Statistiques', description: "Consultez le chiffre d'affaires, les matchs et les dettes.", route: '/admin/statistiques' }

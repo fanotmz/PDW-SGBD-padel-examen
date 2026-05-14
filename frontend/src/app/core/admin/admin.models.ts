@@ -83,6 +83,21 @@ export interface AdminSiteScheduleResponse {
   heureFermeture: string;
 }
 
+export interface AdminSiteConsultationTerrain {
+  id: number;
+  nom: string;
+  siteId: number;
+}
+
+export interface AdminSiteConsultationResponse {
+  id: number;
+  nom: string;
+  ville: string;
+  joursFermeture: string[];
+  terrains: AdminSiteConsultationTerrain[];
+  horaires: AdminSiteScheduleResponse[];
+}
+
 export interface AdminCaStatsResponse {
   caTotal: number;
   from: string;

@@ -9,6 +9,7 @@ import {
   AdminPlayerResponse,
   AdminSitePlayerResponse,
   AdminSiteClosureResponse,
+  AdminSiteConsultationResponse,
   AdminSiteScheduleResponse,
   AdminMatchsStatsResponse,
   AdminInfoResponse,
@@ -41,6 +42,10 @@ export class AdminService {
 
   getPlayersBySite(siteId: number): Observable<AdminSitePlayerResponse[]> {
     return this.http.get<AdminSitePlayerResponse[]>(`${environment.apiBaseUrl}/admin/sites/${siteId}/joueurs`);
+  }
+
+  getAdminSites(): Observable<AdminSiteConsultationResponse[]> {
+    return this.http.get<AdminSiteConsultationResponse[]>(`${environment.apiBaseUrl}/admin/sites`);
   }
 
   getGlobalClosures(): Observable<AdminGlobalClosureResponse[]> {

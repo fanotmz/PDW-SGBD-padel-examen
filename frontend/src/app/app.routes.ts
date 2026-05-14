@@ -38,6 +38,12 @@ export const routes: Routes = [
         canActivate: [authGuard]
       },
       {
+        path: 'admin/sites',
+        loadComponent: () => import('./features/admin/sites/admin-sites-page.component')
+          .then((m) => m.AdminSitesPageComponent),
+        canActivate: [authGuard]
+      },
+      {
         path: 'admin/statistiques',
         loadComponent: () => import('./features/admin/statistiques/admin-statistics-page.component')
           .then((m) => m.AdminStatisticsPageComponent),

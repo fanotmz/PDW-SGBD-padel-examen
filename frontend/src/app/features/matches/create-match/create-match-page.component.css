@@ -150,6 +150,31 @@ h1 {
   font-size: 0.85rem;
 }
 
+.slot-info {
+  margin-top: 1.25rem;
+  padding: 1rem 1.1rem;
+  border: 1px solid #bfdbfe;
+  border-radius: 0.85rem;
+  background: #eff6ff;
+}
+
+.slot-info-title {
+  margin: 0 0 0.85rem;
+  color: #10233f;
+  font-weight: 700;
+}
+
+.slot-info-text {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.slot-info-text p {
+  margin: 0;
+  color: #10233f;
+  line-height: 1.45;
+}
+
 .form-actions {
   margin-top: 1.4rem;
 }

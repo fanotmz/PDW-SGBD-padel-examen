@@ -1260,6 +1260,11 @@ class MatchPadelServiceTest {
         assertFalse(response.getCreneaux().contains("20:30"));
         assertFalse(response.getCreneaux().contains("22:00"));
         assertNull(response.getMessage());
+        assertEquals(2026, response.getAnnee());
+        assertEquals(LocalTime.of(8, 0), response.getHeureOuverture());
+        assertEquals(LocalTime.of(22, 0), response.getHeureFermeture());
+        assertEquals(90L, response.getDureeMatchMinutes());
+        assertEquals(15L, response.getBufferMinutes());
     }
 
     @Test
@@ -1285,12 +1290,17 @@ class MatchPadelServiceTest {
         when(site.getId()).thenReturn(1L);
         when(terrainRepo.findById(1L)).thenReturn(Optional.of(terrain));
         when(horaireSiteService.getApplicable(1L, date.atStartOfDay()))
-                .thenThrow(new BusinessException("Aucun horaire configure"));
+                .thenThrow(new BusinessException("Aucun horaire configuré"));
 
         CreneauxMatchResponseDto response = service.getCreneauxDisponibles(1L, date);
 
         assertTrue(response.getCreneaux().isEmpty());
-        assertEquals("Aucun horaire n'est configure pour ce site et cette annee.", response.getMessage());
+        assertEquals("Aucun horaire n'est configuré pour ce site et cette année.", response.getMessage());
+        assertEquals(2026, response.getAnnee());
+        assertNull(response.getHeureOuverture());
+        assertNull(response.getHeureFermeture());
+        assertEquals(90L, response.getDureeMatchMinutes());
+        assertEquals(15L, response.getBufferMinutes());
         verify(matchRepo, never()).findByTerrainIdAndDateDebutBetween(anyLong(), any(), any());
     }
 
@@ -1303,7 +1313,9 @@ class MatchPadelServiceTest {
         CreneauxMatchResponseDto response = service.getCreneauxDisponibles(1L, date);
 
         assertTrue(response.getCreneaux().isEmpty());
-        assertEquals("Aucun creneau disponible : le site est ferme a cette date.", response.getMessage());
+        assertEquals("Le site est fermé à cette date. Aucun créneau n'est disponible.", response.getMessage());
+        assertNull(response.getHeureOuverture());
+        assertNull(response.getHeureFermeture());
         verify(matchRepo, never()).findByTerrainIdAndDateDebutBetween(anyLong(), any(), any());
     }
 
@@ -1316,7 +1328,9 @@ class MatchPadelServiceTest {
         CreneauxMatchResponseDto response = service.getCreneauxDisponibles(1L, date);
 
         assertTrue(response.getCreneaux().isEmpty());
-        assertEquals("Aucun creneau disponible : le site est ferme a cette date.", response.getMessage());
+        assertEquals("Le site est fermé à cette date. Aucun créneau n'est disponible.", response.getMessage());
+        assertNull(response.getHeureOuverture());
+        assertNull(response.getHeureFermeture());
         verify(matchRepo, never()).findByTerrainIdAndDateDebutBetween(anyLong(), any(), any());
     }
 
@@ -1329,7 +1343,9 @@ class MatchPadelServiceTest {
         CreneauxMatchResponseDto response = service.getCreneauxDisponibles(1L, date);
 
         assertTrue(response.getCreneaux().isEmpty());
-        assertEquals("Aucun creneau disponible : le site est ferme a cette date.", response.getMessage());
+        assertEquals("Le site est fermé à cette date. Aucun créneau n'est disponible.", response.getMessage());
+        assertNull(response.getHeureOuverture());
+        assertNull(response.getHeureFermeture());
         verify(matchRepo, never()).findByTerrainIdAndDateDebutBetween(anyLong(), any(), any());
     }
 
@@ -1352,6 +1368,83 @@ class MatchPadelServiceTest {
     }
 
     @Test
+    void getCreneauxDisponibles_terrain_totalement_occupe_retourne_message_dedie() {
+        LocalDate date = LocalDate.of(2026, 3, 25);
+        stubTerrainPourCreneaux(1L, 1L, date, LocalTime.of(8, 0), LocalTime.of(9, 45));
+        MatchPadel existing = mock(MatchPadel.class);
+        when(existing.getDateDebut()).thenReturn(date.atTime(8, 0));
+        when(matchRepo.findByTerrainIdAndDateDebutBetween(eq(1L), any(LocalDateTime.class), any(LocalDateTime.class)))
+                .thenReturn(List.of(existing));
+
+        CreneauxMatchResponseDto response = service.getCreneauxDisponibles(1L, date);
+
+        assertTrue(response.getCreneaux().isEmpty());
+        assertEquals("Tous les créneaux de cette date sont déjà occupés pour ce terrain.", response.getMessage());
+    }
+
+    @Test
+    void getCreneauxDisponibles_horaire_trop_court_retourne_message_dedie() {
+        LocalDate date = LocalDate.of(2026, 3, 25);
+        stubTerrainPourCreneaux(1L, 1L, date, LocalTime.of(8, 0), LocalTime.of(9, 30));
+
+        CreneauxMatchResponseDto response = service.getCreneauxDisponibles(1L, date);
+
+        assertTrue(response.getCreneaux().isEmpty());
+        assertEquals("L'horaire du site ne permet pas de placer un match complet à cette date.", response.getMessage());
+    }
+
+    @Test
+    void getCreneauxDisponibles_dette_retourne_message_dedie() {
+        LocalDate date = LocalDate.of(2026, 3, 25);
+        stubTerrainPourCreneaux(1L, 1L, date);
+        stubCurrentJoueur("G0001", TypeJoueur.GLOBAL, BigDecimal.TEN);
+
+        CreneauxMatchResponseDto response = service.getCreneauxDisponibles(1L, date);
+
+        assertTrue(response.getCreneaux().isEmpty());
+        assertEquals("Vous ne pouvez pas réserver tant qu'un solde est dû.", response.getMessage());
+    }
+
+    @Test
+    void getCreneauxDisponibles_penalite_active_retourne_message_dedie() {
+        LocalDate date = LocalDate.of(2026, 3, 25);
+        stubTerrainPourCreneaux(1L, 1L, date);
+        Joueur joueur = stubCurrentJoueur("G0001", TypeJoueur.GLOBAL, BigDecimal.ZERO);
+        when(joueur.getPenaliteJusqua()).thenReturn(LocalDateTime.now(clock).plusDays(2));
+
+        CreneauxMatchResponseDto response = service.getCreneauxDisponibles(1L, date);
+
+        assertTrue(response.getCreneaux().isEmpty());
+        assertEquals("Vous ne pouvez pas réserver pendant votre période de pénalité.", response.getMessage());
+    }
+
+    @Test
+    void getCreneauxDisponibles_global_trop_loin_retourne_message_dedie() {
+        LocalDate date = LocalDate.of(2026, 4, 20);
+        stubTerrainPourCreneaux(1L, 1L, date);
+
+        CreneauxMatchResponseDto response = service.getCreneauxDisponibles(1L, date);
+
+        assertTrue(response.getCreneaux().isEmpty());
+        assertEquals("Vous pouvez réserver au maximum 3 semaines à l'avance.", response.getMessage());
+    }
+
+    @Test
+    void getCreneauxDisponibles_site_trop_loin_retourne_message_dedie() {
+        LocalDate date = LocalDate.of(2026, 4, 15);
+        stubTerrainPourCreneaux(1L, 1L, date);
+        Joueur joueur = stubCurrentJoueur("S0001", TypeJoueur.SITE, BigDecimal.ZERO);
+        Site siteJoueur = mock(Site.class);
+        when(siteJoueur.getId()).thenReturn(1L);
+        when(joueur.getSite()).thenReturn(siteJoueur);
+
+        CreneauxMatchResponseDto response = service.getCreneauxDisponibles(1L, date);
+
+        assertTrue(response.getCreneaux().isEmpty());
+        assertEquals("Vous pouvez réserver au maximum 2 semaines à l'avance.", response.getMessage());
+    }
+
+    @Test
     void getCreneauxDisponibles_libre_trop_loin_retourne_liste_vide() {
         LocalDate date = LocalDate.of(2026, 4, 15);
         stubTerrainPourCreneaux(1L, 1L, date);
@@ -1360,7 +1453,7 @@ class MatchPadelServiceTest {
         CreneauxMatchResponseDto response = service.getCreneauxDisponibles(1L, date);
 
         assertTrue(response.getCreneaux().isEmpty());
-        assertEquals("Aucun creneau disponible pour ce terrain et cette date.", response.getMessage());
+        assertEquals("Vous pouvez réserver au maximum 5 jours à l'avance.", response.getMessage());
     }
 
     @Test
@@ -1376,7 +1469,7 @@ class MatchPadelServiceTest {
         CreneauxMatchResponseDto response = service.getCreneauxDisponibles(1L, date);
 
         assertTrue(response.getCreneaux().isEmpty());
-        assertEquals("Aucun creneau disponible pour ce terrain et cette date.", response.getMessage());
+        assertEquals("Votre abonnement SITE permet de réserver uniquement sur votre site.", response.getMessage());
     }
 
     @Test
@@ -1389,6 +1482,17 @@ class MatchPadelServiceTest {
         assertFalse(response.getCreneaux().contains("08:00"));
         assertFalse(response.getCreneaux().contains("11:00"));
         assertTrue(response.getCreneaux().contains("11:15"));
+    }
+
+    @Test
+    void getCreneauxDisponibles_date_du_jour_sans_creneau_futur_retourne_message_dedie() {
+        LocalDate date = LocalDate.of(2026, 3, 24);
+        stubTerrainPourCreneaux(1L, 1L, date, LocalTime.of(8, 0), LocalTime.of(12, 45));
+
+        CreneauxMatchResponseDto response = service.getCreneauxDisponibles(1L, date);
+
+        assertTrue(response.getCreneaux().isEmpty());
+        assertEquals("Il n'y a plus de créneau disponible aujourd'hui pour ce terrain.", response.getMessage());
     }
 }
 
