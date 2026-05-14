@@ -24,4 +24,9 @@ export interface CreatedMatch {
 export interface MatchSlotsResponse {
   creneaux: string[];
   message: string | null;
+  annee: number | null;
+  heureOuverture: string | null;
+  heureFermeture: string | null;
+  dureeMatchMinutes: number | null;
+  bufferMinutes: number | null;
 }

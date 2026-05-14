@@ -1,6 +1,6 @@
 import { CommonModule, CurrencyPipe, DatePipe } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
-import { Component, DestroyRef, OnInit, inject, signal } from '@angular/core';
+import { Component, DestroyRef, OnInit, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { RouterLink } from '@angular/router';
@@ -25,6 +25,14 @@ interface ApiErrorBody {
 interface FriendlyErrorDetail {
   key: string;
   message: string;
+}
+
+interface SlotScheduleInfo {
+  annee: number;
+  heureOuverture: string;
+  heureFermeture: string;
+  dureeMatchMinutes: number;
+  bufferMinutes: number;
 }
 
 @Component({
@@ -54,6 +62,11 @@ export class CreateMatchPageComponent implements OnInit {
   protected readonly backendFieldErrors = signal<Record<string, string>>({});
   protected readonly friendlyErrorDetails = signal<FriendlyErrorDetail[]>([]);
   protected readonly availableSlots = signal<string[]>([]);
+  protected readonly slotScheduleInfo = signal<SlotScheduleInfo | null>(null);
+  protected readonly lastAvailableSlot = computed(() => {
+    const slots = this.availableSlots();
+    return slots.length > 0 ? slots[slots.length - 1] : '';
+  });
 
   protected readonly form = this.fb.nonNullable.group({
     siteId: [null as number | null, Validators.required],
@@ -189,7 +202,7 @@ export class CreateMatchPageComponent implements OnInit {
     }
 
     if (this.isLoadingSlots()) {
-      hints.push('Chargement des creneaux en cours.');
+      hints.push('Chargement des créneaux en cours.');
     }
 
     if (this.isSubmitting()) {
@@ -218,11 +231,12 @@ export class CreateMatchPageComponent implements OnInit {
       this.form.controls.terrainId.value != null &&
       this.form.controls.date.value &&
       this.form.controls.heure.disabled &&
-      !this.isLoadingSlots()
+      !this.isLoadingSlots() &&
+      !this.slotsMessage()
     ) {
-      hints.push('Aucun creneau disponible.');
-    } else if (this.form.controls.heure.disabled) {
-      hints.push('Selectionnez un terrain et une date pour charger les creneaux.');
+      hints.push('Aucun créneau disponible.');
+    } else if (this.form.controls.heure.disabled && !this.slotsMessage()) {
+      hints.push('Sélectionnez un terrain et une date pour charger les créneaux.');
     }
 
     if (this.form.controls.heure.hasError('required')) {
@@ -238,6 +252,25 @@ export class CreateMatchPageComponent implements OnInit {
 
   protected dateDebutFieldError(): string {
     return this.backendFieldErrors()['dateDebut'] ?? '';
+  }
+
+  protected formatSlotTime(value: string): string {
+    return value.length >= 5 ? value.slice(0, 5) : value;
+  }
+
+  protected formatDuration(minutes: number): string {
+    const hours = Math.floor(minutes / 60);
+    const remainingMinutes = minutes % 60;
+
+    if (hours > 0 && remainingMinutes > 0) {
+      return `${hours}h${remainingMinutes}`;
+    }
+
+    if (hours > 0) {
+      return `${hours}h`;
+    }
+
+    return `${minutes} minutes`;
   }
 
   private loadSites(): void {
@@ -339,7 +372,7 @@ export class CreateMatchPageComponent implements OnInit {
           this.availableSlots.set([]);
           this.form.controls.heure.disable();
           this.slotsMessage.set(
-            error.status === 0 ? 'Backend inaccessible.' : 'Impossible de charger les creneaux.'
+            error.status === 0 ? 'Backend inaccessible.' : 'Impossible de charger les créneaux.'
           );
         }
       });
@@ -350,6 +383,7 @@ export class CreateMatchPageComponent implements OnInit {
 
     this.availableSlots.set(slots);
     this.slotsMessage.set(response.message ?? '');
+    this.slotScheduleInfo.set(this.toSlotScheduleInfo(response));
 
     if (slots.length > 0) {
       this.form.controls.heure.enable();
@@ -365,9 +399,30 @@ export class CreateMatchPageComponent implements OnInit {
   private resetSlots(): void {
     this.availableSlots.set([]);
     this.slotsMessage.set('');
+    this.slotScheduleInfo.set(null);
     this.isLoadingSlots.set(false);
     this.form.controls.heure.reset('');
     this.form.controls.heure.disable();
+  }
+
+  private toSlotScheduleInfo(response: MatchSlotsResponse): SlotScheduleInfo | null {
+    if (
+      response.annee == null ||
+      !response.heureOuverture ||
+      !response.heureFermeture ||
+      response.dureeMatchMinutes == null ||
+      response.bufferMinutes == null
+    ) {
+      return null;
+    }
+
+    return {
+      annee: response.annee,
+      heureOuverture: response.heureOuverture,
+      heureFermeture: response.heureFermeture,
+      dureeMatchMinutes: response.dureeMatchMinutes,
+      bufferMinutes: response.bufferMinutes
+    };
   }
 
   private handleSubmitError(error: HttpErrorResponse): void {
@@ -436,11 +491,11 @@ export class CreateMatchPageComponent implements OnInit {
 
   private normalizeForSearch(value: string): string {
     return value
-      .replace(/ÃƒÂ©|Ã©/g, 'e')
-      .replace(/ÃƒÂ¨|Ã¨/g, 'e')
-      .replace(/ÃƒÂª|Ãª/g, 'e')
-      .replace(/ÃƒÂ |Ã /g, 'a')
-      .replace(/ÃƒÂ§|Ã§/g, 'c')
+      .replace(/\u00c3\u0192\u00c2\u00a9|\u00c3\u00a9/g, 'e')
+      .replace(/\u00c3\u0192\u00c2\u00a8|\u00c3\u00a8/g, 'e')
+      .replace(/\u00c3\u0192\u00c2\u00aa|\u00c3\u00aa/g, 'e')
+      .replace(/\u00c3\u0192\u00c2\u00a0|\u00c3\u00a0/g, 'a')
+      .replace(/\u00c3\u0192\u00c2\u00a7|\u00c3\u00a7/g, 'c')
       .normalize('NFD')
       .replace(/[\u0300-\u036f]/g, '')
       .toLowerCase();

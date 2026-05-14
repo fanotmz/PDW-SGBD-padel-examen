@@ -179,7 +179,15 @@ class MatchControllerTest {
     void getCreneaux_auth_200_et_json() throws Exception {
         LocalDate date = LocalDate.of(2030, 1, 1);
         when(matchPadelService.getCreneauxDisponibles(1L, date))
-                .thenReturn(new CreneauxMatchResponseDto(List.of("08:00", "08:15", "20:15"), null));
+                .thenReturn(new CreneauxMatchResponseDto(
+                        List.of("08:00", "08:15", "20:15"),
+                        null,
+                        2030,
+                        LocalTime.of(8, 0),
+                        LocalTime.of(22, 0),
+                        90L,
+                        15L
+                ));
 
         mvc.perform(get("/api/v1/matchs/creneaux")
                         .param("terrainId", "1")
@@ -188,7 +196,12 @@ class MatchControllerTest {
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.creneaux[0]").value("08:00"))
                 .andExpect(jsonPath("$.creneaux[2]").value("20:15"))
-                .andExpect(jsonPath("$.message").value(nullValue()));
+                .andExpect(jsonPath("$.message").value(nullValue()))
+                .andExpect(jsonPath("$.annee").value(2030))
+                .andExpect(jsonPath("$.heureOuverture").value("08:00:00"))
+                .andExpect(jsonPath("$.heureFermeture").value("22:00:00"))
+                .andExpect(jsonPath("$.dureeMatchMinutes").value(90))
+                .andExpect(jsonPath("$.bufferMinutes").value(15));
 
         verify(matchPadelService).getCreneauxDisponibles(1L, date);
     }
@@ -199,7 +212,7 @@ class MatchControllerTest {
         when(matchPadelService.getCreneauxDisponibles(1L, date))
                 .thenReturn(new CreneauxMatchResponseDto(
                         List.of(),
-                        "Aucun horaire n'est configure pour ce site et cette annee."
+                        "Aucun horaire n'est configuré pour ce site et cette année."
                 ));
 
         mvc.perform(get("/api/v1/matchs/creneaux")
@@ -208,7 +221,9 @@ class MatchControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.creneaux").isArray())
                 .andExpect(jsonPath("$.creneaux").isEmpty())
-                .andExpect(jsonPath("$.message").value("Aucun horaire n'est configure pour ce site et cette annee."));
+                .andExpect(jsonPath("$.message").value("Aucun horaire n'est configuré pour ce site et cette année."))
+                .andExpect(jsonPath("$.heureOuverture").value(nullValue()))
+                .andExpect(jsonPath("$.heureFermeture").value(nullValue()));
     }
 
     @Test

@@ -3,6 +3,7 @@ package be.ephec.padel.backend.controller;
 import be.ephec.padel.backend.dto.response.AdminCaStatsDto;
 import be.ephec.padel.backend.dto.response.AdminDettesStatsDto;
 import be.ephec.padel.backend.dto.response.AdminMatchsStatsDto;
+import be.ephec.padel.backend.dto.response.AdminSiteConsultationDto;
 import be.ephec.padel.backend.dto.response.JoueurAdminDto;
 import be.ephec.padel.backend.service.AdminSiteService;
 import be.ephec.padel.backend.service.AdminSiteStatsService;
@@ -27,6 +28,11 @@ public class AdminSiteController {
                                AdminSiteStatsService adminSiteStatsService) {
         this.adminSiteService = adminSiteService;
         this.adminSiteStatsService = adminSiteStatsService;
+    }
+
+    @GetMapping
+    public List<AdminSiteConsultationDto> getSites() {
+        return adminSiteService.getSitesConsultables();
     }
 
     @GetMapping("/{siteId}/joueurs")

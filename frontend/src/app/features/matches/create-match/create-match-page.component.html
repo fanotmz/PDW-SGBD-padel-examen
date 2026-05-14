@@ -107,7 +107,7 @@
             <select formControlName="heure">
               <option value="">Sélectionner une heure</option>
               @if (isLoadingSlots()) {
-                <option value="" disabled>Chargement des creneaux...</option>
+                <option value="" disabled>Chargement des créneaux...</option>
               }
               @for (slot of availableSlots(); track slot) {
                 <option [value]="slot">{{ slot }}</option>
@@ -138,6 +138,23 @@
             }
           </label>
         </div>
+
+        @if (slotScheduleInfo(); as info) {
+          <section class="slot-info" aria-live="polite">
+            <p class="slot-info-title">Créneaux disponibles</p>
+            <div class="slot-info-text">
+              <p>
+                Pour cette date, le site est ouvert de {{ formatSlotTime(info.heureOuverture) }}
+                à {{ formatSlotTime(info.heureFermeture) }}.
+              </p>
+              <p>Un match dure {{ formatDuration(info.dureeMatchMinutes) }}.</p>
+              <p>Un intervalle de {{ info.bufferMinutes }} minutes est prévu entre deux matchs.</p>
+              @if (lastAvailableSlot()) {
+                <p>Le dernier créneau possible est {{ lastAvailableSlot() }}.</p>
+              }
+            </div>
+          </section>
+        }
 
         <div class="form-actions">
           <button
