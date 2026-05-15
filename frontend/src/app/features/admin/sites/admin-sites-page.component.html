@@ -1,7 +1,7 @@
 <section class="admin-sites-page">
   <header class="page-header">
     <p class="page-eyebrow">Administration</p>
-    <a routerLink="/admin" class="back-link">&larr; Retour &agrave; l&rsquo;administration</a>
+    <a routerLink="/admin" class="back-link">← Retour à l’administration</a>
     <h1>{{ pageTitle() }}</h1>
     <p class="page-intro">{{ pageIntro() }}</p>
   </header>
@@ -21,7 +21,12 @@
               <span>Site</span>
               <h2>{{ site.nom }}</h2>
             </div>
-            <p>{{ site.ville }}</p>
+            <div class="site-actions">
+              <p>{{ site.ville }}</p>
+              <a class="site-action-link" [routerLink]="['/admin/sites', site.id, 'matchs']">
+                Voir les matchs planifiés
+              </a>
+            </div>
           </div>
 
           <section class="site-section">

@@ -3,10 +3,14 @@ package be.ephec.padel.backend.service;
 import be.ephec.padel.backend.dto.enums.PlayerMatchRoleDto;
 import be.ephec.padel.backend.dto.response.RegularisationDto;
 import be.ephec.padel.backend.dto.response.RegularisationsResponseDto;
+import be.ephec.padel.backend.exception.BusinessException;
+import be.ephec.padel.backend.exception.ForbiddenException;
+import be.ephec.padel.backend.exception.NotFoundException;
 import be.ephec.padel.backend.model.entities.Joueur;
 import be.ephec.padel.backend.model.entities.MatchPadel;
 import be.ephec.padel.backend.model.entities.Participation;
 import be.ephec.padel.backend.model.enums.MatchStatut;
+import be.ephec.padel.backend.model.enums.OrigineMouvementSoldeType;
 import be.ephec.padel.backend.repository.ParticipationRepository;
 import be.ephec.padel.backend.security.CurrentUserFacade;
 import be.ephec.padel.backend.service.model.ImputationResult;
@@ -27,13 +31,16 @@ public class RegularisationService {
     private final CurrentUserFacade currentUserFacade;
     private final SoldeImputationService soldeImputationService;
     private final ParticipationRepository participationRepository;
+    private final SoldeService soldeService;
 
     public RegularisationService(CurrentUserFacade currentUserFacade,
                                  SoldeImputationService soldeImputationService,
-                                 ParticipationRepository participationRepository) {
+                                 ParticipationRepository participationRepository,
+                                 SoldeService soldeService) {
         this.currentUserFacade = currentUserFacade;
         this.soldeImputationService = soldeImputationService;
         this.participationRepository = participationRepository;
+        this.soldeService = soldeService;
     }
 
     public RegularisationsResponseDto getCurrentUserRegularisations() {
@@ -75,6 +82,46 @@ public class RegularisationService {
         return new RegularisationsResponseDto(totalTracable, items);
     }
 
+    @Transactional
+    public void payerAnnulationTardiveOrganisateur(Long participationId, BigDecimal montant) {
+        if (participationId == null) {
+            throw new BusinessException("Participation obligatoire");
+        }
+        BigDecimal montantValide = scalePaymentAmount(montant);
+
+        Joueur joueur = currentUserFacade.getCurrentJoueur();
+        Participation participation = participationRepository.findByIdWithDetails(participationId)
+                .orElseThrow(() -> new NotFoundException("Participation introuvable"));
+
+        verifierParticipationCourante(joueur, participation);
+        verifierParticipationOrganisateur(joueur, participation);
+
+        BigDecimal montantRestant = soldeImputationService.getMontantOuvertPourParticipationEtOrigine(
+                joueur.getMatricule(),
+                participationId,
+                OrigineMouvementSoldeType.ANNULATION_TARDIVE_ORGANISATEUR
+        );
+
+        if (montantRestant.signum() <= 0) {
+            throw new BusinessException("Aucune dette d'annulation tardive a regulariser.");
+        }
+        if (montantValide.compareTo(montantRestant) > 0) {
+            throw new BusinessException("Montant trop eleve. Reste a regulariser = " + montantRestant);
+        }
+
+        Long matchId = participation.getMatch() == null ? null : participation.getMatch().getId();
+        soldeService.crediter(
+                joueur.getMatricule(),
+                montantValide,
+                new SoldeOriginContext(
+                        OrigineMouvementSoldeType.REGULARISATION_ANNULATION_TARDIVE,
+                        participationId,
+                        matchId,
+                        "Regularisation annulation tardive organisateur"
+                )
+        );
+    }
+
     private RegularisationDto toRegularisationDto(OpenDebtLine line,
                                                   Participation participation,
                                                   String joueurCourantMatricule) {
@@ -92,7 +139,9 @@ public class RegularisationService {
         BigDecimal montantInitial = scale(line.getMontantInitial());
         BigDecimal montantRestant = scale(line.getMontantRestant());
         BigDecimal montantDejaPaye = montantInitial.subtract(montantRestant).setScale(2, RoundingMode.HALF_UP);
-        boolean payable = match.getStatut() != MatchStatut.ANNULE && montantRestant.signum() > 0;
+        boolean payable = montantRestant.signum() > 0
+                && (match.getStatut() != MatchStatut.ANNULE
+                || line.getOrigineType() == OrigineMouvementSoldeType.ANNULATION_TARDIVE_ORGANISATEUR);
 
         return new RegularisationDto(
                 participation.getId(),
@@ -113,5 +162,27 @@ public class RegularisationService {
 
     private BigDecimal scale(BigDecimal montant) {
         return (montant == null ? BigDecimal.ZERO : montant).setScale(2, RoundingMode.HALF_UP);
+    }
+
+    private BigDecimal scalePaymentAmount(BigDecimal montant) {
+        if (montant == null || montant.signum() <= 0) {
+            throw new BusinessException("Montant invalide");
+        }
+        return montant.setScale(2, RoundingMode.HALF_UP);
+    }
+
+    private void verifierParticipationCourante(Joueur joueur, Participation participation) {
+        if (joueur == null || participation.getJoueur() == null
+                || !joueur.getMatricule().equals(participation.getJoueur().getMatricule())) {
+            throw new ForbiddenException("Seul le joueur concerne peut regulariser cette dette.");
+        }
+    }
+
+    private void verifierParticipationOrganisateur(Joueur joueur, Participation participation) {
+        MatchPadel match = participation.getMatch();
+        if (match == null || match.getOrganisateur() == null
+                || !joueur.getMatricule().equals(match.getOrganisateur().getMatricule())) {
+            throw new BusinessException("Cette regularisation est reservee a l'organisateur du match.");
+        }
     }
 }

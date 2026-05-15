@@ -11,4 +11,8 @@ export class MatchDetailService {
   getMatchDetail(id: number): Observable<MatchDetail> {
     return this.http.get<MatchDetail>(`${environment.apiBaseUrl}/matchs/${id}`);
   }
+
+  cancelMatch(id: number): Observable<void> {
+    return this.http.post<void>(`${environment.apiBaseUrl}/matchs/${id}/annulation`, null);
+  }
 }

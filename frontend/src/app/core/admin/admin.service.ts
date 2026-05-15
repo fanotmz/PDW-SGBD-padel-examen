@@ -10,6 +10,7 @@ import {
   AdminSitePlayerResponse,
   AdminSiteClosureResponse,
   AdminSiteConsultationResponse,
+  AdminSiteMatchSummaryResponse,
   AdminSiteScheduleResponse,
   AdminMatchsStatsResponse,
   AdminInfoResponse,
@@ -46,6 +47,12 @@ export class AdminService {
 
   getAdminSites(): Observable<AdminSiteConsultationResponse[]> {
     return this.http.get<AdminSiteConsultationResponse[]>(`${environment.apiBaseUrl}/admin/sites`);
+  }
+
+  getSiteMatches(siteId: number): Observable<AdminSiteMatchSummaryResponse[]> {
+    return this.http.get<AdminSiteMatchSummaryResponse[]>(
+      `${environment.apiBaseUrl}/admin/sites/${siteId}/matchs`
+    );
   }
 
   getGlobalClosures(): Observable<AdminGlobalClosureResponse[]> {

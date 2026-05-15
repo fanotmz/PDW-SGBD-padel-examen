@@ -1,0 +1,57 @@
+<section class="admin-site-matches-page">
+  <header class="page-header">
+    <p class="page-eyebrow">Administration</p>
+    <button type="button" class="back-link" (click)="goBackToSites()">← Retour au détail du site</button>
+    <h1>{{ pageTitle() }}</h1>
+    <p class="page-intro">Liste des matchs à venir encore planifiés pour ce site.</p>
+  </header>
+
+  @if (isLoading()) {
+    <p class="page-state">Chargement en cours...</p>
+  } @else if (errorMessage()) {
+    <p class="page-state is-error">{{ errorMessage() }}</p>
+  } @else if (hasNoMatches()) {
+    <p class="page-state">Aucun match à venir planifié pour ce site.</p>
+  } @else {
+    <div class="matches-list">
+      @for (match of matches(); track trackMatch(match)) {
+        <article class="match-card">
+          <div class="match-main">
+            <div>
+              <span class="match-date">{{ match.dateDebut | date: 'dd/MM/yyyy' }} - {{ formatTime(match.heureDebut) }}</span>
+              <h2>{{ match.terrainNom }}</h2>
+              <p>{{ match.siteNom }}</p>
+            </div>
+            <span class="status-badge">{{ getStatusLabel(match.statut) }}</span>
+          </div>
+
+          <dl class="match-meta">
+            <div>
+              <dt>Organisateur</dt>
+              <dd>{{ match.organisateurNom }} ({{ match.organisateurMatricule }})</dd>
+            </div>
+            <div>
+              <dt>Visibilité</dt>
+              <dd>{{ getVisibilityLabel(match.visibilite) }}</dd>
+            </div>
+            <div>
+              <dt>Participants</dt>
+              <dd>{{ match.nbParticipants }}/4</dd>
+            </div>
+            <div>
+              <dt>Places restantes</dt>
+              <dd>{{ match.placesRestantes }}</dd>
+            </div>
+          </dl>
+
+          <div class="match-actions">
+            @if (match.peutAnnuler) {
+              <span class="cancel-indicator">Annulation possible</span>
+            }
+            <a class="detail-link" [routerLink]="['/matchs', match.id]">Voir détail</a>
+          </div>
+        </article>
+      }
+    </div>
+  }
+</section>

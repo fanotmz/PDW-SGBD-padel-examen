@@ -11,4 +11,11 @@ export class RegularisationService {
   getMyRegularisations(): Observable<RegularisationsResponse> {
     return this.http.get<RegularisationsResponse>(`${environment.apiBaseUrl}/me/regularisations`);
   }
+
+  payLateCancellationRegularisation(participationId: number, montant: number): Observable<void> {
+    return this.http.post<void>(
+      `${environment.apiBaseUrl}/me/regularisations/${participationId}/paiement`,
+      { montant }
+    );
+  }
 }

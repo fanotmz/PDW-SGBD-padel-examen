@@ -17,6 +17,7 @@ public final class MatchDetailMapper {
 
     public static MatchDetailDto toDto(MatchPadel m,
                                        boolean peutAjouterJoueurPrive,
+                                       boolean peutAnnuler,
                                        BigDecimal montantTotal,
                                        BigDecimal montantPaye,
                                        BigDecimal resteAPayer,
@@ -48,11 +49,29 @@ public final class MatchDetailMapper {
                 placesRestantes,
                 complet,
                 peutAjouterJoueurPrive,
+                peutAnnuler,
                 montantTotal,
                 montantPaye,
                 resteAPayer,
                 montantRembourse,
                 participants
+        );
+    }
+
+    public static MatchDetailDto toDto(MatchPadel m,
+                                       boolean peutAjouterJoueurPrive,
+                                       BigDecimal montantTotal,
+                                       BigDecimal montantPaye,
+                                       BigDecimal resteAPayer,
+                                       BigDecimal montantRembourse) {
+        return toDto(
+                m,
+                peutAjouterJoueurPrive,
+                false,
+                montantTotal,
+                montantPaye,
+                resteAPayer,
+                montantRembourse
         );
     }
 

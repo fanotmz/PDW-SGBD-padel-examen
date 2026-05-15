@@ -95,6 +95,40 @@ class SoldeImputationServiceTest {
     }
 
     @Test
+    void annulationTardiveOrganisateur_est_reconstruite_comme_dette_ciblee() {
+        when(mouvementSoldeRepository.findByJoueur_MatriculeOrderByDateMouvementAscIdAsc("J1"))
+                .thenReturn(List.of(
+                        debit(1L, 400L, 40L, "45.00", OrigineMouvementSoldeType.ANNULATION_TARDIVE_ORGANISATEUR, 1)
+                ));
+
+        ImputationResult result = service.reconstruirePourJoueur("J1");
+
+        assertThat(result.getOpenDebtLines()).hasSize(1);
+        assertThat(result.getOpenDebtLines().getFirst().getParticipationId()).isEqualTo(400L);
+        assertThat(result.getOpenDebtLines().getFirst().getMontantRestant()).isEqualByComparingTo("45.00");
+        assertThat(service.getMontantOuvertPourParticipation("J1", 400L)).isEqualByComparingTo("45.00");
+    }
+
+    @Test
+    void paiementAnnulationTardiveOrganisateur_solde_dette_ciblee() {
+        when(mouvementSoldeRepository.findByJoueur_MatriculeOrderByDateMouvementAscIdAsc("J1"))
+                .thenReturn(List.of(
+                        debit(1L, 400L, 40L, "45.00", OrigineMouvementSoldeType.ANNULATION_TARDIVE_ORGANISATEUR, 1),
+                        credit(2L, 400L, 40L, "45.00", OrigineMouvementSoldeType.REGULARISATION_ANNULATION_TARDIVE, 2)
+                ));
+
+        ImputationResult result = service.reconstruirePourJoueur("J1");
+
+        assertThat(result.getOpenDebtLines()).isEmpty();
+        assertThat(result.getTotalTrackedOpenAmount()).isEqualByComparingTo("0.00");
+        assertThat(service.getMontantOuvertPourParticipationEtOrigine(
+                "J1",
+                400L,
+                OrigineMouvementSoldeType.ANNULATION_TARDIVE_ORGANISATEUR
+        )).isEqualByComparingTo("0.00");
+    }
+
+    @Test
     void neutralisationJ1_surA_A_soldee() {
         when(mouvementSoldeRepository.findByJoueur_MatriculeOrderByDateMouvementAscIdAsc("J1"))
                 .thenReturn(List.of(

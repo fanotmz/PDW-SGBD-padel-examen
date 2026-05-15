@@ -13,6 +13,7 @@ import be.ephec.padel.backend.repository.PaiementRepository;
 import be.ephec.padel.backend.repository.ParticipationRepository;
 import be.ephec.padel.backend.service.SoldeOriginContext;
 import be.ephec.padel.backend.service.SoldeService;
+import be.ephec.padel.backend.service.PenaliteJoueurService;
 import be.ephec.padel.backend.service.TraitementJ1Service;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -55,6 +56,7 @@ class TraitementJ1ServiceTest {
                 participationRepository,
                 paiementRepository,
                 soldeService,
+                new PenaliteJoueurService(clock),
                 clock
         );
     }

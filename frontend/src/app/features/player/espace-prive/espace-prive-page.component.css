@@ -213,6 +213,16 @@
   margin-top: 0.75rem;
 }
 
+.regularization-note {
+  margin: 0.75rem 0 0;
+  padding: 0.75rem 0.85rem;
+  border: 1px solid #fcd34d;
+  border-radius: 0.5rem;
+  background: #fffbeb;
+  color: #92400e;
+  line-height: 1.45;
+}
+
 .meta-badge {
   display: inline-flex;
   align-items: center;
@@ -281,6 +291,71 @@
   color: #526277;
   font-size: 0.92rem;
   text-align: right;
+}
+
+.regularization-confirmation-box {
+  display: grid;
+  gap: 1rem;
+  margin-top: 1rem;
+  padding: 1rem;
+  border: 1px solid #bfdbfe;
+  border-radius: 0.9rem;
+  background: #eff6ff;
+  color: #1e3a8a;
+}
+
+.regularization-confirmation-box h3 {
+  margin: 0 0 0.55rem;
+  color: #10233f;
+  font-size: 1.05rem;
+}
+
+.regularization-confirmation-box p {
+  margin: 0;
+  line-height: 1.5;
+}
+
+.regularization-confirmation-box p + p {
+  margin-top: 0.55rem;
+}
+
+.regularization-confirmation-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.confirm-regularization-button,
+.keep-regularization-button {
+  border: none;
+  border-radius: 0.85rem;
+  color: #ffffff;
+  font: inherit;
+  font-weight: 700;
+  padding: 0.75rem 1rem;
+  cursor: pointer;
+}
+
+.confirm-regularization-button {
+  background: #1d4ed8;
+}
+
+.confirm-regularization-button:hover:not(:disabled) {
+  background: #1e40af;
+}
+
+.keep-regularization-button {
+  background: #10233f;
+}
+
+.keep-regularization-button:hover:not(:disabled) {
+  background: #0f172a;
+}
+
+.confirm-regularization-button:disabled,
+.keep-regularization-button:disabled {
+  opacity: 0.7;
+  cursor: wait;
 }
 
 .shortcuts {

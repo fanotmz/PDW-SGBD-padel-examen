@@ -335,4 +335,46 @@ class MatchControllerTest {
         mvc.perform(get("/api/v1/matchs/99"))
                 .andExpect(status().isNotFound());
     }
+
+    @Test
+    @WithAnonymousUser
+    void cancel_sansAuth_401() throws Exception {
+        mvc.perform(post("/api/v1/matchs/1/annulation"))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void cancel_auth_204() throws Exception {
+        mvc.perform(post("/api/v1/matchs/1/annulation"))
+                .andExpect(status().isNoContent());
+
+        verify(matchPadelService).annulerMatchParUtilisateurCourant(1L);
+    }
+
+    @Test
+    void cancel_business_400() throws Exception {
+        org.mockito.Mockito.doThrow(new BusinessException("Seul un match planifie peut etre annule."))
+                .when(matchPadelService).annulerMatchParUtilisateurCourant(1L);
+
+        mvc.perform(post("/api/v1/matchs/1/annulation"))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void cancel_forbidden_403() throws Exception {
+        org.mockito.Mockito.doThrow(new ForbiddenException("Acces interdit"))
+                .when(matchPadelService).annulerMatchParUtilisateurCourant(1L);
+
+        mvc.perform(post("/api/v1/matchs/1/annulation"))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void cancel_notFound_404() throws Exception {
+        org.mockito.Mockito.doThrow(new NotFoundException("Match introuvable"))
+                .when(matchPadelService).annulerMatchParUtilisateurCourant(99L);
+
+        mvc.perform(post("/api/v1/matchs/99/annulation"))
+                .andExpect(status().isNotFound());
+    }
 }

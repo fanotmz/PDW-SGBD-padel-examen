@@ -44,6 +44,12 @@ export const routes: Routes = [
         canActivate: [authGuard]
       },
       {
+        path: 'admin/sites/:siteId/matchs',
+        loadComponent: () => import('./features/admin/site-matches/admin-site-matches-page.component')
+          .then((m) => m.AdminSiteMatchesPageComponent),
+        canActivate: [authGuard]
+      },
+      {
         path: 'admin/statistiques',
         loadComponent: () => import('./features/admin/statistiques/admin-statistics-page.component')
           .then((m) => m.AdminStatisticsPageComponent),

@@ -1,5 +1,6 @@
 package be.ephec.padel.backend.controller;
 
+import be.ephec.padel.backend.dto.request.PayRequest;
 import be.ephec.padel.backend.dto.response.DetteDto;
 import be.ephec.padel.backend.dto.response.JoueurDto;
 import be.ephec.padel.backend.dto.response.MeStatsDto;
@@ -11,8 +12,11 @@ import be.ephec.padel.backend.service.JoueurService;
 import be.ephec.padel.backend.service.MeStatsService;
 import be.ephec.padel.backend.service.RegularisationService;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -58,6 +62,13 @@ public class MeController {
     @GetMapping("/regularisations")
     public ResponseEntity<RegularisationsResponseDto> getMyRegularisations() {
         return ResponseEntity.ok(regularisationService.getCurrentUserRegularisations());
+    }
+
+    @PostMapping("/regularisations/{participationId}/paiement")
+    public ResponseEntity<Void> payRegularisation(@PathVariable Long participationId,
+                                                  @Valid @org.springframework.web.bind.annotation.RequestBody PayRequest request) {
+        regularisationService.payerAnnulationTardiveOrganisateur(participationId, request.getMontant());
+        return ResponseEntity.noContent().build();
     }
 
     @GetMapping("/stats")

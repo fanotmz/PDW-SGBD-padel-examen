@@ -80,6 +80,25 @@ public class MatchController {
         return ResponseEntity.ok(matchPadelService.getMatchDetailDto(id));
     }
 
+    @Operation(
+            summary = "Annuler un match",
+            description = "Annule un match planifie futur si l'utilisateur authentifie est autorise."
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "204", description = "Match annule"),
+            @ApiResponse(responseCode = "400", description = "Regle metier non respectee",
+                    content = @Content(schema = @Schema(implementation = ApiErrorDto.class))),
+            @ApiResponse(responseCode = "403", description = "Annulation non autorisee",
+                    content = @Content(schema = @Schema(implementation = ApiErrorDto.class))),
+            @ApiResponse(responseCode = "404", description = "Match introuvable",
+                    content = @Content(schema = @Schema(implementation = ApiErrorDto.class)))
+    })
+    @PostMapping("/{id}/annulation")
+    public ResponseEntity<Void> cancel(@PathVariable Long id) {
+        matchPadelService.annulerMatchParUtilisateurCourant(id);
+        return ResponseEntity.noContent().build();
+    }
+
     @Operation(summary = "Créer un match", description = "Crée un match (PUBLIC ou PRIVE) pour l'utilisateur authentifié.")
     @ApiResponses({
             @ApiResponse(responseCode = "201", description = "Match créé"),

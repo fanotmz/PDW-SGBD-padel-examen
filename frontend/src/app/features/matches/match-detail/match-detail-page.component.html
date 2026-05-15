@@ -76,6 +76,18 @@
           </div>
         }
 
+        @if (cancelSuccessMessage()) {
+          <div class="action-message is-success" role="status" aria-live="polite">
+            <p>{{ cancelSuccessMessage() }}</p>
+          </div>
+        }
+
+        @if (cancelErrorMessage()) {
+          <div class="action-message is-error" role="alert" aria-live="polite">
+            <p>{{ cancelErrorMessage() }}</p>
+          </div>
+        }
+
         <div class="badge-row">
           <span
             class="status-badge"
@@ -116,6 +128,47 @@
           </button>
         } @else if (isAlreadyParticipant()) {
           <p class="already-joined-message">Déjà inscrit</p>
+        }
+
+        @if (detail.peutAnnuler) {
+          <button
+            type="button"
+            class="cancel-button"
+            [disabled]="isCancelling() || isCancelConfirmationOpen()"
+            (click)="requestCancelMatch()"
+          >
+            Annuler le match
+          </button>
+
+          @if (isCancelConfirmationOpen()) {
+            <div class="cancel-confirmation-box" role="alert" aria-live="polite">
+              <div>
+                <h3>{{ getCancelConfirmationTitle() }}</h3>
+                @for (message of getCancelConfirmationMessages(); track message) {
+                  <p>{{ message }}</p>
+                }
+              </div>
+
+              <div class="cancel-confirmation-actions">
+                <button
+                  type="button"
+                  class="confirm-cancel-button"
+                  [disabled]="isCancelling()"
+                  (click)="confirmCancelMatch()"
+                >
+                  {{ isCancelling() ? 'Annulation en cours...' : 'Confirmer l\u2019annulation' }}
+                </button>
+                <button
+                  type="button"
+                  class="keep-match-button"
+                  [disabled]="isCancelling()"
+                  (click)="closeCancelConfirmation()"
+                >
+                  Garder le match
+                </button>
+              </div>
+            </div>
+          }
         }
       </article>
 

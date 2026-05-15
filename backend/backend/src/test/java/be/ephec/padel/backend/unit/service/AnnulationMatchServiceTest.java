@@ -43,8 +43,11 @@ class AnnulationMatchServiceTest {
     private PaiementRepository paiementRepository;
     private PaiementService paiementService;
     private SoldeService soldeService;
+    private SoldeImputationService soldeImputationService;
+    private PenaliteJoueurService penaliteJoueurService;
 
     private AnnulationMatchService service;
+    private Clock clock;
 
     @BeforeEach
     void setUp() {
@@ -52,13 +55,17 @@ class AnnulationMatchServiceTest {
         paiementRepository = mock(PaiementRepository.class);
         paiementService = mock(PaiementService.class);
         soldeService = mock(SoldeService.class);
+        soldeImputationService = mock(SoldeImputationService.class);
+        penaliteJoueurService = mock(PenaliteJoueurService.class);
 
-        Clock clock = Clock.fixed(Instant.parse("2030-01-01T09:00:00Z"), ZoneOffset.UTC);
+        clock = Clock.fixed(Instant.parse("2030-01-01T09:00:00Z"), ZoneOffset.UTC);
         service = new AnnulationMatchService(
                 matchPadelRepository,
                 paiementRepository,
                 paiementService,
                 soldeService,
+                soldeImputationService,
+                penaliteJoueurService,
                 clock
         );
     }
@@ -145,6 +152,86 @@ class AnnulationMatchServiceTest {
     }
 
     @Test
+    void annulerMatch_organisateurStandard_compenseToutesLesParticipations() {
+        MatchPadel match = createMatch(LocalDateTime.of(2030, 1, 3, 10, 0));
+        Participation pOrga = participation(match, match.getOrganisateur(), 21L);
+        Participation pAutre = participation(match, createJoueur("J002", new BigDecimal("15.00")), 22L);
+        match.addParticipation(pOrga);
+        match.addParticipation(pAutre);
+
+        when(matchPadelRepository.findByIdForUpdateWithParticipations(1L)).thenReturn(Optional.of(match));
+        when(paiementRepository.sumMontantByParticipationId(21L)).thenReturn(new BigDecimal("15.00"));
+        when(paiementRepository.sumMontantByParticipationId(22L)).thenReturn(BigDecimal.ZERO);
+
+        service.annulerMatch(1L, ModeAnnulationMatch.ORGANISATEUR_STANDARD);
+
+        assertEquals(MatchStatut.ANNULE, match.getStatut());
+        verify(paiementService).enregistrerRemboursementAnnulation(pOrga, new BigDecimal("15.00"));
+        verify(soldeService).crediter(
+                org.mockito.ArgumentMatchers.eq("J002"),
+                org.mockito.ArgumentMatchers.eq(new BigDecimal("15.00")),
+                any(SoldeOriginContext.class)
+        );
+        verify(penaliteJoueurService, never()).appliquerPenaliteReservation(any());
+    }
+
+    @Test
+    void annulerMatch_organisateurTardive_neCompensePasOrganisateur_etDebiteComplement() {
+        MatchPadel match = createMatch(LocalDateTime.of(2030, 1, 1, 10, 0));
+        Participation pOrga = participation(match, match.getOrganisateur(), 31L);
+        Participation pAutre = participation(match, createJoueur("J002", BigDecimal.ZERO), 32L);
+        match.addParticipation(pOrga);
+        match.addParticipation(pAutre);
+
+        when(matchPadelRepository.findByIdForUpdateWithParticipations(1L)).thenReturn(Optional.of(match));
+        when(paiementRepository.sumMontantByParticipationId(32L)).thenReturn(new BigDecimal("15.00"));
+        when(paiementRepository.sumMontantByParticipationIdAndType(31L, be.ephec.padel.backend.model.enums.TypePaiement.ENCAISSEMENT))
+                .thenReturn(new BigDecimal("15.00"));
+        when(soldeImputationService.getMontantOuvertPourParticipation("ORG1", 31L))
+                .thenReturn(BigDecimal.ZERO);
+
+        service.annulerMatch(1L, ModeAnnulationMatch.ORGANISATEUR_TARDIVE);
+
+        assertEquals(MatchStatut.ANNULE, match.getStatut());
+        verify(paiementService, never()).enregistrerRemboursementAnnulation(
+                org.mockito.ArgumentMatchers.eq(pOrga),
+                any()
+        );
+        verify(paiementService).enregistrerRemboursementAnnulation(pAutre, new BigDecimal("15.00"));
+        verify(soldeService).debiter(
+                org.mockito.ArgumentMatchers.eq("ORG1"),
+                org.mockito.ArgumentMatchers.eq(new BigDecimal("45.00")),
+                argThat((SoldeOriginContext context) ->
+                        context.getOrigineType() == OrigineMouvementSoldeType.ANNULATION_TARDIVE_ORGANISATEUR
+                                && Long.valueOf(31L).equals(context.getParticipationId())
+                                && Long.valueOf(1L).equals(context.getMatchId())
+                )
+        );
+        verify(penaliteJoueurService).appliquerPenaliteReservation(match.getOrganisateur());
+    }
+
+    @Test
+    void annulerMatch_organisateurTardive_tientCompteDetteOuverteParticipation() {
+        MatchPadel match = createMatch(LocalDateTime.of(2030, 1, 1, 10, 0));
+        Participation pOrga = participation(match, match.getOrganisateur(), 41L);
+        match.addParticipation(pOrga);
+
+        when(matchPadelRepository.findByIdForUpdateWithParticipations(1L)).thenReturn(Optional.of(match));
+        when(paiementRepository.sumMontantByParticipationIdAndType(41L, be.ephec.padel.backend.model.enums.TypePaiement.ENCAISSEMENT))
+                .thenReturn(BigDecimal.ZERO);
+        when(soldeImputationService.getMontantOuvertPourParticipation("ORG1", 41L))
+                .thenReturn(new BigDecimal("15.00"));
+
+        service.annulerMatch(1L, ModeAnnulationMatch.ORGANISATEUR_TARDIVE);
+
+        verify(soldeService).debiter(
+                org.mockito.ArgumentMatchers.eq("ORG1"),
+                org.mockito.ArgumentMatchers.eq(new BigDecimal("45.00")),
+                any(SoldeOriginContext.class)
+        );
+    }
+
+    @Test
     void annulerMatchsFutursPlanifiesSite_annuleTousLesMatchsRetournes() {
         MatchPadel match1 = createMatch(LocalDateTime.of(2030, 1, 1, 10, 0));
         MatchPadel match2 = createMatch(LocalDateTime.of(2030, 1, 1, 11, 0));
@@ -180,6 +267,12 @@ class AnnulationMatchServiceTest {
         MatchPadel match = new MatchPadel(terrain, organisateur, dateDebut, MatchVisibilite.PUBLIC);
         ReflectionTestUtils.setField(match, "id", 1L);
         return match;
+    }
+
+    private Participation participation(MatchPadel match, Joueur joueur, Long id) {
+        Participation participation = new Participation(match, joueur);
+        ReflectionTestUtils.setField(participation, "id", id);
+        return participation;
     }
 
     private Joueur createJoueur(String matricule, BigDecimal solde) {

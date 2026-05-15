@@ -28,5 +28,17 @@ public interface ParticipationRepository extends JpaRepository<Participation, Lo
             """)
     List<Participation> findByIdInWithDetails(@Param("ids") List<Long> ids);
 
+    @Query("""
+            select p
+            from Participation p
+            join fetch p.joueur
+            join fetch p.match m
+            join fetch m.organisateur
+            join fetch m.terrain t
+            join fetch t.site
+            where p.id = :id
+            """)
+    Optional<Participation> findByIdWithDetails(@Param("id") Long id);
+
     int countByMatch_Id(Long matchId);
 }

@@ -3,8 +3,11 @@ package be.ephec.padel.backend.web.security;
 import be.ephec.padel.backend.config.SecurityConfig;
 import be.ephec.padel.backend.controller.AdminSiteController;
 import be.ephec.padel.backend.dto.response.AdminSiteConsultationDto;
+import be.ephec.padel.backend.dto.response.AdminSiteMatchSummaryDto;
 import be.ephec.padel.backend.dto.response.HoraireSiteDto;
 import be.ephec.padel.backend.dto.response.TerrainDto;
+import be.ephec.padel.backend.model.enums.MatchStatut;
+import be.ephec.padel.backend.model.enums.MatchVisibilite;
 import be.ephec.padel.backend.service.AdminSiteService;
 import be.ephec.padel.backend.service.AdminSiteStatsService;
 import org.junit.jupiter.api.Test;
@@ -17,6 +20,7 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.time.DayOfWeek;
+import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.List;
 import java.util.Set;
@@ -71,6 +75,12 @@ class AdminSiteControllerSecurityTest {
     }
 
     @Test
+    void matchsSansAuth_401() throws Exception {
+        mockMvc.perform(get("/api/v1/admin/sites/1/matchs"))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
     @WithMockUser(username = "adminSite1", roles = {"ADMIN_SITE"})
     void adminSite_auth_200_mapping_ok() throws Exception {
         mockMvc.perform(get("/api/v1/admin/sites/1/joueurs"))
@@ -82,6 +92,38 @@ class AdminSiteControllerSecurityTest {
     void adminGlobal_auth_200() throws Exception {
         mockMvc.perform(get("/api/v1/admin/sites/2/joueurs"))
                 .andExpect(status().isOk());
+    }
+
+    @Test
+    @WithMockUser(username = "adminGlobal", roles = {"ADMIN_GLOBAL"})
+    void matchsAdmin_auth_200_json() throws Exception {
+        when(adminSiteService.getMatchsBySite(1L, null, null, null)).thenReturn(List.of(
+                new AdminSiteMatchSummaryDto(
+                        100L,
+                        LocalDate.of(2026, 5, 15),
+                        LocalTime.of(14, 30),
+                        1L,
+                        "Site 1",
+                        10L,
+                        "Terrain A",
+                        "ORG001",
+                        "Organisateur",
+                        MatchVisibilite.PUBLIC,
+                        MatchStatut.PLANIFIE,
+                        2,
+                        2,
+                        true
+                )
+        ));
+
+        mockMvc.perform(get("/api/v1/admin/sites/1/matchs"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].id").value(100))
+                .andExpect(jsonPath("$[0].siteNom").value("Site 1"))
+                .andExpect(jsonPath("$[0].terrainNom").value("Terrain A"))
+                .andExpect(jsonPath("$[0].organisateurMatricule").value("ORG001"))
+                .andExpect(jsonPath("$[0].statut").value("PLANIFIE"))
+                .andExpect(jsonPath("$[0].peutAnnuler").value(true));
     }
 
     @Test

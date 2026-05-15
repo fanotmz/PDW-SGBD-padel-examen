@@ -12,6 +12,7 @@ import be.ephec.padel.backend.model.entities.*;
 import be.ephec.padel.backend.model.enums.MatchStatut;
 import be.ephec.padel.backend.model.enums.MatchVisibilite;
 import be.ephec.padel.backend.model.enums.OrigineMouvementSoldeType;
+import be.ephec.padel.backend.model.enums.SecurityRole;
 import be.ephec.padel.backend.model.enums.TypePaiement;
 import be.ephec.padel.backend.model.enums.TypeJoueur;
 import be.ephec.padel.backend.repository.FermetureGlobaleRepository;
@@ -52,6 +53,7 @@ class MatchPadelServiceTest {
     private PaiementService paiementService;
     private PaiementRepository paiementRepo;
     private FermetureGlobaleRepository fermetureGlobaleRepo;
+    private AnnulationMatchService annulationMatchService;
     private FermetureSiteService fermetureSiteService;
     private HoraireSiteService horaireSiteService;
     private CurrentUserFacade currentUserFacade;
@@ -70,6 +72,7 @@ class MatchPadelServiceTest {
         paiementService = mock(PaiementService.class);
         paiementRepo = mock(PaiementRepository.class);
         fermetureGlobaleRepo = mock(FermetureGlobaleRepository.class);
+        annulationMatchService = mock(AnnulationMatchService.class);
         fermetureSiteService = mock(FermetureSiteService.class);
         horaireSiteService = mock(HoraireSiteService.class);
         currentUserFacade = mock(CurrentUserFacade.class);
@@ -89,6 +92,7 @@ class MatchPadelServiceTest {
                 fermetureSiteService,
                 paiementRepo,
                 fermetureGlobaleRepo,
+                annulationMatchService,
                 clock,
                 currentUserFacade,
                 serviceAutorisationAdmin
@@ -163,6 +167,104 @@ class MatchPadelServiceTest {
         when(joueur.getSolde()).thenReturn(solde);
         when(currentUserFacade.getCurrentJoueur()).thenReturn(joueur);
         return joueur;
+    }
+
+    private MatchPadel annulationMatch(LocalDateTime dateDebut, String organisateurMatricule, Long siteId) {
+        MatchPadel match = mock(MatchPadel.class);
+        Terrain terrain = mock(Terrain.class);
+        Site site = mock(Site.class);
+        Joueur organisateur = mock(Joueur.class);
+
+        when(match.getId()).thenReturn(1L);
+        when(match.getStatut()).thenReturn(MatchStatut.PLANIFIE);
+        when(match.getDateDebut()).thenReturn(dateDebut);
+        when(match.getTerrain()).thenReturn(terrain);
+        when(terrain.getSite()).thenReturn(site);
+        when(site.getId()).thenReturn(siteId);
+        when(match.getOrganisateur()).thenReturn(organisateur);
+        when(organisateur.getMatricule()).thenReturn(organisateurMatricule);
+        when(matchRepo.findByIdWithDetails(1L)).thenReturn(Optional.of(match));
+
+        return match;
+    }
+
+    @Test
+    void annulerMatchParUtilisateurCourant_organisateur_standard() {
+        annulationMatch(LocalDateTime.now(clock).plusHours(25), "G0001", 1L);
+        stubCurrentJoueur("G0001", TypeJoueur.GLOBAL, BigDecimal.ZERO);
+
+        service.annulerMatchParUtilisateurCourant(1L);
+
+        verify(annulationMatchService).annulerMatch(1L, ModeAnnulationMatch.ORGANISATEUR_STANDARD);
+    }
+
+    @Test
+    void annulerMatchParUtilisateurCourant_organisateur_exactement24h_standard() {
+        annulationMatch(LocalDateTime.now(clock).plusHours(24), "G0001", 1L);
+        stubCurrentJoueur("G0001", TypeJoueur.GLOBAL, BigDecimal.ZERO);
+
+        service.annulerMatchParUtilisateurCourant(1L);
+
+        verify(annulationMatchService).annulerMatch(1L, ModeAnnulationMatch.ORGANISATEUR_STANDARD);
+    }
+
+    @Test
+    void annulerMatchParUtilisateurCourant_organisateur_tardive() {
+        annulationMatch(LocalDateTime.now(clock).plusHours(23).plusMinutes(59), "G0001", 1L);
+        stubCurrentJoueur("G0001", TypeJoueur.GLOBAL, BigDecimal.ZERO);
+
+        service.annulerMatchParUtilisateurCourant(1L);
+
+        verify(annulationMatchService).annulerMatch(1L, ModeAnnulationMatch.ORGANISATEUR_TARDIVE);
+    }
+
+    @Test
+    void annulerMatchParUtilisateurCourant_nonOrganisateur_refuse() {
+        annulationMatch(LocalDateTime.now(clock).plusHours(25), "G0002", 1L);
+        stubCurrentJoueur("G0001", TypeJoueur.GLOBAL, BigDecimal.ZERO);
+
+        assertThrows(ForbiddenException.class, () -> service.annulerMatchParUtilisateurCourant(1L));
+
+        verifyNoInteractions(annulationMatchService);
+    }
+
+    @Test
+    void annulerMatchParUtilisateurCourant_adminGlobal_sansProfilJoueur_autorise() {
+        annulationMatch(LocalDateTime.now(clock).plusHours(25), "G0002", 1L);
+        when(currentUserFacade.hasRole(be.ephec.padel.backend.model.enums.SecurityRole.ROLE_ADMIN_GLOBAL))
+                .thenReturn(true);
+        when(currentUserFacade.getCurrentJoueur()).thenThrow(new ForbiddenException("Aucun joueur"));
+
+        service.annulerMatchParUtilisateurCourant(1L);
+
+        verify(annulationMatchService).annulerMatch(1L, ModeAnnulationMatch.ADMIN_OU_FERMETURE);
+        verify(currentUserFacade, never()).getCurrentJoueur();
+    }
+
+    @Test
+    void annulerMatchParUtilisateurCourant_adminSite_sansProfilJoueur_surSonSite_autorise() {
+        annulationMatch(LocalDateTime.now(clock).plusHours(25), "G0002", 2L);
+        when(currentUserFacade.hasRole(be.ephec.padel.backend.model.enums.SecurityRole.ROLE_ADMIN_SITE))
+                .thenReturn(true);
+        when(serviceAutorisationAdmin.peutAdministrerSite(2L)).thenReturn(true);
+        when(currentUserFacade.getCurrentJoueur()).thenThrow(new ForbiddenException("Aucun joueur"));
+
+        service.annulerMatchParUtilisateurCourant(1L);
+
+        verify(annulationMatchService).annulerMatch(1L, ModeAnnulationMatch.ADMIN_OU_FERMETURE);
+        verify(currentUserFacade, never()).getCurrentJoueur();
+    }
+
+    @Test
+    void annulerMatchParUtilisateurCourant_adminSite_autreSite_refuse() {
+        annulationMatch(LocalDateTime.now(clock).plusHours(25), "G0002", 2L);
+        when(currentUserFacade.hasRole(be.ephec.padel.backend.model.enums.SecurityRole.ROLE_ADMIN_SITE))
+                .thenReturn(true);
+        when(serviceAutorisationAdmin.peutAdministrerSite(2L)).thenReturn(false);
+
+        assertThrows(ForbiddenException.class, () -> service.annulerMatchParUtilisateurCourant(1L));
+
+        verifyNoInteractions(annulationMatchService);
     }
 
     // ----------------
@@ -1033,8 +1135,8 @@ class MatchPadelServiceTest {
 
     @Test
     void getMatchDetailDto_prive_adminGlobal_peutAjouterJoueurPrive_true() {
-        when(currentUserFacade.isAdmin()).thenReturn(true);
-        stubCurrentJoueur("X9999", TypeJoueur.GLOBAL, BigDecimal.ZERO);
+        when(currentUserFacade.hasRole(SecurityRole.ROLE_ADMIN_GLOBAL)).thenReturn(true);
+        when(currentUserFacade.getCurrentJoueur()).thenThrow(new ForbiddenException("Aucun joueur"));
 
         MatchPadel match = mock(MatchPadel.class);
         when(match.getId()).thenReturn(1L);
@@ -1063,12 +1165,14 @@ class MatchPadelServiceTest {
         MatchDetailDto dto = service.getMatchDetailDto(1L);
 
         assertTrue(dto.isPeutAjouterJoueurPrive());
+        assertTrue(dto.isPeutAnnuler());
+        verify(currentUserFacade, never()).getCurrentJoueur();
     }
 
     @Test
     void getMatchDetailDto_prive_adminSiteBonPerimetre_peutAjouterJoueurPrive_true() {
-        when(currentUserFacade.isAdmin()).thenReturn(true);
-        stubCurrentJoueur("X9999", TypeJoueur.GLOBAL, BigDecimal.ZERO);
+        when(currentUserFacade.hasRole(SecurityRole.ROLE_ADMIN_SITE)).thenReturn(true);
+        when(currentUserFacade.getCurrentJoueur()).thenThrow(new ForbiddenException("Aucun joueur"));
 
         MatchPadel match = mock(MatchPadel.class);
         when(match.getId()).thenReturn(1L);
@@ -1097,12 +1201,14 @@ class MatchPadelServiceTest {
         MatchDetailDto dto = service.getMatchDetailDto(1L);
 
         assertTrue(dto.isPeutAjouterJoueurPrive());
+        assertTrue(dto.isPeutAnnuler());
+        verify(currentUserFacade, never()).getCurrentJoueur();
     }
 
     @Test
-    void getMatchDetailDto_prive_adminSiteHorsPerimetre_peutAjouterJoueurPrive_false() {
-        when(currentUserFacade.isAdmin()).thenReturn(true);
-        stubCurrentJoueur("X9999", TypeJoueur.GLOBAL, BigDecimal.ZERO);
+    void getMatchDetailDto_prive_adminSiteHorsPerimetre_refuse() {
+        when(currentUserFacade.hasRole(SecurityRole.ROLE_ADMIN_SITE)).thenReturn(true);
+        when(currentUserFacade.getCurrentJoueur()).thenThrow(new ForbiddenException("Aucun joueur"));
 
         MatchPadel match = mock(MatchPadel.class);
         when(match.getId()).thenReturn(1L);
@@ -1128,9 +1234,40 @@ class MatchPadelServiceTest {
         when(matchRepo.findByIdWithDetails(1L)).thenReturn(Optional.of(match));
         when(serviceAutorisationAdmin.peutAdministrerSite(5L)).thenReturn(false);
 
+        assertThrows(ForbiddenException.class, () -> service.getMatchDetailDto(1L));
+        verify(currentUserFacade, never()).getCurrentJoueur();
+    }
+
+    @Test
+    void getMatchDetailDto_public_organisateur_peutAnnuler_true() {
+        stubCurrentJoueur("G0001", TypeJoueur.GLOBAL, BigDecimal.ZERO);
+
+        MatchPadel match = mock(MatchPadel.class);
+        when(match.getId()).thenReturn(1L);
+        when(match.getVisibilite()).thenReturn(MatchVisibilite.PUBLIC);
+        when(match.getStatut()).thenReturn(MatchStatut.PLANIFIE);
+        when(match.getDateDebut()).thenReturn(LocalDateTime.of(2030, 1, 1, 10, 0));
+
+        Terrain terrain = mock(Terrain.class);
+        Site site = mock(Site.class);
+        Joueur orga = mock(Joueur.class);
+
+        when(site.getId()).thenReturn(5L);
+        when(site.getNom()).thenReturn("Site Delta");
+        when(terrain.getId()).thenReturn(10L);
+        when(terrain.getNom()).thenReturn("Terrain 1");
+        when(terrain.getSite()).thenReturn(site);
+        when(orga.getMatricule()).thenReturn("G0001");
+        when(orga.getNom()).thenReturn("Orga");
+
+        when(match.getTerrain()).thenReturn(terrain);
+        when(match.getOrganisateur()).thenReturn(orga);
+        when(match.getParticipations()).thenReturn(List.of());
+        when(matchRepo.findByIdWithDetails(1L)).thenReturn(Optional.of(match));
+
         MatchDetailDto dto = service.getMatchDetailDto(1L);
 
-        assertFalse(dto.isPeutAjouterJoueurPrive());
+        assertTrue(dto.isPeutAnnuler());
     }
 
     @Test
