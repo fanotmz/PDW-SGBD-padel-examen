@@ -25,8 +25,8 @@ export class AdminSitesPageComponent implements OnInit {
   protected readonly pageTitle = computed(() => (this.isSingleSiteView() ? 'Détail du site' : 'Détail des sites'));
   protected readonly pageIntro = computed(() =>
     this.isSingleSiteView()
-      ? 'Consultez les informations du site : terrains, jours de fermeture, horaires et matchs planifiés.'
-      : 'Consultez les sites, leurs terrains, leurs jours de fermeture, leurs horaires et leurs matchs planifiés.'
+      ? 'Consultez les informations du site : terrains, jours de fermeture, horaires et matchs.'
+      : 'Consultez les informations des sites : terrains, jours de fermeture, horaires et matchs.'
   );
 
   private readonly dayLabels: Record<string, string> = {

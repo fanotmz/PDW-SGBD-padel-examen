@@ -6,7 +6,9 @@ import be.ephec.padel.backend.dto.response.AdminMatchsStatsDto;
 import be.ephec.padel.backend.dto.response.AdminSiteConsultationDto;
 import be.ephec.padel.backend.dto.response.AdminSiteMatchSummaryDto;
 import be.ephec.padel.backend.dto.response.JoueurAdminDto;
+import be.ephec.padel.backend.model.enums.AdminMatchScope;
 import be.ephec.padel.backend.model.enums.MatchStatut;
+import be.ephec.padel.backend.model.enums.MatchVisibilite;
 import be.ephec.padel.backend.service.AdminSiteService;
 import be.ephec.padel.backend.service.AdminSiteStatsService;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
@@ -50,8 +52,10 @@ public class AdminSiteController {
                                                     @RequestParam(required = false)
                                                     @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
                                                     LocalDate to,
-                                                    @RequestParam(required = false) MatchStatut statut) {
-        return adminSiteService.getMatchsBySite(siteId, from, to, statut);
+                                                    @RequestParam(required = false) MatchStatut statut,
+                                                    @RequestParam(required = false) MatchVisibilite visibilite,
+                                                    @RequestParam(required = false) AdminMatchScope scope) {
+        return adminSiteService.getMatchsBySite(siteId, from, to, statut, visibilite, scope);
     }
 
     @GetMapping("/{siteId}/stats/ca")

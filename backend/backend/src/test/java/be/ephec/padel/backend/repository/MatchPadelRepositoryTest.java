@@ -481,6 +481,161 @@ class MatchPadelRepositoryTest extends SqlServerTestContainerConfig {
     }
 
     @Test
+    void findAdminSiteMatches_scopeAll_sans_filtres_retourne_tous_les_matchs_du_site() {
+        Site siteA = siteRepository.save(new Site("Site A", "Bruxelles"));
+        Site siteB = siteRepository.save(new Site("Site B", "Namur"));
+        Terrain terrainA = terrainRepository.save(new Terrain("T1", siteA));
+        Terrain terrainB = terrainRepository.save(new Terrain("T2", siteB));
+        Joueur orga = joueurRepository.save(new Joueur("ORG1", "Orga", TypeJoueur.GLOBAL));
+
+        LocalDateTime now = LocalDateTime.of(2030, 1, 10, 9, 0);
+        MatchPadel plannedFuture = matchPadelRepository.save(new MatchPadel(
+                terrainA, orga, LocalDateTime.of(2030, 1, 11, 10, 0), MatchVisibilite.PUBLIC
+        ));
+        MatchPadel plannedPast = matchPadelRepository.save(new MatchPadel(
+                terrainA, orga, LocalDateTime.of(2030, 1, 9, 10, 0), MatchVisibilite.PUBLIC
+        ));
+        MatchPadel cancelledFuture = new MatchPadel(
+                terrainA, orga, LocalDateTime.of(2030, 1, 12, 10, 0), MatchVisibilite.PRIVE
+        );
+        cancelledFuture.setStatut(MatchStatut.ANNULE);
+        cancelledFuture = matchPadelRepository.save(cancelledFuture);
+        matchPadelRepository.save(new MatchPadel(
+                terrainB, orga, LocalDateTime.of(2030, 1, 13, 10, 0), MatchVisibilite.PUBLIC
+        ));
+
+        em.flush();
+        em.clear();
+
+        List<MatchPadel> rows = matchPadelRepository.findAdminSiteMatches(
+                siteA.getId(),
+                null,
+                null,
+                null,
+                null,
+                false,
+                false,
+                now
+        );
+
+        assertThat(rows)
+                .extracting(MatchPadel::getId)
+                .containsExactlyInAnyOrder(plannedFuture.getId(), plannedPast.getId(), cancelledFuture.getId());
+    }
+
+    @Test
+    void findAdminSiteMatches_futureOnly_retourne_uniquement_les_futurs_planifies() {
+        Site site = siteRepository.save(new Site("Site A", "Bruxelles"));
+        Terrain terrain = terrainRepository.save(new Terrain("T1", site));
+        Joueur orga = joueurRepository.save(new Joueur("ORG1", "Orga", TypeJoueur.GLOBAL));
+
+        LocalDateTime now = LocalDateTime.of(2030, 1, 10, 9, 0);
+        MatchPadel plannedFuture = matchPadelRepository.save(new MatchPadel(
+                terrain, orga, LocalDateTime.of(2030, 1, 11, 10, 0), MatchVisibilite.PUBLIC
+        ));
+        matchPadelRepository.save(new MatchPadel(
+                terrain, orga, LocalDateTime.of(2030, 1, 9, 10, 0), MatchVisibilite.PUBLIC
+        ));
+        MatchPadel cancelledFuture = new MatchPadel(
+                terrain, orga, LocalDateTime.of(2030, 1, 12, 10, 0), MatchVisibilite.PUBLIC
+        );
+        cancelledFuture.setStatut(MatchStatut.ANNULE);
+        matchPadelRepository.save(cancelledFuture);
+
+        em.flush();
+        em.clear();
+
+        List<MatchPadel> rows = matchPadelRepository.findAdminSiteMatches(
+                site.getId(),
+                MatchStatut.PLANIFIE,
+                null,
+                null,
+                null,
+                true,
+                false,
+                now
+        );
+
+        assertThat(rows).extracting(MatchPadel::getId).containsExactly(plannedFuture.getId());
+    }
+
+    @Test
+    void findAdminSiteMatches_history_retourne_matchs_passes_et_annules_futurs() {
+        Site site = siteRepository.save(new Site("Site A", "Bruxelles"));
+        Terrain terrain = terrainRepository.save(new Terrain("T1", site));
+        Joueur orga = joueurRepository.save(new Joueur("ORG1", "Orga", TypeJoueur.GLOBAL));
+
+        LocalDateTime now = LocalDateTime.of(2030, 1, 10, 9, 0);
+        MatchPadel plannedPast = matchPadelRepository.save(new MatchPadel(
+                terrain, orga, LocalDateTime.of(2030, 1, 9, 10, 0), MatchVisibilite.PUBLIC
+        ));
+        matchPadelRepository.save(new MatchPadel(
+                terrain, orga, LocalDateTime.of(2030, 1, 11, 10, 0), MatchVisibilite.PUBLIC
+        ));
+        MatchPadel cancelledFuture = new MatchPadel(
+                terrain, orga, LocalDateTime.of(2030, 1, 12, 10, 0), MatchVisibilite.PUBLIC
+        );
+        cancelledFuture.setStatut(MatchStatut.ANNULE);
+        cancelledFuture = matchPadelRepository.save(cancelledFuture);
+
+        em.flush();
+        em.clear();
+
+        List<MatchPadel> rows = matchPadelRepository.findAdminSiteMatches(
+                site.getId(),
+                null,
+                null,
+                null,
+                null,
+                false,
+                true,
+                now
+        );
+
+        assertThat(rows)
+                .extracting(MatchPadel::getId)
+                .containsExactlyInAnyOrder(plannedPast.getId(), cancelledFuture.getId());
+    }
+
+    @Test
+    void findAdminSiteMatches_filtre_par_statut_et_visibilite() {
+        Site site = siteRepository.save(new Site("Site A", "Bruxelles"));
+        Terrain terrain = terrainRepository.save(new Terrain("T1", site));
+        Joueur orga = joueurRepository.save(new Joueur("ORG1", "Orga", TypeJoueur.GLOBAL));
+
+        LocalDateTime now = LocalDateTime.of(2030, 1, 10, 9, 0);
+        MatchPadel cancelledPublic = new MatchPadel(
+                terrain, orga, LocalDateTime.of(2030, 1, 11, 10, 0), MatchVisibilite.PUBLIC
+        );
+        cancelledPublic.setStatut(MatchStatut.ANNULE);
+        cancelledPublic = matchPadelRepository.save(cancelledPublic);
+        MatchPadel cancelledPrivate = new MatchPadel(
+                terrain, orga, LocalDateTime.of(2030, 1, 12, 10, 0), MatchVisibilite.PRIVE
+        );
+        cancelledPrivate.setStatut(MatchStatut.ANNULE);
+        matchPadelRepository.save(cancelledPrivate);
+        matchPadelRepository.save(new MatchPadel(
+                terrain, orga, LocalDateTime.of(2030, 1, 13, 10, 0), MatchVisibilite.PUBLIC
+        ));
+
+        em.flush();
+        em.clear();
+
+        List<MatchPadel> rows = matchPadelRepository.findAdminSiteMatches(
+                site.getId(),
+                MatchStatut.ANNULE,
+                MatchVisibilite.PUBLIC,
+                null,
+                null,
+                false,
+                false,
+                now
+        );
+
+        assertThat(rows).extracting(MatchPadel::getId).containsExactly(cancelledPublic.getId());
+    }
+
+    @Test
     void countByOrganisateurMatricule_compte_les_matchs_organises() {
         Site s = siteRepository.save(new Site("Site A", "Bruxelles"));
         Terrain t = terrainRepository.save(new Terrain("T1", s));

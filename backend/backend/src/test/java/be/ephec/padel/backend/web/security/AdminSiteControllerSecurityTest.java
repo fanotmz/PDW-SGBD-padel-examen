@@ -6,6 +6,7 @@ import be.ephec.padel.backend.dto.response.AdminSiteConsultationDto;
 import be.ephec.padel.backend.dto.response.AdminSiteMatchSummaryDto;
 import be.ephec.padel.backend.dto.response.HoraireSiteDto;
 import be.ephec.padel.backend.dto.response.TerrainDto;
+import be.ephec.padel.backend.model.enums.AdminMatchScope;
 import be.ephec.padel.backend.model.enums.MatchStatut;
 import be.ephec.padel.backend.model.enums.MatchVisibilite;
 import be.ephec.padel.backend.service.AdminSiteService;
@@ -97,7 +98,7 @@ class AdminSiteControllerSecurityTest {
     @Test
     @WithMockUser(username = "adminGlobal", roles = {"ADMIN_GLOBAL"})
     void matchsAdmin_auth_200_json() throws Exception {
-        when(adminSiteService.getMatchsBySite(1L, null, null, null)).thenReturn(List.of(
+        when(adminSiteService.getMatchsBySite(1L, null, null, null, null, null)).thenReturn(List.of(
                 new AdminSiteMatchSummaryDto(
                         100L,
                         LocalDate.of(2026, 5, 15),
@@ -112,7 +113,8 @@ class AdminSiteControllerSecurityTest {
                         MatchStatut.PLANIFIE,
                         2,
                         2,
-                        true
+                        true,
+                        false
                 )
         ));
 
@@ -123,7 +125,29 @@ class AdminSiteControllerSecurityTest {
                 .andExpect(jsonPath("$[0].terrainNom").value("Terrain A"))
                 .andExpect(jsonPath("$[0].organisateurMatricule").value("ORG001"))
                 .andExpect(jsonPath("$[0].statut").value("PLANIFIE"))
-                .andExpect(jsonPath("$[0].peutAnnuler").value(true));
+                .andExpect(jsonPath("$[0].peutAnnuler").value(true))
+                .andExpect(jsonPath("$[0].passe").value(false));
+    }
+
+    @Test
+    @WithMockUser(username = "adminGlobal", roles = {"ADMIN_GLOBAL"})
+    void matchsAdmin_auth_200_avec_filtres_historique() throws Exception {
+        when(adminSiteService.getMatchsBySite(
+                1L,
+                LocalDate.of(2026, 5, 1),
+                LocalDate.of(2026, 5, 31),
+                MatchStatut.ANNULE,
+                MatchVisibilite.PRIVE,
+                AdminMatchScope.HISTORY
+        )).thenReturn(List.of());
+
+        mockMvc.perform(get("/api/v1/admin/sites/1/matchs")
+                        .param("from", "2026-05-01")
+                        .param("to", "2026-05-31")
+                        .param("statut", "ANNULE")
+                        .param("visibilite", "PRIVE")
+                        .param("scope", "HISTORY"))
+                .andExpect(status().isOk());
     }
 
     @Test

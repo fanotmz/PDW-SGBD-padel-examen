@@ -98,6 +98,11 @@ export interface AdminSiteConsultationResponse {
   horaires: AdminSiteScheduleResponse[];
 }
 
+export type AdminMatchScope = 'UPCOMING_PLANNED' | 'HISTORY' | 'ALL';
+export type AdminMatchStateFilter = 'ALL' | 'UPCOMING' | 'PLAYED' | 'CANCELLED';
+export type AdminMatchStatusFilter = 'PLANIFIE' | 'ANNULE';
+export type AdminMatchVisibilityFilter = 'PUBLIC' | 'PRIVE';
+
 export interface AdminSiteMatchSummaryResponse {
   id: number;
   dateDebut: string;
@@ -113,6 +118,7 @@ export interface AdminSiteMatchSummaryResponse {
   nbParticipants: number;
   placesRestantes: number;
   peutAnnuler: boolean;
+  passe: boolean;
 }
 
 export interface AdminCaStatsResponse {

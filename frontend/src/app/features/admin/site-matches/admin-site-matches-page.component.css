@@ -61,6 +61,76 @@
   color: #b91c1c;
 }
 
+.filters-panel {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.85rem;
+  align-items: end;
+  padding: 1rem;
+  border: 1px solid #d7e0eb;
+  border-radius: 0.5rem;
+  background: #ffffff;
+  box-shadow: 0 18px 38px rgba(15, 23, 42, 0.06);
+}
+
+.filters-panel label {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.filters-panel span {
+  color: #526277;
+  font-size: 0.82rem;
+  font-weight: 800;
+}
+
+.filters-panel select,
+.filters-panel input {
+  min-height: 2.55rem;
+  padding: 0.55rem 0.65rem;
+  border: 1px solid #c3d0de;
+  border-radius: 0.5rem;
+  background: #ffffff;
+  color: #10233f;
+  font: inherit;
+}
+
+.filters-panel select:disabled {
+  background: #f1f5f9;
+  color: #94a3b8;
+}
+
+.filter-actions {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 0.6rem;
+  justify-content: flex-start;
+  align-items: center;
+}
+
+.filter-button {
+  min-height: 2.25rem;
+  padding: 0.42rem 0.8rem;
+  border: 1px solid #0f766e;
+  border-radius: 0.5rem;
+  background: #ffffff;
+  color: #0f766e;
+  font: inherit;
+  font-weight: 800;
+  cursor: pointer;
+  width: auto;
+}
+
+.filter-button.is-primary {
+  background: #0f766e;
+  color: #ffffff;
+}
+
+.filter-button:hover {
+  filter: brightness(0.97);
+}
+
 .matches-list {
   display: grid;
   gap: 1rem;
@@ -85,7 +155,7 @@
 }
 
 .match-date,
-.status-badge,
+.state-badge,
 .cancel-indicator {
   color: #526277;
   font-size: 0.86rem;
@@ -105,12 +175,37 @@
   color: #526277;
 }
 
-.status-badge {
+.match-badges {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.5rem;
+}
+
+.state-badge {
   padding: 0.3rem 0.55rem;
   border: 1px solid #c3d0de;
   border-radius: 999px;
   background: #f8fbff;
   color: #10233f;
+}
+
+.state-badge.is-cancelled {
+  border-color: #fecaca;
+  background: #fef2f2;
+  color: #991b1b;
+}
+
+.state-badge.is-upcoming {
+  border-color: #bfdbfe;
+  background: #eff6ff;
+  color: #1d4ed8;
+}
+
+.state-badge.is-played {
+  border-color: #e5e7eb;
+  background: #f3f4f6;
+  color: #374151;
 }
 
 .match-meta {
@@ -156,4 +251,34 @@
 
 .detail-link:hover {
   background: #ecfdf5;
+}
+
+@media (max-width: 900px) {
+  .filters-panel {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 640px) {
+  .filters-panel {
+    grid-template-columns: 1fr;
+  }
+
+  .match-main,
+  .match-actions {
+    display: grid;
+  }
+
+  .match-badges {
+    justify-content: flex-start;
+  }
+
+  .filter-actions {
+    display: grid;
+  }
+
+  .filter-button,
+  .detail-link {
+    width: 100%;
+  }
 }

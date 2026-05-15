@@ -10,6 +10,7 @@ import {
   AdminSitePlayerResponse,
   AdminSiteClosureResponse,
   AdminSiteConsultationResponse,
+  AdminMatchScope,
   AdminSiteMatchSummaryResponse,
   AdminSiteScheduleResponse,
   AdminMatchsStatsResponse,
@@ -49,9 +50,33 @@ export class AdminService {
     return this.http.get<AdminSiteConsultationResponse[]>(`${environment.apiBaseUrl}/admin/sites`);
   }
 
-  getSiteMatches(siteId: number): Observable<AdminSiteMatchSummaryResponse[]> {
+  getSiteMatches(siteId: number, filters?: {
+    from?: string;
+    to?: string;
+    statut?: string;
+    visibilite?: string;
+    scope?: AdminMatchScope;
+  }): Observable<AdminSiteMatchSummaryResponse[]> {
+    const params: Record<string, string> = {};
+    if (filters?.from) {
+      params['from'] = filters.from;
+    }
+    if (filters?.to) {
+      params['to'] = filters.to;
+    }
+    if (filters?.statut) {
+      params['statut'] = filters.statut;
+    }
+    if (filters?.visibilite) {
+      params['visibilite'] = filters.visibilite;
+    }
+    if (filters?.scope) {
+      params['scope'] = filters.scope;
+    }
+
     return this.http.get<AdminSiteMatchSummaryResponse[]>(
-      `${environment.apiBaseUrl}/admin/sites/${siteId}/matchs`
+      `${environment.apiBaseUrl}/admin/sites/${siteId}/matchs`,
+      { params }
     );
   }
 

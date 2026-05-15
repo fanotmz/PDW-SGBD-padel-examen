@@ -22,6 +22,7 @@ public class AdminSiteMatchSummaryDto {
     private final int nbParticipants;
     private final int placesRestantes;
     private final boolean peutAnnuler;
+    private final boolean passe;
 
     public AdminSiteMatchSummaryDto(Long id,
                                     LocalDate dateDebut,
@@ -36,7 +37,8 @@ public class AdminSiteMatchSummaryDto {
                                     MatchStatut statut,
                                     int nbParticipants,
                                     int placesRestantes,
-                                    boolean peutAnnuler) {
+                                    boolean peutAnnuler,
+                                    boolean passe) {
         this.id = id;
         this.dateDebut = dateDebut;
         this.heureDebut = heureDebut;
@@ -51,6 +53,7 @@ public class AdminSiteMatchSummaryDto {
         this.nbParticipants = nbParticipants;
         this.placesRestantes = placesRestantes;
         this.peutAnnuler = peutAnnuler;
+        this.passe = passe;
     }
 
     public Long getId() { return id; }
@@ -67,4 +70,5 @@ public class AdminSiteMatchSummaryDto {
     public int getNbParticipants() { return nbParticipants; }
     public int getPlacesRestantes() { return placesRestantes; }
     public boolean isPeutAnnuler() { return peutAnnuler; }
+    public boolean isPasse() { return passe; }
 }
