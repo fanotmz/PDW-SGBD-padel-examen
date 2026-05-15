@@ -9,7 +9,9 @@ import be.ephec.padel.backend.model.entities.MatchPadel;
 import be.ephec.padel.backend.exception.NotFoundException;
 import be.ephec.padel.backend.model.entities.HoraireSite;
 import be.ephec.padel.backend.model.entities.Joueur;
+import be.ephec.padel.backend.model.enums.AdminMatchScope;
 import be.ephec.padel.backend.model.enums.MatchStatut;
+import be.ephec.padel.backend.model.enums.MatchVisibilite;
 import be.ephec.padel.backend.repository.JoueurRepository;
 import be.ephec.padel.backend.repository.MatchPadelRepository;
 import be.ephec.padel.backend.model.entities.Site;
@@ -24,6 +26,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.Clock;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.Comparator;
 import java.util.List;
 
 @Service
@@ -86,7 +89,9 @@ public class AdminSiteService {
     public List<AdminSiteMatchSummaryDto> getMatchsBySite(Long siteId,
                                                           LocalDate from,
                                                           LocalDate to,
-                                                          MatchStatut statut) {
+                                                          MatchStatut statut,
+                                                          MatchVisibilite visibilite,
+                                                          AdminMatchScope scope) {
         serviceAutorisationAdmin.verifierAccesAuSite(siteId);
 
         if (!siteRepository.existsById(siteId)) {
@@ -94,22 +99,35 @@ public class AdminSiteService {
         }
 
         LocalDateTime now = LocalDateTime.now(clock);
-        boolean defaultFilter = from == null && to == null && statut == null;
-        MatchStatut effectiveStatut = statut != null ? statut : MatchStatut.PLANIFIE;
-        LocalDateTime fromDateTime = defaultFilter ? now : toStartOfDay(from);
+        AdminMatchScope effectiveScope = scope == null ? AdminMatchScope.UPCOMING_PLANNED : scope;
+        boolean upcomingPlannedOnly = effectiveScope == AdminMatchScope.UPCOMING_PLANNED;
+        boolean historyOnly = effectiveScope == AdminMatchScope.HISTORY;
+        MatchStatut effectiveStatut = upcomingPlannedOnly ? MatchStatut.PLANIFIE : statut;
+        LocalDateTime fromDateTime = toStartOfDay(from);
         LocalDateTime toDateTime = to == null ? null : to.plusDays(1).atStartOfDay();
 
         return matchPadelRepository.findAdminSiteMatches(
                         siteId,
                         effectiveStatut,
+                        visibilite,
                         fromDateTime,
                         toDateTime,
-                        defaultFilter,
+                        upcomingPlannedOnly,
+                        historyOnly,
                         now
                 )
                 .stream()
+                .sorted(getAdminMatchComparator(effectiveScope))
                 .map((match) -> toAdminSiteMatchSummaryDto(match, now))
                 .toList();
+    }
+
+    private Comparator<MatchPadel> getAdminMatchComparator(AdminMatchScope scope) {
+        Comparator<MatchPadel> comparator = Comparator.comparing(MatchPadel::getDateDebut);
+        if (scope == AdminMatchScope.UPCOMING_PLANNED) {
+            return comparator;
+        }
+        return comparator.reversed();
     }
 
     private JoueurAdminDto toJoueurAdminDto(Joueur joueur) {
@@ -147,6 +165,7 @@ public class AdminSiteService {
         boolean peutAnnuler = match.getStatut() == MatchStatut.PLANIFIE
                 && match.getDateDebut().isAfter(now)
                 && serviceAutorisationAdmin.peutAdministrerSite(match.getTerrain().getSite().getId());
+        boolean passe = match.getDateDebut().isBefore(now);
 
         return new AdminSiteMatchSummaryDto(
                 match.getId(),
@@ -162,7 +181,8 @@ public class AdminSiteService {
                 match.getStatut(),
                 nbParticipants,
                 placesRestantes,
-                peutAnnuler
+                peutAnnuler,
+                passe
         );
     }
 

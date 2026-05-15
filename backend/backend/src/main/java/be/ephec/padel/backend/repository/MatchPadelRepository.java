@@ -155,17 +155,21 @@ public interface MatchPadelRepository extends JpaRepository<MatchPadel, Long> {
         left join fetch m.participations p
         where s.id = :siteId
           and (:statut is null or m.statut = :statut)
+          and (:visibilite is null or m.visibilite = :visibilite)
           and (:from is null or m.dateDebut >= :from)
           and (:to is null or m.dateDebut < :to)
-          and (:futureOnly = false or m.dateDebut > :now)
+          and (:futureOnly = false or (m.statut = be.ephec.padel.backend.model.enums.MatchStatut.PLANIFIE and m.dateDebut > :now))
+          and (:historyOnly = false or (m.dateDebut < :now or m.statut = be.ephec.padel.backend.model.enums.MatchStatut.ANNULE))
         order by m.dateDebut asc
     """)
     List<MatchPadel> findAdminSiteMatches(
             @Param("siteId") Long siteId,
             @Param("statut") MatchStatut statut,
+            @Param("visibilite") MatchVisibilite visibilite,
             @Param("from") LocalDateTime from,
             @Param("to") LocalDateTime to,
             @Param("futureOnly") boolean futureOnly,
+            @Param("historyOnly") boolean historyOnly,
             @Param("now") LocalDateTime now
     );
 
