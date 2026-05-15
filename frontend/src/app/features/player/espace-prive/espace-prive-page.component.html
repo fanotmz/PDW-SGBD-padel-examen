@@ -2,7 +2,7 @@
   <header class="page-header">
     <p class="page-eyebrow">Espace joueur</p>
     <h1>Mon espace</h1>
-    <p class="page-intro">Consultez vos informations personnelles, votre solde et vos acc&egrave;s rapides.</p>
+    <p class="page-intro">Consultez vos informations personnelles, votre solde et vos accès rapides.</p>
   </header>
 
   @if (isLoading()) {
@@ -13,12 +13,12 @@
     <div class="page-grid">
       @if (hasActivePenalty() && profile.penaliteJusqua) {
         <section class="penalty-alert" role="alert">
-          <h2>P&eacute;nalit&eacute; active</h2>
+          <h2>Pénalité active</h2>
           <p>
-            Vous &ecirc;tes p&eacute;nalis&eacute; jusqu&rsquo;au
-            {{ profile.penaliteJusqua | date:'dd/MM/yyyy' }} &agrave;
+            Vous êtes pénalisé jusqu’au
+            {{ profile.penaliteJusqua | date:'dd/MM/yyyy' }} à
             {{ profile.penaliteJusqua | date:'HH:mm' }}.
-            Vous ne pouvez pas cr&eacute;er de nouveau match pendant cette p&eacute;riode.
+            Vous ne pouvez pas créer de nouveau match pendant cette période.
           </p>
         </section>
       }
@@ -60,7 +60,7 @@
       </section>
 
       <section class="info-section">
-        <h2>Matchs &agrave; payer</h2>
+        <h2>Matchs à payer</h2>
 
         @if (hasRegularisations()) {
           <p class="section-note">Voici les matchs pour lesquels un paiement est encore attendu.</p>
@@ -68,14 +68,14 @@
 
         @if (hasRegularisations()) {
           <p class="traceable-total">
-            <span>Total &agrave; payer identifi&eacute;</span>
+            <span>Total à payer identifié</span>
             <strong>{{ formatAmount(totalTracable()) }}</strong>
           </p>
         }
 
         @if (hasTraceableGap()) {
           <p class="traceable-warning">
-            Une partie de votre solde peut concerner d&rsquo;anciens mouvements non d&eacute;taill&eacute;s ici.
+            Une partie de votre solde peut concerner d’anciens mouvements non détaillés ici.
           </p>
         }
 
@@ -88,8 +88,8 @@
         }
 
         @if (!hasRegularisations()) {
-          <p class="empty-regularizations">Tous vos paiements sont &agrave; jour.</p>
-          <p class="empty-regularizations">Aucun match ne n&eacute;cessite de paiement pour le moment.</p>
+          <p class="empty-regularizations">Tous vos paiements sont à jour.</p>
+          <p class="empty-regularizations">Aucun match ne nécessite de paiement pour le moment.</p>
         } @else {
           <div class="regularization-list">
             @for (regularisation of regularisationItems(); track regularisation.participationId) {
@@ -99,7 +99,7 @@
                     <p class="regularization-site">{{ regularisation.siteNom }}</p>
                     <h3>{{ regularisation.terrainNom }}</h3>
                     <p class="regularization-datetime">
-                      {{ regularisation.dateMatch | date:'dd/MM/yyyy' }} &agrave;
+                      {{ regularisation.dateMatch | date:'dd/MM/yyyy' }} à
                       {{ regularisation.dateMatch | date:'HH:mm' }}
                     </p>
 
@@ -107,11 +107,19 @@
                       <span class="meta-badge">{{ regularisation.visibilite }}</span>
                       <span class="meta-badge is-secondary">{{ getRoleLabel(regularisation.roleJoueur) }}</span>
                     </div>
+
+                    @if (isLateCancellationRegularisation(regularisation)) {
+                      <p class="regularization-note">
+                        Cette régularisation concerne la dette créée par l’annulation tardive du match.
+                        Le paiement règle le montant dû, mais la pénalité de réservation
+                        reste active jusqu’à sa date de fin.
+                      </p>
+                    }
                   </div>
 
                   <div class="regularization-payment">
                     <p class="payment-amount">
-                      <span>Montant &agrave; payer</span>
+                      <span>Montant à payer</span>
                       <strong>{{ formatAmount(regularisation.montantRestant) }}</strong>
                     </p>
 
@@ -119,15 +127,42 @@
                       <button
                         type="button"
                         class="pay-button"
-                        [disabled]="isPaying(regularisation.participationId)"
-                        (click)="payerRegularisation(regularisation)">
-                        {{ isPaying(regularisation.participationId) ? 'Paiement en cours...' : 'Payer' }}
+                        [disabled]="isPaying(regularisation.participationId) || isRegularisationConfirmationOpen(regularisation)"
+                        (click)="requestRegularisationPayment(regularisation)">
+                        {{ getPaymentButtonLabel(regularisation) }}
                       </button>
                     } @else {
                       <p class="payment-unavailable">Paiement indisponible</p>
                     }
                   </div>
                 </div>
+
+                @if (isRegularisationConfirmationOpen(regularisation)) {
+                  <div class="regularization-confirmation-box" role="alert" aria-live="polite">
+                    <div>
+                      <h3>Confirmer la régularisation de {{ formatAmount(regularisation.montantRestant) }} ?</h3>
+                      <p>Ce paiement règle votre dette financière liée à l’annulation tardive du match.</p>
+                      <p>La pénalité de réservation reste active jusqu’à sa date de fin.</p>
+                    </div>
+
+                    <div class="regularization-confirmation-actions">
+                      <button
+                        type="button"
+                        class="confirm-regularization-button"
+                        [disabled]="isPaying(regularisation.participationId)"
+                        (click)="payerRegularisation(regularisation)">
+                        {{ isPaying(regularisation.participationId) ? 'Paiement en cours...' : 'Confirmer la régularisation' }}
+                      </button>
+                      <button
+                        type="button"
+                        class="keep-regularization-button"
+                        [disabled]="isPaying(regularisation.participationId)"
+                        (click)="closeRegularisationConfirmation()">
+                        Ne pas régulariser
+                      </button>
+                    </div>
+                  </div>
+                }
               </article>
             }
           </div>
@@ -135,11 +170,11 @@
       </section>
 
       <section class="info-section shortcuts-section">
-        <h2>Acc&egrave;s rapides</h2>
+        <h2>Accès rapides</h2>
 
         <div class="shortcuts">
           <a routerLink="/me/matchs" class="shortcut-link">Mes matchs</a>
-          <a routerLink="/me/matchs/organises" class="shortcut-link">Mes matchs organis&eacute;s</a>
+          <a routerLink="/me/matchs/organises" class="shortcut-link">Mes matchs organisés</a>
         </div>
       </section>
     </div>

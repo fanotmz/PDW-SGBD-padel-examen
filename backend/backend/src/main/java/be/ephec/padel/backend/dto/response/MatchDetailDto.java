@@ -31,6 +31,7 @@ public class MatchDetailDto {
     private int placesRestantes;
     private boolean complet;
     private boolean peutAjouterJoueurPrive;
+    private boolean peutAnnuler;
 
     private BigDecimal montantTotal;
     private BigDecimal montantPaye;
@@ -54,6 +55,7 @@ public class MatchDetailDto {
                           int placesRestantes,
                           boolean complet,
                           boolean peutAjouterJoueurPrive,
+                          boolean peutAnnuler,
                           BigDecimal montantTotal,
                           BigDecimal montantPaye,
                           BigDecimal resteAPayer,
@@ -74,11 +76,57 @@ public class MatchDetailDto {
         this.placesRestantes = placesRestantes;
         this.complet = complet;
         this.peutAjouterJoueurPrive = peutAjouterJoueurPrive;
+        this.peutAnnuler = peutAnnuler;
         this.montantTotal = montantTotal;
         this.montantPaye = montantPaye;
         this.resteAPayer = resteAPayer;
         this.montantRembourse = montantRembourse;
         this.participants = participants;
+    }
+
+    public MatchDetailDto(Long id,
+                          LocalDate dateDebut,
+                          LocalTime heureDebut,
+                          Long siteId,
+                          String siteNom,
+                          Long terrainId,
+                          String terrainNom,
+                          String organisateurMatricule,
+                          String organisateurNom,
+                          MatchVisibilite visibilite,
+                          MatchStatut statut,
+                          int nbParticipants,
+                          int placesRestantes,
+                          boolean complet,
+                          boolean peutAjouterJoueurPrive,
+                          BigDecimal montantTotal,
+                          BigDecimal montantPaye,
+                          BigDecimal resteAPayer,
+                          BigDecimal montantRembourse,
+                          List<ParticipantDto> participants) {
+        this(
+                id,
+                dateDebut,
+                heureDebut,
+                siteId,
+                siteNom,
+                terrainId,
+                terrainNom,
+                organisateurMatricule,
+                organisateurNom,
+                visibilite,
+                statut,
+                nbParticipants,
+                placesRestantes,
+                complet,
+                peutAjouterJoueurPrive,
+                false,
+                montantTotal,
+                montantPaye,
+                resteAPayer,
+                montantRembourse,
+                participants
+        );
     }
 
     public Long getId() {
@@ -139,6 +187,10 @@ public class MatchDetailDto {
 
     public boolean isPeutAjouterJoueurPrive() {
         return peutAjouterJoueurPrive;
+    }
+
+    public boolean isPeutAnnuler() {
+        return peutAnnuler;
     }
 
     public BigDecimal getMontantTotal() {

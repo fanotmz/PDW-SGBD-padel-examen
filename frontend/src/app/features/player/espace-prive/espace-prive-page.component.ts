@@ -2,7 +2,7 @@ import { CommonModule } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { finalize, forkJoin } from 'rxjs';
+import { finalize, forkJoin, Observable } from 'rxjs';
 import { AuthService } from '../../../core/auth/auth.service';
 import { MeProfile } from '../../../core/me/me.models';
 import { MeService } from '../../../core/me/me.service';
@@ -34,6 +34,7 @@ export class EspacePrivePageComponent implements OnInit {
   protected readonly paymentSuccessMessage = signal('');
   protected readonly paymentErrorMessage = signal('');
   protected readonly payingParticipationId = signal<number | null>(null);
+  protected readonly pendingRegularisationConfirmationId = signal<number | null>(null);
 
   protected readonly hasDebt = computed(() => {
     const profile = this.profile();
@@ -63,7 +64,7 @@ export class EspacePrivePageComponent implements OnInit {
     }
 
     if (profile.solde > 0) {
-      return `Vous avez actuellement ${this.formatAmount(profile.solde)} \u00e0 r\u00e9gulariser.`;
+      return `Vous avez actuellement ${this.formatAmount(profile.solde)} à régulariser.`;
     }
 
     return 'Aucune dette en cours.';
@@ -93,11 +94,53 @@ export class EspacePrivePageComponent implements OnInit {
     return new Intl.NumberFormat('fr-BE', {
       minimumFractionDigits: 2,
       maximumFractionDigits: 2
-    }).format(amount) + ' \u20ac';
+    }).format(amount) + ' €';
   }
 
   protected isPaying(participationId: number): boolean {
     return this.payingParticipationId() === participationId;
+  }
+
+  protected isRegularisationConfirmationOpen(regularisation: Regularisation): boolean {
+    return this.pendingRegularisationConfirmationId() === regularisation.participationId;
+  }
+
+  protected isLateCancellationRegularisation(regularisation: Regularisation): boolean {
+    return regularisation.origineType === 'ANNULATION_TARDIVE_ORGANISATEUR';
+  }
+
+  protected getPaymentButtonLabel(regularisation: Regularisation): string {
+    if (this.isPaying(regularisation.participationId)) {
+      return 'Paiement en cours...';
+    }
+
+    if (this.isLateCancellationRegularisation(regularisation)) {
+      return `Régulariser ${this.formatAmount(regularisation.montantRestant)}`;
+    }
+
+    return 'Payer';
+  }
+
+  protected requestRegularisationPayment(regularisation: Regularisation): void {
+    if (!regularisation.payable || this.isPaying(regularisation.participationId)) {
+      return;
+    }
+
+    this.paymentSuccessMessage.set('');
+    this.paymentErrorMessage.set('');
+
+    if (this.isLateCancellationRegularisation(regularisation)) {
+      this.pendingRegularisationConfirmationId.set(regularisation.participationId);
+      return;
+    }
+
+    this.payerRegularisation(regularisation);
+  }
+
+  protected closeRegularisationConfirmation(): void {
+    if (this.payingParticipationId() == null) {
+      this.pendingRegularisationConfirmationId.set(null);
+    }
   }
 
   protected payerRegularisation(regularisation: Regularisation): void {
@@ -107,14 +150,24 @@ export class EspacePrivePageComponent implements OnInit {
 
     this.paymentSuccessMessage.set('');
     this.paymentErrorMessage.set('');
+    this.pendingRegularisationConfirmationId.set(null);
     this.payingParticipationId.set(regularisation.participationId);
 
-    this.paiementService
-      .payerParticipation(regularisation.participationId, regularisation.montantRestant)
+    const payment$: Observable<unknown> = this.isLateCancellationRegularisation(regularisation)
+      ? this.regularisationService.payLateCancellationRegularisation(
+        regularisation.participationId,
+        regularisation.montantRestant
+      )
+      : this.paiementService.payerParticipation(regularisation.participationId, regularisation.montantRestant);
+
+    payment$
       .pipe(finalize(() => this.payingParticipationId.set(null)))
       .subscribe({
         next: () => {
           this.paymentSuccessMessage.set('Paiement enregistré avec succès.');
+          if (this.isLateCancellationRegularisation(regularisation)) {
+            this.paymentSuccessMessage.set('Régularisation enregistrée avec succès. La dette financière est réduite, mais la pénalité de réservation reste active jusqu’à son terme.');
+          }
           this.reloadFinancialData();
         },
         error: (error: HttpErrorResponse) => {
@@ -126,7 +179,7 @@ export class EspacePrivePageComponent implements OnInit {
   private loadPageData(): void {
     if (this.authService.isAdmin() && !this.authService.hasPlayerProfile()) {
       this.isLoading.set(false);
-      this.errorMessage.set('Cet espace est r\u00e9serv\u00e9 aux joueurs.');
+      this.errorMessage.set('Cet espace est réservé aux joueurs.');
       return;
     }
 
@@ -152,7 +205,7 @@ export class EspacePrivePageComponent implements OnInit {
           }
 
           if (error.status === 403 && this.authService.isAdmin() && !this.authService.hasPlayerProfile()) {
-            this.errorMessage.set('Cet espace est r\u00e9serv\u00e9 aux joueurs.');
+            this.errorMessage.set('Cet espace est réservé aux joueurs.');
             return;
           }
 

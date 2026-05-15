@@ -55,7 +55,10 @@ public interface MatchPadelRepository extends JpaRepository<MatchPadel, Long> {
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("""
-        select m from MatchPadel m
+        select distinct m from MatchPadel m
+        join fetch m.terrain t
+        join fetch t.site
+        join fetch m.organisateur
         left join fetch m.participations p
         left join fetch p.joueur
         where m.id = :id
@@ -126,6 +129,44 @@ public interface MatchPadelRepository extends JpaRepository<MatchPadel, Long> {
             @Param("now") LocalDateTime now,
             @Param("from") LocalDateTime from,
             @Param("to") LocalDateTime to
+    );
+
+    @Query("""
+    select m
+    from MatchPadel m
+    where m.statut = :statut
+      and m.dateDebut > :now
+      and m.dateDebut >= :from
+      and m.dateDebut < :to
+""")
+    List<MatchPadel> findPlannedFutureMatchesByDateDebutBetween(
+            @Param("statut") MatchStatut statut,
+            @Param("now") LocalDateTime now,
+            @Param("from") LocalDateTime from,
+            @Param("to") LocalDateTime to
+    );
+
+    @Query("""
+        select distinct m
+        from MatchPadel m
+        join fetch m.terrain t
+        join fetch t.site s
+        join fetch m.organisateur o
+        left join fetch m.participations p
+        where s.id = :siteId
+          and (:statut is null or m.statut = :statut)
+          and (:from is null or m.dateDebut >= :from)
+          and (:to is null or m.dateDebut < :to)
+          and (:futureOnly = false or m.dateDebut > :now)
+        order by m.dateDebut asc
+    """)
+    List<MatchPadel> findAdminSiteMatches(
+            @Param("siteId") Long siteId,
+            @Param("statut") MatchStatut statut,
+            @Param("from") LocalDateTime from,
+            @Param("to") LocalDateTime to,
+            @Param("futureOnly") boolean futureOnly,
+            @Param("now") LocalDateTime now
     );
 
     @Query("""

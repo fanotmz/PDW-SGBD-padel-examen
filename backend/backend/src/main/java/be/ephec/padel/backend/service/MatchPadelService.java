@@ -20,6 +20,7 @@ import be.ephec.padel.backend.model.entities.Terrain;
 import be.ephec.padel.backend.model.enums.MatchStatut;
 import be.ephec.padel.backend.model.enums.MatchVisibilite;
 import be.ephec.padel.backend.model.enums.OrigineMouvementSoldeType;
+import be.ephec.padel.backend.model.enums.SecurityRole;
 import be.ephec.padel.backend.model.enums.TypePaiement;
 import be.ephec.padel.backend.model.enums.TypeJoueur;
 import be.ephec.padel.backend.repository.FermetureGlobaleRepository;
@@ -38,6 +39,7 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.Clock;
 import java.time.DayOfWeek;
+import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -54,6 +56,7 @@ public class MatchPadelService {
     private static final long BUFFER_MIN = 15;
     private static final long SLOT_MIN = DUREE_MATCH_MIN + BUFFER_MIN;
     private static final long PAS_CRENEAU_MIN = 15;
+    private static final Duration SEUIL_ANNULATION_TARDIVE = Duration.ofHours(24);
     private static final DateTimeFormatter CRENEAU_FORMATTER = DateTimeFormatter.ofPattern("HH:mm");
     private static final String MESSAGE_HORAIRE_MANQUANT =
             "Aucun horaire n'est configuré pour ce site et cette année.";
@@ -91,6 +94,7 @@ public class MatchPadelService {
     private final FermetureSiteService fermetureSiteService;
     private final PaiementRepository paiementRepository;
     private final FermetureGlobaleRepository fermetureGlobaleRepository;
+    private final AnnulationMatchService annulationMatchService;
     private final Clock clock;
     private final CurrentUserFacade currentUserFacade;
     private final ServiceAutorisationAdmin serviceAutorisationAdmin;
@@ -105,6 +109,7 @@ public class MatchPadelService {
                              FermetureSiteService fermetureSiteService,
                              PaiementRepository paiementRepository,
                              FermetureGlobaleRepository fermetureGlobaleRepository,
+                             AnnulationMatchService annulationMatchService,
                              Clock clock,
                              CurrentUserFacade currentUserFacade,
                              ServiceAutorisationAdmin serviceAutorisationAdmin) {
@@ -117,6 +122,7 @@ public class MatchPadelService {
         this.fermetureSiteService = fermetureSiteService;
         this.paiementRepository = paiementRepository;
         this.fermetureGlobaleRepository = fermetureGlobaleRepository;
+        this.annulationMatchService = annulationMatchService;
         this.clock = clock;
         this.currentUserFacade = currentUserFacade;
         this.serviceAutorisationAdmin = serviceAutorisationAdmin;
@@ -590,14 +596,66 @@ public class MatchPadelService {
     public MatchDetailDto getMatchDetailDto(Long id) {
         MatchPadel match = getMatch(id);
 
-        if (!currentUserFacade.isAdmin()) {
-            String matricule = currentUserFacade.getCurrentJoueur().getMatricule();
-            if (match.getVisibilite() == MatchVisibilite.PRIVE && !peutVoirMatchPrive(match, matricule)) {
-                throw new ForbiddenException("Acc\u00e8s refus\u00e9 \u00e0 ce match priv\u00e9.");
+        if (currentUserFacade.hasRole(SecurityRole.ROLE_ADMIN_GLOBAL)) {
+            return buildMatchDetailDto(match);
+        }
+
+        if (currentUserFacade.hasRole(SecurityRole.ROLE_ADMIN_SITE)) {
+            if (!serviceAutorisationAdmin.peutAdministrerSite(getSiteId(match))) {
+                throw new ForbiddenException("Acces interdit : site non autorise");
             }
+            return buildMatchDetailDto(match);
+        }
+
+        String matricule = currentUserFacade.getCurrentJoueur().getMatricule();
+        if (match.getVisibilite() == MatchVisibilite.PRIVE && !peutVoirMatchPrive(match, matricule)) {
+            throw new ForbiddenException("Acc\u00e8s refus\u00e9 \u00e0 ce match priv\u00e9.");
         }
 
         return buildMatchDetailDto(match);
+    }
+
+    public void annulerMatchParUtilisateurCourant(Long matchId) {
+        MatchPadel match = getMatch(matchId);
+        ModeAnnulationMatch mode = determinerModeAnnulation(match);
+        annulationMatchService.annulerMatch(matchId, mode);
+    }
+
+    private ModeAnnulationMatch determinerModeAnnulation(MatchPadel match) {
+        verifierMatchAnnulable(match);
+
+        if (currentUserFacade.hasRole(SecurityRole.ROLE_ADMIN_GLOBAL)) {
+            return ModeAnnulationMatch.ADMIN_OU_FERMETURE;
+        }
+
+        if (currentUserFacade.hasRole(SecurityRole.ROLE_ADMIN_SITE)) {
+            if (serviceAutorisationAdmin.peutAdministrerSite(getSiteId(match))) {
+                return ModeAnnulationMatch.ADMIN_OU_FERMETURE;
+            }
+            throw new ForbiddenException("Acces interdit : site non autorise");
+        }
+
+        if (!estOrganisateur(match)) {
+            throw new ForbiddenException("Seul l'organisateur ou un administrateur autorise peut annuler ce match.");
+        }
+
+        return estAnnulationTardive(match.getDateDebut())
+                ? ModeAnnulationMatch.ORGANISATEUR_TARDIVE
+                : ModeAnnulationMatch.ORGANISATEUR_STANDARD;
+    }
+
+    private void verifierMatchAnnulable(MatchPadel match) {
+        if (match.getStatut() != MatchStatut.PLANIFIE) {
+            throw new BusinessException("Seul un match planifie peut etre annule.");
+        }
+        if (match.getDateDebut() == null || !match.getDateDebut().isAfter(LocalDateTime.now(clock))) {
+            throw new BusinessException("Seul un match futur peut etre annule.");
+        }
+    }
+
+    private boolean estAnnulationTardive(LocalDateTime dateDebut) {
+        return Duration.between(LocalDateTime.now(clock), dateDebut)
+                .compareTo(SEUIL_ANNULATION_TARDIVE) < 0;
     }
 
     private MatchDetailDto buildMatchDetailDto(MatchPadel match) {
@@ -606,15 +664,40 @@ public class MatchPadelService {
         BigDecimal montantRembourse = getMontantRembourseParMatch(match);
         BigDecimal resteAPayer = calculerResteAPayer(match, montantTotal, montantPaye);
         boolean peutAjouterJoueurPrive = peutAjouterJoueurPrive(match);
+        boolean peutAnnuler = peutAnnuler(match);
 
         return MatchDetailMapper.toDto(
                 match,
                 peutAjouterJoueurPrive,
+                peutAnnuler,
                 montantTotal,
                 montantPaye,
                 resteAPayer,
                 montantRembourse
         );
+    }
+
+    private boolean peutAnnuler(MatchPadel match) {
+        if (match == null
+                || match.getStatut() != MatchStatut.PLANIFIE
+                || match.getDateDebut() == null
+                || !match.getDateDebut().isAfter(LocalDateTime.now(clock))) {
+            return false;
+        }
+
+        if (currentUserFacade.hasRole(SecurityRole.ROLE_ADMIN_GLOBAL)) {
+            return true;
+        }
+
+        if (currentUserFacade.hasRole(SecurityRole.ROLE_ADMIN_SITE)) {
+            try {
+                return serviceAutorisationAdmin.peutAdministrerSite(getSiteId(match));
+            } catch (RuntimeException exception) {
+                return false;
+            }
+        }
+
+        return estOrganisateur(match);
     }
 
     private boolean peutAjouterJoueurPrive(MatchPadel match) {
@@ -630,11 +713,16 @@ public class MatchPadelService {
             return false;
         }
 
+        if (currentUserFacade.hasRole(SecurityRole.ROLE_ADMIN_GLOBAL)
+                || currentUserFacade.hasRole(SecurityRole.ROLE_ADMIN_SITE)) {
+            return serviceAutorisationAdmin.peutAdministrerSite(getSiteId(match));
+        }
+
         if (estOrganisateur(match)) {
             return true;
         }
 
-        return serviceAutorisationAdmin.peutAdministrerSite(getSiteId(match));
+        return false;
     }
 
     private boolean estOrganisateur(MatchPadel match) {

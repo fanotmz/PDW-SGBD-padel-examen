@@ -18,7 +18,6 @@ import java.math.RoundingMode;
 import java.time.Clock;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.LocalTime;
 import java.util.List;
 
 @Service
@@ -31,17 +30,20 @@ public class TraitementJ1Service {
     private final ParticipationRepository participationRepository;
     private final PaiementRepository paiementRepository;
     private final SoldeService soldeService;
+    private final PenaliteJoueurService penaliteJoueurService;
     private final Clock clock;
 
     public TraitementJ1Service(MatchPadelRepository matchPadelRepository,
                                ParticipationRepository participationRepository,
                                PaiementRepository paiementRepository,
                                SoldeService soldeService,
+                               PenaliteJoueurService penaliteJoueurService,
                                Clock clock) {
         this.matchPadelRepository = matchPadelRepository;
         this.participationRepository = participationRepository;
         this.paiementRepository = paiementRepository;
         this.soldeService = soldeService;
+        this.penaliteJoueurService = penaliteJoueurService;
         this.clock = clock;
     }
 
@@ -106,10 +108,7 @@ public class TraitementJ1Service {
         // 2) Privé incomplet => PUBLIC + pénalité 1 semaine organisateur
         if (match.getVisibilite() == MatchVisibilite.PRIVE && nbParticipants < 4) {
             match.setVisibilite(MatchVisibilite.PUBLIC);
-
-            Joueur orga = match.getOrganisateur();
-            LocalDate finSeptiemeJour = now.toLocalDate().plusDays(7);
-            orga.setPenaliteJusqua(finSeptiemeJour.atTime(LocalTime.MAX));
+            penaliteJoueurService.appliquerPenaliteReservation(match.getOrganisateur());
         }
     }
 }

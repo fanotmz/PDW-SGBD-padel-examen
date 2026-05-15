@@ -103,10 +103,10 @@ export class AdminPageComponent implements OnInit {
     cards.push(
       { title: 'Joueurs', description: 'Consultez les joueurs enregistr\u00e9s dans votre p\u00e9rim\u00e8tre.', route: '/admin/joueurs' },
       {
-        title: this.isSiteScopedAdmin() ? 'Site' : 'Sites',
+        title: this.isSiteScopedAdmin() ? 'Détail du site' : 'Détail des sites',
         description: this.isSiteScopedAdmin()
-          ? 'Consultez le site, ses terrains, ses jours de fermeture et ses horaires.'
-          : 'Consultez les sites, leurs terrains, leurs jours de fermeture et leurs horaires.',
+          ? 'Consultez les informations du site : terrains, jours de fermeture, horaires et matchs planifiés.'
+          : 'Consultez les sites, leurs terrains, leurs jours de fermeture, leurs horaires et leurs matchs planifiés.',
         route: '/admin/sites'
       },
       { title: 'Fermetures', description: 'Consultez les fermetures globales et les fermetures de site.', route: '/admin/fermetures' },

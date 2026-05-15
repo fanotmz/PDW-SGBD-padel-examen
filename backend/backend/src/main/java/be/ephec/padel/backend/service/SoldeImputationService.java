@@ -25,11 +25,14 @@ public class SoldeImputationService {
     private static final EnumSet<OrigineMouvementSoldeType> TRACKED_DEBIT_ORIGINS = EnumSet.of(
             OrigineMouvementSoldeType.CREATION_MATCH_ORGANISATEUR,
             OrigineMouvementSoldeType.AJOUT_MATCH_PRIVE,
-            OrigineMouvementSoldeType.REJOINDRE_MATCH_PUBLIC_PART
+            OrigineMouvementSoldeType.REJOINDRE_MATCH_PUBLIC_PART,
+            OrigineMouvementSoldeType.ANNULATION_TARDIVE_ORGANISATEUR
     );
 
     private static final EnumSet<OrigineMouvementSoldeType> TRACKED_CREDIT_ORIGINS = EnumSet.of(
             OrigineMouvementSoldeType.PAIEMENT_PARTICIPATION,
+            OrigineMouvementSoldeType.PAIEMENT_ANNULATION_TARDIVE_ORGANISATEUR,
+            OrigineMouvementSoldeType.REGULARISATION_ANNULATION_TARDIVE,
             OrigineMouvementSoldeType.TRAITEMENT_J1_NEUTRALISATION,
             OrigineMouvementSoldeType.ANNULATION_MATCH_NEUTRALISATION
     );
@@ -44,6 +47,33 @@ public class SoldeImputationService {
         List<MouvementSolde> mouvements =
                 mouvementSoldeRepository.findByJoueur_MatriculeOrderByDateMouvementAscIdAsc(matricule);
         return reconstruirePourMouvements(mouvements);
+    }
+
+    public BigDecimal getMontantOuvertPourParticipation(String matricule, Long participationId) {
+        if (matricule == null || matricule.isBlank() || participationId == null) {
+            return BigDecimal.ZERO.setScale(2, RoundingMode.HALF_UP);
+        }
+
+        return reconstruirePourJoueur(matricule).getOpenDebtLines().stream()
+                .filter(line -> line.cibleParticipation(participationId))
+                .map(OpenDebtLine::getMontantRestant)
+                .reduce(BigDecimal.ZERO.setScale(2, RoundingMode.HALF_UP), BigDecimal::add)
+                .setScale(2, RoundingMode.HALF_UP);
+    }
+
+    public BigDecimal getMontantOuvertPourParticipationEtOrigine(String matricule,
+                                                                  Long participationId,
+                                                                  OrigineMouvementSoldeType origineType) {
+        if (matricule == null || matricule.isBlank() || participationId == null || origineType == null) {
+            return BigDecimal.ZERO.setScale(2, RoundingMode.HALF_UP);
+        }
+
+        return reconstruirePourJoueur(matricule).getOpenDebtLines().stream()
+                .filter(line -> line.cibleParticipation(participationId))
+                .filter(line -> line.getOrigineType() == origineType)
+                .map(OpenDebtLine::getMontantRestant)
+                .reduce(BigDecimal.ZERO.setScale(2, RoundingMode.HALF_UP), BigDecimal::add)
+                .setScale(2, RoundingMode.HALF_UP);
     }
 
     ImputationResult reconstruirePourMouvements(List<MouvementSolde> mouvements) {

@@ -22,11 +22,11 @@ export class AdminSitesPageComponent implements OnInit {
   protected readonly isSingleSiteView = computed(
     () => !this.isLoading() && !this.errorMessage() && this.sites().length === 1
   );
-  protected readonly pageTitle = computed(() => (this.isSingleSiteView() ? 'Site' : 'Sites'));
+  protected readonly pageTitle = computed(() => (this.isSingleSiteView() ? 'Détail du site' : 'Détail des sites'));
   protected readonly pageIntro = computed(() =>
     this.isSingleSiteView()
-      ? 'Consultez le site, ses terrains, ses jours de fermeture et ses horaires.'
-      : 'Consultez les sites, leurs terrains, leurs jours de fermeture et leurs horaires.'
+      ? 'Consultez les informations du site : terrains, jours de fermeture, horaires et matchs planifiés.'
+      : 'Consultez les sites, leurs terrains, leurs jours de fermeture, leurs horaires et leurs matchs planifiés.'
   );
 
   private readonly dayLabels: Record<string, string> = {

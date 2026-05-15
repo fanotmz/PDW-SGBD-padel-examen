@@ -16,9 +16,12 @@ import java.util.List;
 public class FermetureGlobaleService {
 
     private final FermetureGlobaleRepository repo;
+    private final AnnulationMatchService annulationMatchService;
 
-    public FermetureGlobaleService(FermetureGlobaleRepository repo) {
+    public FermetureGlobaleService(FermetureGlobaleRepository repo,
+                                   AnnulationMatchService annulationMatchService) {
         this.repo = repo;
+        this.annulationMatchService = annulationMatchService;
     }
 
     @Transactional(readOnly = true)
@@ -34,7 +37,12 @@ public class FermetureGlobaleService {
             throw new BusinessException("Une fermeture globale existe déjà pour cette date");
         }
 
-        return repo.save(new FermetureGlobale(date, req.getMotif()));
+        FermetureGlobale saved = repo.save(new FermetureGlobale(date, req.getMotif()));
+        annulationMatchService.annulerMatchsFutursPlanifiesTousSites(
+                date.atStartOfDay(),
+                date.plusDays(1).atStartOfDay()
+        );
+        return saved;
     }
 
     public void supprimer(Long id) {

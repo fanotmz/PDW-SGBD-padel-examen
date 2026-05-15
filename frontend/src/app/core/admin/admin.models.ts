@@ -98,6 +98,23 @@ export interface AdminSiteConsultationResponse {
   horaires: AdminSiteScheduleResponse[];
 }
 
+export interface AdminSiteMatchSummaryResponse {
+  id: number;
+  dateDebut: string;
+  heureDebut: string;
+  siteId: number;
+  siteNom: string;
+  terrainId: number;
+  terrainNom: string;
+  organisateurMatricule: string;
+  organisateurNom: string;
+  visibilite: string;
+  statut: string;
+  nbParticipants: number;
+  placesRestantes: number;
+  peutAnnuler: boolean;
+}
+
 export interface AdminCaStatsResponse {
   caTotal: number;
   from: string;
