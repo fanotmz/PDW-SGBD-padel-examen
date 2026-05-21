@@ -1,16 +1,16 @@
 <section class="organized-matches-page">
-  <div class="page-header">
-    <p class="eyebrow">Matchs organis&eacute;s</p>
-    <h1>Matchs organis&eacute;s</h1>
-    <p>Retrouvez ici les matchs que vous organisez actuellement.</p>
-  </div>
+  <app-page-header
+    eyebrow="Matchs organisés"
+    title="Matchs organisés"
+    description="Retrouvez ici les matchs que vous organisez actuellement."
+  />
 
   @if (isLoading()) {
-    <p class="state-message">Chargement de vos matchs organis&eacute;s...</p>
+    <app-page-state type="loading" message="Chargement de vos matchs organisés..." />
   } @else if (errorMessage()) {
-    <p class="state-message is-error">{{ errorMessage() }}</p>
+    <app-page-state type="error" [message]="errorMessage()" />
   } @else if (matches().length === 0) {
-    <p class="state-message">Vous n'avez aucun match organis&eacute; pour le moment.</p>
+    <app-page-state type="empty" message="Vous n'avez aucun match organisé pour le moment." />
   } @else {
     <div class="match-list">
       @for (match of matches(); track match.id) {
@@ -24,21 +24,14 @@
             <div class="badge-group">
               <span
                 class="status-badge"
-                [class.is-cancelled]="match.statut === 'ANNULE'"
-                [class.temporal-passe]="match.statut !== 'ANNULE' && match.statutTemporel === 'PASSE'"
-                [class.temporal-aujourd_hui]="match.statut !== 'ANNULE' && match.statutTemporel === 'AUJOURD_HUI'"
-                [class.temporal-futur]="match.statut !== 'ANNULE' && match.statutTemporel === 'FUTUR'"
+                [ngClass]="getStatusClassMap(match)"
               >
                 {{ getDisplayStatusLabel(match) }}
               </span>
 
-              @if (match.statut !== 'ANNULE' && match.statutTemporel !== 'PASSE') {
-                <span
-                  class="status-badge"
-                  [class.is-full]="match.complet"
-                  [class.is-open]="!match.complet"
-                >
-                  {{ match.complet ? 'Complet' : 'Places disponibles' }}
+              @if (getOrganizerBadgeLabel(match)) {
+                <span class="status-badge" [class]=" 'status-badge ' + getOrganizerBadgeClass(match) ">
+                  {{ getOrganizerBadgeLabel(match) }}
                 </span>
               }
             </div>
@@ -54,7 +47,7 @@
               <dd>{{ match.dateDebut | date:'HH:mm' }}</dd>
             </div>
             <div>
-              <dt>Visibilit&eacute;</dt>
+              <dt>Visibilité</dt>
               <dd>{{ match.visibilite }}</dd>
             </div>
             <div>
@@ -79,12 +72,12 @@
 
           @if (match.risquePenaliteJ1) {
             <p class="risk-message">
-              Attention : ce match priv&eacute; est incomplet. S&rsquo;il reste incomplet &agrave; J-1,
-              il pourra devenir public et une p&eacute;nalit&eacute; pourra &ecirc;tre appliqu&eacute;e.
+              Attention : ce match privé est incomplet. S’il reste incomplet à J-1,
+              il pourra devenir public et une pénalité pourra être appliquée.
             </p>
           }
 
-          <a [routerLink]="['/matchs', match.id]" class="detail-link">Voir le d&eacute;tail</a>
+          <a [routerLink]="['/matchs', match.id]" class="detail-link">Voir le détail</a>
         </article>
       }
     </div>

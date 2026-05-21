@@ -1,8 +1,16 @@
-import { CommonModule, CurrencyPipe, DatePipe } from '@angular/common';
+import { CurrencyPipe, DatePipe } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, DestroyRef, OnInit, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { MatButtonModule } from '@angular/material/button';
+import { MatCardModule } from '@angular/material/card';
+import { MatDatepickerModule } from '@angular/material/datepicker';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatInputModule } from '@angular/material/input';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MatSelectModule } from '@angular/material/select';
+import { MatSnackBarModule } from '@angular/material/snack-bar';
 import { RouterLink } from '@angular/router';
 import { finalize } from 'rxjs';
 import {
@@ -12,10 +20,17 @@ import {
   MatchVisibility
 } from '../../../core/matches/create-match.models';
 import { MatchCreationService } from '../../../core/matches/match-creation.service';
+import { MeProfile } from '../../../core/me/me.models';
+import { MeService } from '../../../core/me/me.service';
 import { SiteOption } from '../../../core/sites/site.models';
 import { SitesService } from '../../../core/sites/sites.service';
 import { TerrainOption } from '../../../core/terrains/terrain.models';
 import { TerrainsService } from '../../../core/terrains/terrains.service';
+import { BELGIAN_DATE_PROVIDERS, formatDateForApi } from '../../../shared/date/belgian-date-formats';
+import { PageHeaderComponent } from '../../../shared/ui/page-header/page-header.component';
+import { PageStateComponent } from '../../../shared/ui/page-state/page-state.component';
+import { UiFeedbackService } from '../../../shared/ui/ui-feedback.service';
+import { UI_MESSAGES } from '../../../shared/ui/ui-messages';
 
 interface ApiErrorBody {
   message?: string;
@@ -38,7 +53,23 @@ interface SlotScheduleInfo {
 @Component({
   selector: 'app-create-match-page',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, RouterLink, DatePipe, CurrencyPipe],
+  imports: [
+    ReactiveFormsModule,
+    RouterLink,
+    DatePipe,
+    CurrencyPipe,
+    MatButtonModule,
+    MatCardModule,
+    MatDatepickerModule,
+    MatFormFieldModule,
+    MatInputModule,
+    MatProgressSpinnerModule,
+    MatSelectModule,
+    MatSnackBarModule,
+    PageHeaderComponent,
+    PageStateComponent
+  ],
+  providers: BELGIAN_DATE_PROVIDERS,
   templateUrl: './create-match-page.component.html',
   styleUrl: './create-match-page.component.css'
 })
@@ -46,11 +77,15 @@ export class CreateMatchPageComponent implements OnInit {
   private readonly fb = inject(FormBuilder);
   private readonly destroyRef = inject(DestroyRef);
   private readonly matchCreationService = inject(MatchCreationService);
+  private readonly meService = inject(MeService);
   private readonly sitesService = inject(SitesService);
   private readonly terrainsService = inject(TerrainsService);
+  private readonly feedback = inject(UiFeedbackService);
 
   protected readonly sites = signal<SiteOption[]>([]);
   protected readonly terrains = signal<TerrainOption[]>([]);
+  protected readonly currentProfile = signal<MeProfile | null>(null);
+  protected readonly isLoadingProfile = signal(true);
   protected readonly isLoadingSites = signal(true);
   protected readonly isLoadingTerrains = signal(false);
   protected readonly isLoadingSlots = signal(false);
@@ -63,20 +98,33 @@ export class CreateMatchPageComponent implements OnInit {
   protected readonly friendlyErrorDetails = signal<FriendlyErrorDetail[]>([]);
   protected readonly availableSlots = signal<string[]>([]);
   protected readonly slotScheduleInfo = signal<SlotScheduleInfo | null>(null);
+  protected readonly uiMessages = UI_MESSAGES;
   protected readonly lastAvailableSlot = computed(() => {
     const slots = this.availableSlots();
     return slots.length > 0 ? slots[slots.length - 1] : '';
   });
+  protected readonly isSiteProfileLocked = computed(() => {
+    const profile = this.currentProfile();
+    return profile?.type === 'SITE' && profile.siteId != null;
+  });
+  protected readonly selectedSiteLabel = computed(() => {
+    const profileSiteId = this.currentProfile()?.siteId;
+    const selectedSiteId = profileSiteId ?? this.form.controls.siteId.value;
+    const site = this.sites().find((option) => option.id === selectedSiteId);
 
-  protected readonly form = this.fb.nonNullable.group({
-    siteId: [null as number | null, Validators.required],
-    terrainId: [{ value: null as number | null, disabled: true }, Validators.required],
-    date: ['', Validators.required],
-    heure: [{ value: '', disabled: true }, Validators.required],
-    visibilite: ['PUBLIC' as MatchVisibility, Validators.required]
+    return site ? this.siteLabel(site) : 'Site rattaché à votre profil';
+  });
+
+  protected readonly form = this.fb.group({
+    siteId: this.fb.control<number | null>(null, Validators.required),
+    terrainId: this.fb.control({ value: null as number | null, disabled: true }, Validators.required),
+    date: this.fb.control<Date | null>(null, Validators.required),
+    heure: this.fb.nonNullable.control({ value: '', disabled: true }, Validators.required),
+    visibilite: this.fb.nonNullable.control<MatchVisibility>('PUBLIC', Validators.required)
   });
 
   ngOnInit(): void {
+    this.loadProfile();
     this.loadSites();
 
     this.form.controls.siteId.valueChanges
@@ -141,7 +189,7 @@ export class CreateMatchPageComponent implements OnInit {
 
     const payload = this.buildPayload();
     if (!payload) {
-      this.globalErrorMessage.set('Le formulaire est incomplet.');
+      this.globalErrorMessage.set(UI_MESSAGES.createMatch.incompleteForm);
       return;
     }
 
@@ -153,8 +201,9 @@ export class CreateMatchPageComponent implements OnInit {
       .subscribe({
         next: (createdMatch) => {
           this.createdMatch.set(createdMatch);
-          this.successMessage.set('Match créé avec succès.');
-          this.form.controls.date.reset('');
+          this.successMessage.set(UI_MESSAGES.createMatch.success);
+          this.feedback.showSuccess(UI_MESSAGES.createMatch.success);
+          this.form.controls.date.reset(null);
           this.resetSlots();
           this.form.controls.visibilite.setValue('PUBLIC');
           this.form.controls.terrainId.reset(null);
@@ -283,6 +332,7 @@ export class CreateMatchPageComponent implements OnInit {
       .subscribe({
         next: (sites) => {
           this.sites.set(sites);
+          this.applySiteProfileLock();
         },
         error: (error: HttpErrorResponse) => {
           this.globalErrorMessage.set(
@@ -290,6 +340,42 @@ export class CreateMatchPageComponent implements OnInit {
           );
         }
       });
+  }
+
+  private loadProfile(): void {
+    this.isLoadingProfile.set(true);
+
+    this.meService
+      .getMe()
+      .pipe(finalize(() => this.isLoadingProfile.set(false)))
+      .subscribe({
+        next: (profile) => {
+          this.currentProfile.set(profile);
+          this.applySiteProfileLock();
+        },
+        error: () => {
+          this.currentProfile.set(null);
+        }
+      });
+  }
+
+  private applySiteProfileLock(): void {
+    const profile = this.currentProfile();
+    const siteControl = this.form.controls.siteId;
+
+    if (profile?.type !== 'SITE' || profile.siteId == null) {
+      if (siteControl.disabled) {
+        siteControl.enable({ emitEvent: false });
+      }
+
+      return;
+    }
+
+    if (siteControl.value !== profile.siteId) {
+      siteControl.setValue(profile.siteId);
+    }
+
+    siteControl.disable({ emitEvent: false });
   }
 
   private loadTerrains(siteId: number): void {
@@ -323,22 +409,24 @@ export class CreateMatchPageComponent implements OnInit {
 
   private buildPayload(): CreateMatchPayload | null {
     const { terrainId, date, heure, visibilite } = this.form.getRawValue();
+    const formattedDate = formatDateForApi(date);
 
-    if (terrainId == null || !date || !heure) {
+    if (terrainId == null || !formattedDate || !heure) {
       return null;
     }
 
     return {
       terrainId,
-      dateDebut: `${date}T${heure}:00`,
+      dateDebut: `${formattedDate}T${heure}:00`,
       visibilite
     };
   }
 
   private refreshSlots(): void {
     const { terrainId, date } = this.form.getRawValue();
+    const formattedDate = formatDateForApi(date);
 
-    if (terrainId == null || !date) {
+    if (terrainId == null || !formattedDate) {
       this.resetSlots();
       return;
     }
@@ -349,7 +437,7 @@ export class CreateMatchPageComponent implements OnInit {
     this.isLoadingSlots.set(true);
 
     const requestTerrainId = terrainId;
-    const requestDate = date;
+    const requestDate = formattedDate;
 
     this.matchCreationService
       .getCreneaux(requestTerrainId, requestDate)
@@ -357,7 +445,7 @@ export class CreateMatchPageComponent implements OnInit {
       .subscribe({
         next: (response) => {
           const current = this.form.getRawValue();
-          if (current.terrainId !== requestTerrainId || current.date !== requestDate) {
+          if (current.terrainId !== requestTerrainId || formatDateForApi(current.date) !== requestDate) {
             return;
           }
 
@@ -365,7 +453,7 @@ export class CreateMatchPageComponent implements OnInit {
         },
         error: (error: HttpErrorResponse) => {
           const current = this.form.getRawValue();
-          if (current.terrainId !== requestTerrainId || current.date !== requestDate) {
+          if (current.terrainId !== requestTerrainId || formatDateForApi(current.date) !== requestDate) {
             return;
           }
 

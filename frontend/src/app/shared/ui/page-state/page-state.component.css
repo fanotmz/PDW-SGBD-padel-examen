@@ -1,0 +1,23 @@
+.page-state {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  margin: 0;
+  padding: 1rem 1.2rem;
+  border: 1px solid #d7e0eb;
+  border-radius: 0.5rem;
+  background: #ffffff;
+  color: #526277;
+}
+
+.page-state.is-error {
+  border-color: #fecaca;
+  background: #fef2f2;
+  color: #b91c1c;
+}
+
+.page-state.is-success {
+  border-color: #86efac;
+  background: #f0fdf4;
+  color: #166534;
+}

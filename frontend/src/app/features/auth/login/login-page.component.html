@@ -1,38 +1,55 @@
-<section class="login-page">
-  <form class="login-card" [formGroup]="form" (ngSubmit)="onSubmit()">
-    <h1>Connexion</h1>
-    <p class="login-subtitle">Connectez-vous pour accedér à votre espace padel.</p>
+<section class="flex justify-center py-8 sm:py-14">
+  <mat-card class="w-full max-w-md">
+    <mat-card-header>
+      <mat-card-title>Connexion</mat-card-title>
+      <mat-card-subtitle>Connectez-vous pour accéder à votre espace padel.</mat-card-subtitle>
+    </mat-card-header>
 
-    <label class="field">
-      <span>Username</span>
-      <input type="text" formControlName="username" autocomplete="username" />
-    </label>
+    <mat-card-content>
+      <form class="mt-6 grid gap-4" [formGroup]="form" (ngSubmit)="onSubmit()">
+        <mat-form-field appearance="outline">
+          <mat-label>Identifiant</mat-label>
+          <input matInput type="text" formControlName="username" autocomplete="username" />
+          @if (form.controls.username.touched && form.controls.username.hasError('required')) {
+            <mat-error>L'identifiant est obligatoire.</mat-error>
+          }
+        </mat-form-field>
 
-    <label class="field">
-      <span>Password</span>
-      <div class="password-field">
-        <input
-          [type]="showPassword() ? 'text' : 'password'"
-          formControlName="password"
-          autocomplete="current-password"
-        />
-        <button
-          type="button"
-          class="password-toggle"
-          [attr.aria-label]="showPassword() ? 'Masquer le mot de passe' : 'Afficher le mot de passe'"
-          (click)="togglePasswordVisibility()"
-        >
-          &#128065;
+        <mat-form-field appearance="outline">
+          <mat-label>Mot de passe</mat-label>
+          <input
+            matInput
+            [type]="showPassword() ? 'text' : 'password'"
+            formControlName="password"
+            autocomplete="current-password"
+          />
+          <button
+            mat-icon-button
+            matSuffix
+            type="button"
+            [attr.aria-label]="showPassword() ? 'Masquer le mot de passe' : 'Afficher le mot de passe'"
+            (click)="togglePasswordVisibility()"
+          >
+            <mat-icon>{{ showPassword() ? 'visibility_off' : 'visibility' }}</mat-icon>
+          </button>
+          @if (form.controls.password.touched && form.controls.password.hasError('required')) {
+            <mat-error>Le mot de passe est obligatoire.</mat-error>
+          }
+        </mat-form-field>
+
+        @if (errorMessage()) {
+          <p class="error-message" role="alert">{{ errorMessage() }}</p>
+        }
+
+        <button mat-flat-button type="submit" color="primary" [disabled]="isSubmitting()">
+          @if (isSubmitting()) {
+            <mat-spinner diameter="18" />
+            <span>Connexion...</span>
+          } @else {
+            <span>Se connecter</span>
+          }
         </button>
-      </div>
-    </label>
-
-    @if (errorMessage()) {
-      <p class="error-message">{{ errorMessage() }}</p>
-    }
-
-    <button type="submit" class="submit-button" [disabled]="isSubmitting()">
-      {{ isSubmitting() ? 'Connexion...' : 'Se connecter' }}
-    </button>
-  </form>
+      </form>
+    </mat-card-content>
+  </mat-card>
 </section>

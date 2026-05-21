@@ -1,10 +1,11 @@
 <section class="admin-registrations-page">
-  <header class="page-header">
-    <p class="page-eyebrow">Administration</p>
-    <a routerLink="/admin" class="back-link">&larr; Retour &agrave; l&rsquo;administration</a>
-    <h1>Demandes d&rsquo;inscription</h1>
-    <p class="page-intro">Consultez les comptes en attente de validation.</p>
-  </header>
+  <app-page-header
+    eyebrow="Administration"
+    title="Demandes d’inscription"
+    description="Consultez les comptes en attente de validation."
+    backLink="/admin"
+    backLabel="Retour à l’administration"
+  />
 
   @if (feedbackMessage()) {
     <p class="page-state" [class.is-success]="feedbackTone() === 'success'" [class.is-error]="feedbackTone() === 'error'">
@@ -17,7 +18,7 @@
   } @else if (errorMessage()) {
     <p class="page-state is-error">{{ errorMessage() }}</p>
   } @else if (isEmpty()) {
-    <p class="page-state">Aucune demande d&rsquo;inscription en attente.</p>
+    <p class="page-state">Aucune demande d’inscription en attente.</p>
   } @else {
     <div class="registrations-list">
       @for (registration of registrations(); track registration.userId) {
@@ -32,7 +33,7 @@
               <p><span>Type</span><strong>{{ getTypeLabel(registration.typeAbonnementDemande) }}</strong></p>
 
               @if (registration.siteNomDemande) {
-                <p><span>Site demand&eacute;</span><strong>{{ registration.siteNomDemande }}</strong></p>
+                <p><span>Site demandé</span><strong>{{ registration.siteNomDemande }}</strong></p>
               }
 
               <p>

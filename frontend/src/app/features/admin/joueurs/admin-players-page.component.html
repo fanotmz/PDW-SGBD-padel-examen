@@ -1,10 +1,11 @@
 <section class="admin-players-page">
-  <header class="page-header">
-    <p class="page-eyebrow">Administration</p>
-    <a routerLink="/admin" class="back-link">&larr; Retour &agrave; l&rsquo;administration</a>
-    <h1>Joueurs</h1>
-    <p class="page-intro">Consultez les joueurs que vous pouvez administrer.</p>
-  </header>
+  <app-page-header
+    eyebrow="Administration"
+    title="Joueurs"
+    description="Consultez les joueurs que vous pouvez administrer."
+    backLink="/admin"
+    backLabel="Retour à l’administration"
+  />
 
   @if (isLoading()) {
     <p class="page-state">Chargement en cours...</p>
@@ -14,17 +15,17 @@
     <p class="page-state">{{ playersCountMessage() }}</p>
 
     @if (isEmpty()) {
-      <p class="page-state">Aucun joueur trouv&eacute; dans votre p&eacute;rim&egrave;tre.</p>
+      <p class="page-state">Aucun joueur trouvé dans votre périmètre.</p>
     }
 
     <section class="penalized-section">
       <div class="section-heading">
-        <h2>Joueurs actuellement p&eacute;nalis&eacute;s</h2>
-        <p>Consultez les joueurs dont la p&eacute;nalit&eacute; est active.</p>
+        <h2>Joueurs actuellement pénalisés</h2>
+        <p>Consultez les joueurs dont la pénalité est active.</p>
       </div>
 
       @if (penalizedPlayers().length === 0) {
-        <p class="page-state">Aucun joueur actuellement p&eacute;nalis&eacute;.</p>
+        <p class="page-state">Aucun joueur actuellement pénalisé.</p>
       } @else {
         <div class="penalized-list">
           @for (player of penalizedPlayers(); track player.matricule) {
@@ -48,11 +49,11 @@
                 }
 
                 <p class="penalty-date">
-                  <span>P&eacute;nalit&eacute;</span>
+                  <span>Pénalité</span>
                   <strong>
-                    P&eacute;nalis&eacute; jusqu&rsquo;au
+                    Pénalisé jusqu’au
                     {{ player.penaliteJusqua | date:'dd/MM/yyyy' }}
-                    &agrave; {{ player.penaliteJusqua | date:'HH:mm' }}
+                    à {{ player.penaliteJusqua | date:'HH:mm' }}
                   </strong>
                 </p>
               </div>

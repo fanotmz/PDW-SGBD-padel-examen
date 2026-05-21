@@ -1,15 +1,22 @@
-import { CommonModule, DatePipe } from '@angular/common';
+import { DatePipe, NgClass } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { finalize } from 'rxjs';
 import { OrganizedMatchSummary } from '../../../core/matches/organized-match-summary.models';
 import { OrganizedMatchesService } from '../../../core/matches/organized-matches.service';
+import {
+  getMatchStatusClassMap,
+  getMatchStatusLabel,
+  getSecondaryMatchBadge
+} from '../../../shared/matches/match-status.utils';
+import { PageHeaderComponent } from '../../../shared/ui/page-header/page-header.component';
+import { PageStateComponent } from '../../../shared/ui/page-state/page-state.component';
 
 @Component({
   selector: 'app-organized-matches-page',
   standalone: true,
-  imports: [CommonModule, RouterLink, DatePipe],
+  imports: [NgClass, RouterLink, DatePipe, PageHeaderComponent, PageStateComponent],
   templateUrl: './organized-matches-page.component.html',
   styleUrl: './organized-matches-page.component.css'
 })
@@ -25,19 +32,19 @@ export class OrganizedMatchesPageComponent implements OnInit {
   }
 
   protected getDisplayStatusLabel(match: OrganizedMatchSummary): string {
-    if (match.statut === 'ANNULE') {
-      return 'Annul\u00e9';
-    }
+    return getMatchStatusLabel(match);
+  }
 
-    switch (match.statutTemporel) {
-      case 'PASSE':
-        return 'D\u00e9j\u00e0 jou\u00e9';
-      case 'AUJOURD_HUI':
-        return 'Aujourd\u2019hui';
-      case 'FUTUR':
-      default:
-        return '\u00c0 venir';
-    }
+  protected getStatusClassMap(match: OrganizedMatchSummary): Record<string, boolean> {
+    return getMatchStatusClassMap(match);
+  }
+
+  protected getOrganizerBadgeLabel(match: OrganizedMatchSummary): string {
+    return getSecondaryMatchBadge(match, 'ORGANISATEUR').label;
+  }
+
+  protected getOrganizerBadgeClass(match: OrganizedMatchSummary): string {
+    return getSecondaryMatchBadge(match, 'ORGANISATEUR').className;
   }
 
   private loadMatches(): void {

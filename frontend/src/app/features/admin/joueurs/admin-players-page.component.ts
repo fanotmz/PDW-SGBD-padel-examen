@@ -1,7 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
-import { RouterLink } from '@angular/router';
 import { catchError, finalize, forkJoin, map, of, switchMap } from 'rxjs';
 import {
   AdminInfoResponse,
@@ -13,11 +12,12 @@ import {
 import { AdminService } from '../../../core/admin/admin.service';
 import { SiteOption } from '../../../core/sites/site.models';
 import { SitesService } from '../../../core/sites/sites.service';
+import { PageHeaderComponent } from '../../../shared/ui/page-header/page-header.component';
 
 @Component({
   selector: 'app-admin-players-page',
   standalone: true,
-  imports: [CommonModule, RouterLink],
+  imports: [CommonModule, PageHeaderComponent],
   templateUrl: './admin-players-page.component.html',
   styleUrl: './admin-players-page.component.css'
 })

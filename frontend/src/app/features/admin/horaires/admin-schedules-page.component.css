@@ -1,12 +1,11 @@
 .admin-schedules-page {
-  width: min(100%, 64rem);
+  width: min(100%, 72rem);
   margin: 0 auto;
   display: grid;
-  gap: 1.5rem;
-  padding: 3rem 0;
+  gap: 1.25rem;
+  padding: 1.5rem 0 2.5rem;
 }
 
-.page-header,
 .form-header,
 .form-field,
 .schedules-list,
@@ -15,68 +14,24 @@
   display: grid;
 }
 
-.page-header {
-  gap: 0.5rem;
-}
-
-.back-link {
-  width: fit-content;
-  color: #0f766e;
-  font-weight: 700;
-  text-decoration: none;
-}
-
-.back-link:hover {
-  text-decoration: underline;
-}
-
-.page-eyebrow {
-  margin: 0;
-  color: #0f766e;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
-
-.page-header h1 {
-  margin: 0;
-  font-size: 2.2rem;
-  color: #10233f;
-}
-
-.page-intro,
 .site-panel p,
 .form-header p {
   margin: 0;
-  color: #526277;
+  color: var(--app-muted);
 }
 
-.page-state,
 .site-panel,
 .schedule-form,
 .schedule-card {
-  border: 1px solid #d7e0eb;
-  border-radius: 0.5rem;
-  background: #ffffff;
+  border: 1px solid var(--app-border);
+  border-radius: var(--app-radius);
+  background: var(--app-surface);
 }
 
-.page-state {
-  margin: 0;
-  padding: 1rem 1.25rem;
-  color: #2c3a4b;
-}
-
-.page-state.is-error,
 .form-message.is-error {
   border-color: #ef4444;
-  background: #fef2f2;
-  color: #b91c1c;
-}
-
-.page-state.is-success {
-  border-color: #86efac;
-  background: #f0fdf4;
-  color: #166534;
+  background: var(--app-danger-soft);
+  color: var(--app-danger);
 }
 
 .site-panel {
@@ -91,7 +46,7 @@
 .form-header h2,
 .form-header h3 {
   margin: 0;
-  color: #10233f;
+  color: var(--app-text);
   font-size: 1.1rem;
 }
 
@@ -104,7 +59,7 @@
 .form-field span,
 .schedule-heading span,
 .schedule-meta span {
-  color: #526277;
+  color: var(--app-muted);
   font-size: 0.86rem;
   font-weight: 700;
 }
@@ -115,19 +70,19 @@
   min-height: 2.75rem;
   padding: 0.7rem 0.8rem;
   border: 1px solid #cbd5e1;
-  border-radius: 0.5rem;
-  background: #ffffff;
-  color: #10233f;
+  border-radius: var(--app-radius);
+  background: var(--app-surface);
+  color: var(--app-text);
   font: inherit;
 }
 
 .schedule-meta p,
 .schedule-form.is-inline {
-  background: #f8fbff;
+  background: var(--app-surface-muted);
 }
 
 .schedule-meta strong {
-  color: #10233f;
+  color: var(--app-text);
 }
 
 .schedule-form,
@@ -179,14 +134,14 @@
 }
 
 .button-primary {
-  background: #0f766e;
+  background: var(--app-primary);
   color: #ffffff;
 }
 
 .button-secondary {
   border-color: #cbd5e1;
   background: #ffffff;
-  color: #10233f;
+  color: var(--app-text);
 }
 
 .button-danger {
@@ -198,7 +153,7 @@
 .confirmation-box {
   margin: 0;
   padding: 0.85rem 1rem;
-  border-radius: 0.5rem;
+  border-radius: var(--app-radius);
 }
 
 .confirmation-box {
@@ -229,7 +184,7 @@
 
 .schedule-heading h2 {
   margin: 0;
-  color: #10233f;
+  color: var(--app-text);
   font-size: 1.35rem;
 }
 
@@ -237,14 +192,14 @@
   display: grid;
   gap: 0.35rem;
   padding: 0.9rem 1rem;
-  border: 1px solid #d7e0eb;
-  border-radius: 0.5rem;
+  border: 1px solid var(--app-border);
+  border-radius: var(--app-radius);
 }
 
 @media (max-width: 760px) {
   .admin-schedules-page {
     gap: 1rem;
-    padding: 2rem 0;
+    padding: 1.25rem 0 2rem;
   }
 
   .site-panel,

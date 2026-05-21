@@ -1,180 +1,192 @@
-<section class="create-match-page">
-  <div class="page-header">
-    <p class="eyebrow">Création</p>
-    <h1>Créer un match</h1>
-    <p>Choisissez un site, un terrain, une date, une heure et une visibilité.</p>
-  </div>
+<section class="py-8 sm:py-12">
+  <app-page-header
+    eyebrow="Création"
+    title="Créer un match"
+    description="Choisissez un site, un terrain, une date, une heure et une visibilité."
+  />
 
-  @if (isLoadingSites()) {
-    <p class="state-message">Chargement des sites...</p>
+  @if (isLoadingSites() || isLoadingProfile()) {
+    <app-page-state type="loading" [message]="uiMessages.createMatch.loadingSites" />
   } @else {
-    <div class="form-card">
-      @if (globalErrorMessage()) {
-        <div class="feedback-box is-error" role="alert" aria-live="assertive">
-          <p class="feedback-title is-error">Création impossible</p>
-          <p class="feedback-message is-error">{{ globalErrorMessage() }}</p>
+    <mat-card>
+      <mat-card-content>
+        @if (globalErrorMessage()) {
+          <div class="feedback-box is-error" role="alert" aria-live="assertive">
+            <p class="feedback-title is-error">Création impossible</p>
+            <p class="feedback-message is-error">{{ globalErrorMessage() }}</p>
 
-          @if (friendlyErrorDetails().length > 0) {
-            <ul class="feedback-details">
-              @for (detail of friendlyErrorDetails(); track detail.key) {
-                <li>{{ detail.message }}</li>
-              }
-            </ul>
-          }
-        </div>
-      }
-
-      @if (successMessage()) {
-        <div class="feedback-box is-success">
-          <p class="feedback-title">{{ successMessage() }}</p>
-
-          @if (createdMatch(); as match) {
-            <dl class="summary-grid">
-              <div>
-                <dt>Terrain</dt>
-                <dd>{{ match.terrainNom }}</dd>
-              </div>
-              <div>
-                <dt>Date</dt>
-                <dd>{{ match.dateDebut | date:"dd/MM/yyyy 'à' HH:mm" }}</dd>
-              </div>
-              <div>
-                <dt>Visibilité</dt>
-                <dd>{{ match.visibilite }}</dd>
-              </div>
-              <div>
-                <dt>Statut</dt>
-                <dd>{{ match.statut }}</dd>
-              </div>
-              <div>
-                <dt>Participants</dt>
-                <dd>{{ match.nbParticipants }}</dd>
-              </div>
-              <div>
-                <dt>Reste à payer</dt>
-                <dd>{{ match.resteAPayer | currency:'EUR' }}</dd>
-              </div>
-            </dl>
-          }
-
-          <a routerLink="/me/matchs/organises" class="summary-link">Voir mes matchs organisés</a>
-        </div>
-      }
-
-      <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
-        <div class="form-grid">
-          <label class="field">
-            <span>Site</span>
-            <select formControlName="siteId">
-              <option [ngValue]="null">Sélectionner un site</option>
-              @for (site of sites(); track site.id) {
-                <option [ngValue]="site.id">{{ siteLabel(site) }}</option>
-              }
-            </select>
-            @if (getFieldError('siteId')) {
-              <small class="field-error">{{ getFieldError('siteId') }}</small>
+            @if (friendlyErrorDetails().length > 0) {
+              <ul class="feedback-details">
+                @for (detail of friendlyErrorDetails(); track detail.key) {
+                  <li>{{ detail.message }}</li>
+                }
+              </ul>
             }
-          </label>
-
-          <label class="field">
-            <span>Terrain</span>
-            <select formControlName="terrainId">
-              <option [ngValue]="null">
-                @if (isLoadingTerrains()) { Chargement des terrains... } @else { Sélectionner un terrain }
-              </option>
-              @for (terrain of terrains(); track terrain.id) {
-                <option [ngValue]="terrain.id">{{ terrain.nom }}</option>
-              }
-            </select>
-            @if (getFieldError('terrainId')) {
-              <small class="field-error">{{ getFieldError('terrainId') }}</small>
-            }
-            @if (backendFieldErrors()['terrainId']) {
-              <small class="field-error">{{ backendFieldErrors()['terrainId'] }}</small>
-            }
-          </label>
-
-          <label class="field">
-            <span>Date</span>
-            <input type="date" formControlName="date" />
-            @if (getFieldError('date')) {
-              <small class="field-error">{{ getFieldError('date') }}</small>
-            }
-          </label>
-
-          <label class="field">
-            <span>Heure</span>
-            <select formControlName="heure">
-              <option value="">Sélectionner une heure</option>
-              @if (isLoadingSlots()) {
-                <option value="" disabled>Chargement des créneaux...</option>
-              }
-              @for (slot of availableSlots(); track slot) {
-                <option [value]="slot">{{ slot }}</option>
-              }
-            </select>
-            @if (slotsMessage()) {
-              <small class="field-error">{{ slotsMessage() }}</small>
-            }
-            @if (getFieldError('heure')) {
-              <small class="field-error">{{ getFieldError('heure') }}</small>
-            }
-            @if (dateDebutFieldError()) {
-              <small class="field-error">{{ dateDebutFieldError() }}</small>
-            }
-          </label>
-
-          <label class="field">
-            <span>Visibilité</span>
-            <select formControlName="visibilite">
-              <option value="PUBLIC">PUBLIC</option>
-              <option value="PRIVE">PRIVE</option>
-            </select>
-            @if (getFieldError('visibilite')) {
-              <small class="field-error">{{ getFieldError('visibilite') }}</small>
-            }
-            @if (backendFieldErrors()['visibilite']) {
-              <small class="field-error">{{ backendFieldErrors()['visibilite'] }}</small>
-            }
-          </label>
-        </div>
-
-        @if (slotScheduleInfo(); as info) {
-          <section class="slot-info" aria-live="polite">
-            <p class="slot-info-title">Créneaux disponibles</p>
-            <div class="slot-info-text">
-              <p>
-                Pour cette date, le site est ouvert de {{ formatSlotTime(info.heureOuverture) }}
-                à {{ formatSlotTime(info.heureFermeture) }}.
-              </p>
-              <p>Un match dure {{ formatDuration(info.dureeMatchMinutes) }}.</p>
-              <p>Un intervalle de {{ info.bufferMinutes }} minutes est prévu entre deux matchs.</p>
-              @if (lastAvailableSlot()) {
-                <p>Le dernier créneau possible est {{ lastAvailableSlot() }}.</p>
-              }
-            </div>
-          </section>
+          </div>
         }
 
-        <div class="form-actions">
-          <button
-            type="submit"
-            class="submit-button"
-            [class.is-ready]="canSubmit()"
-            [disabled]="!canSubmit()"
-          >
-            {{ isSubmitting() ? 'Création en cours...' : 'Créer le match' }}
-          </button>
+        @if (successMessage()) {
+          <div class="feedback-box is-success">
+            <p class="feedback-title">{{ successMessage() }}</p>
 
-          @if (!canSubmit() && getSubmitHints().length > 0) {
-            <ul class="submit-hints">
-              @for (reason of getSubmitHints(); track reason) {
-                <li>{{ reason }}</li>
+            @if (createdMatch(); as match) {
+              <dl class="summary-grid">
+                <div>
+                  <dt>Terrain</dt>
+                  <dd>{{ match.terrainNom }}</dd>
+                </div>
+                <div>
+                  <dt>Date</dt>
+                  <dd>{{ match.dateDebut | date:"dd/MM/yyyy 'à' HH:mm" }}</dd>
+                </div>
+                <div>
+                  <dt>Visibilité</dt>
+                  <dd>{{ match.visibilite }}</dd>
+                </div>
+                <div>
+                  <dt>Statut</dt>
+                  <dd>{{ match.statut }}</dd>
+                </div>
+                <div>
+                  <dt>Participants</dt>
+                  <dd>{{ match.nbParticipants }}</dd>
+                </div>
+                <div>
+                  <dt>Reste à payer</dt>
+                  <dd>{{ match.resteAPayer | currency:'EUR' }}</dd>
+                </div>
+              </dl>
+            }
+
+            <a routerLink="/me/matchs/organises" class="summary-link">Voir mes matchs organisés</a>
+          </div>
+        }
+
+        <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
+          <div class="grid gap-4 md:grid-cols-2">
+            @if (isSiteProfileLocked()) {
+              <mat-form-field appearance="outline" class="site-locked-field">
+                <mat-label>Site</mat-label>
+                <input matInput [value]="selectedSiteLabel()" readonly />
+                <mat-hint>Votre abonnement SITE permet de réserver uniquement sur votre site.</mat-hint>
+              </mat-form-field>
+            } @else {
+            <mat-form-field appearance="outline">
+              <mat-label>Site</mat-label>
+              <mat-select formControlName="siteId">
+                <mat-option [value]="null">Sélectionner un site</mat-option>
+                @for (site of sites(); track site.id) {
+                  <mat-option [value]="site.id">{{ siteLabel(site) }}</mat-option>
+                }
+              </mat-select>
+              @if (getFieldError('siteId')) {
+                <mat-error>{{ getFieldError('siteId') }}</mat-error>
               }
-            </ul>
+            </mat-form-field>
+            }
+
+            <mat-form-field appearance="outline">
+              <mat-label>Terrain</mat-label>
+              <mat-select formControlName="terrainId">
+                <mat-option [value]="null">
+                  @if (isLoadingTerrains()) { Chargement des terrains... } @else { Sélectionner un terrain }
+                </mat-option>
+                @for (terrain of terrains(); track terrain.id) {
+                  <mat-option [value]="terrain.id">{{ terrain.nom }}</mat-option>
+                }
+              </mat-select>
+              @if (getFieldError('terrainId')) {
+                <mat-error>{{ getFieldError('terrainId') }}</mat-error>
+              }
+              @if (backendFieldErrors()['terrainId']) {
+                <mat-error>{{ backendFieldErrors()['terrainId'] }}</mat-error>
+              }
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>Date</mat-label>
+              <input matInput [matDatepicker]="matchDatePicker" formControlName="date" />
+              <mat-datepicker-toggle matIconSuffix [for]="matchDatePicker" />
+              <mat-datepicker #matchDatePicker />
+              @if (getFieldError('date')) {
+                <mat-error>{{ getFieldError('date') }}</mat-error>
+              }
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>Heure</mat-label>
+              <mat-select formControlName="heure">
+                <mat-option value="">Sélectionner une heure</mat-option>
+                @if (isLoadingSlots()) {
+                  <mat-option value="" disabled>Chargement des créneaux...</mat-option>
+                }
+                @for (slot of availableSlots(); track slot) {
+                  <mat-option [value]="slot">{{ slot }}</mat-option>
+                }
+              </mat-select>
+              @if (slotsMessage()) {
+                <mat-hint class="warn-hint">{{ slotsMessage() }}</mat-hint>
+              }
+              @if (getFieldError('heure')) {
+                <mat-error>{{ getFieldError('heure') }}</mat-error>
+              }
+              @if (dateDebutFieldError()) {
+                <mat-error>{{ dateDebutFieldError() }}</mat-error>
+              }
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>Visibilité</mat-label>
+              <mat-select formControlName="visibilite">
+                <mat-option value="PUBLIC">PUBLIC</mat-option>
+                <mat-option value="PRIVE">PRIVE</mat-option>
+              </mat-select>
+              @if (getFieldError('visibilite')) {
+                <mat-error>{{ getFieldError('visibilite') }}</mat-error>
+              }
+              @if (backendFieldErrors()['visibilite']) {
+                <mat-error>{{ backendFieldErrors()['visibilite'] }}</mat-error>
+              }
+            </mat-form-field>
+          </div>
+
+          @if (slotScheduleInfo(); as info) {
+            <section class="slot-info" aria-live="polite">
+              <p class="slot-info-title">Créneaux disponibles</p>
+              <div class="slot-info-text">
+                <p>
+                  Pour cette date, le site est ouvert de {{ formatSlotTime(info.heureOuverture) }}
+                  à {{ formatSlotTime(info.heureFermeture) }}.
+                </p>
+                <p>Un match dure {{ formatDuration(info.dureeMatchMinutes) }}.</p>
+                <p>Un intervalle de {{ info.bufferMinutes }} minutes est prévu entre deux matchs.</p>
+                @if (lastAvailableSlot()) {
+                  <p>Le dernier créneau possible est {{ lastAvailableSlot() }}.</p>
+                }
+              </div>
+            </section>
           }
-        </div>
-      </form>
-    </div>
+
+          <div class="mt-6 flex flex-col gap-3 sm:flex-row sm:items-start">
+            <button mat-flat-button type="submit" color="primary" [disabled]="!canSubmit()">
+              @if (isSubmitting()) {
+                <mat-spinner diameter="18" />
+                <span>Création en cours...</span>
+              } @else {
+                <span>Créer le match</span>
+              }
+            </button>
+
+            @if (!canSubmit() && getSubmitHints().length > 0) {
+              <ul class="submit-hints">
+                @for (reason of getSubmitHints(); track reason) {
+                  <li>{{ reason }}</li>
+                }
+              </ul>
+            }
+          </div>
+        </form>
+      </mat-card-content>
+    </mat-card>
   }
 </section>

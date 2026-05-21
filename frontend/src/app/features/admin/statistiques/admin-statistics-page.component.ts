@@ -1,8 +1,6 @@
-import { CommonModule } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { RouterLink } from '@angular/router';
 import { finalize, forkJoin, of, switchMap } from 'rxjs';
 import {
   AdminCaStatsResponse,
@@ -14,11 +12,13 @@ import { AdminService } from '../../../core/admin/admin.service';
 import { ApiErrorResponse } from '../../../core/auth/auth.models';
 import { SiteOption } from '../../../core/sites/site.models';
 import { SitesService } from '../../../core/sites/sites.service';
+import { PageHeaderComponent } from '../../../shared/ui/page-header/page-header.component';
+import { PageStateComponent } from '../../../shared/ui/page-state/page-state.component';
 
 @Component({
   selector: 'app-admin-statistics-page',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, RouterLink],
+  imports: [ReactiveFormsModule, PageHeaderComponent, PageStateComponent],
   templateUrl: './admin-statistics-page.component.html',
   styleUrl: './admin-statistics-page.component.css'
 })

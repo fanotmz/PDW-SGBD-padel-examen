@@ -1,10 +1,11 @@
 <section class="admin-closures-page">
-  <header class="page-header">
-    <p class="page-eyebrow">Administration</p>
-    <a routerLink="/admin" class="back-link">&larr; Retour &agrave; l&rsquo;administration</a>
-    <h1>Fermetures</h1>
-    <p class="page-intro">Consultez les fermetures globales et les fermetures de site.</p>
-  </header>
+  <app-page-header
+    eyebrow="Administration"
+    title="Fermetures"
+    description="Consultez les fermetures globales et les fermetures de site."
+    backLink="/admin"
+    backLabel="Retour à l’administration"
+  />
 
   @if (isLoading()) {
     <p class="page-state">Chargement en cours...</p>
@@ -24,7 +25,7 @@
         @if (isAdminGlobal()) {
           <form class="closure-form" [formGroup]="globalClosureForm" (ngSubmit)="requestGlobalClosureCreation()">
             <div class="form-header">
-              <h3>Cr&eacute;er une fermeture globale</h3>
+              <h3>Créer une fermeture globale</h3>
               <p>Une fermeture globale concerne tous les sites.</p>
             </div>
 
@@ -49,7 +50,7 @@
 
             @if (isPendingAction('global')) {
               <div class="confirmation-box">
-                <p>Confirmer la cr&eacute;ation de cette fermeture ? Des matchs futurs peuvent &ecirc;tre annul&eacute;s.</p>
+                <p>Confirmer la création de cette fermeture ? Des matchs futurs peuvent être annulés.</p>
                 <div class="form-actions">
                   <button type="button" class="button button-primary" (click)="confirmPendingAction()" [disabled]="isSubmittingGlobalClosure()">
                     Confirmer
@@ -62,7 +63,7 @@
             } @else {
               <div class="form-actions">
                 <button type="submit" class="button button-primary" [disabled]="isSubmittingGlobalClosure()">
-                  Cr&eacute;er une fermeture globale
+                  Créer une fermeture globale
                 </button>
               </div>
             }
@@ -77,7 +78,7 @@
           }
 
           @if (hasNoGlobalClosures()) {
-            <p class="page-state">Aucune fermeture globale enregistr&eacute;e.</p>
+            <p class="page-state">Aucune fermeture globale enregistrée.</p>
           } @else {
             <div class="closures-list">
               @for (closure of globalClosures(); track getGlobalClosureTrack(closure)) {
@@ -154,8 +155,8 @@
         @if (canCreateSiteClosure()) {
           <form class="closure-form" [formGroup]="siteClosureForm" (ngSubmit)="requestSiteClosureCreation()">
             <div class="form-header">
-              <h3>Cr&eacute;er une fermeture de site</h3>
-              <p>La fermeture sera appliqu&eacute;e au site affich&eacute; dans cette section.</p>
+              <h3>Créer une fermeture de site</h3>
+              <p>La fermeture sera appliquée au site affiché dans cette section.</p>
             </div>
 
             <div class="form-grid">
@@ -178,10 +179,10 @@
                 </label>
               } @else {
                 <label class="form-field">
-                  <span>Date de d&eacute;but</span>
+                  <span>Date de début</span>
                   <input type="date" formControlName="dateDebut">
                   @if (showSiteDateDebutError()) {
-                    <small>La date de d&eacute;but est obligatoire.</small>
+                    <small>La date de début est obligatoire.</small>
                   }
                 </label>
 
@@ -206,7 +207,7 @@
 
             @if (isPendingAction('site-date') || isPendingAction('site-period')) {
               <div class="confirmation-box">
-                <p>Confirmer la cr&eacute;ation de cette fermeture ? Des matchs futurs peuvent &ecirc;tre annul&eacute;s.</p>
+                <p>Confirmer la création de cette fermeture ? Des matchs futurs peuvent être annulés.</p>
                 <div class="form-actions">
                   <button type="button" class="button button-primary" (click)="confirmPendingAction()" [disabled]="isSubmittingSiteClosure()">
                     Confirmer
@@ -219,7 +220,7 @@
             } @else {
               <div class="form-actions">
                 <button type="submit" class="button button-primary" [disabled]="isSubmittingSiteClosure()">
-                  Cr&eacute;er la fermeture
+                  Créer la fermeture
                 </button>
               </div>
             }
@@ -242,7 +243,7 @@
           }
 
           @if (hasNoSiteClosures()) {
-            <p class="page-state">Aucune fermeture enregistr&eacute;e pour ce site.</p>
+            <p class="page-state">Aucune fermeture enregistrée pour ce site.</p>
           } @else {
             <div class="closures-list">
               @for (closure of siteClosures(); track getSiteClosureTrack(closure)) {
@@ -279,7 +280,7 @@
                     <form class="closure-form edit-form" [formGroup]="editSiteClosureForm" (ngSubmit)="requestSiteClosureUpdate(closure)">
                       <div class="form-header">
                         <h3>Modifier la fermeture</h3>
-                        <p>Choisissez une date unique ou une p&eacute;riode.</p>
+                        <p>Choisissez une date unique ou une période.</p>
                       </div>
 
                       <div class="form-grid">
@@ -302,10 +303,10 @@
                           </label>
                         } @else {
                           <label class="form-field">
-                            <span>Date de d&eacute;but</span>
+                            <span>Date de début</span>
                             <input type="date" formControlName="dateDebut">
                             @if (showEditDateDebutError()) {
-                              <small>La date de d&eacute;but est obligatoire.</small>
+                              <small>La date de début est obligatoire.</small>
                             }
                           </label>
 
@@ -326,7 +327,7 @@
 
                       @if (isPendingEdit(closure.id)) {
                         <div class="confirmation-box">
-                          <p>Confirmer la modification de cette fermeture ? Des matchs futurs peuvent &ecirc;tre impact&eacute;s.</p>
+                          <p>Confirmer la modification de cette fermeture ? Des matchs futurs peuvent être impactés.</p>
                           <div class="form-actions">
                             <button
                               type="button"
