@@ -1,64 +1,77 @@
-<section class="admin-page">
-  <header class="page-header">
-    <p class="page-eyebrow">Administration</p>
-    <h1>Administration</h1>
-  </header>
+<section class="mx-auto grid max-w-5xl gap-6 py-8 sm:py-12">
+  <app-page-header eyebrow="Administration" title="Administration" />
 
   @if (isLoading()) {
-    <p class="page-state">Chargement en cours...</p>
+    <app-page-state type="loading" [message]="uiMessages.admin.loading" />
   } @else if (errorMessage()) {
-    <p class="page-state is-error">{{ errorMessage() }}</p>
+    <app-page-state type="error" [message]="errorMessage()" />
   } @else if (adminInfo(); as adminInfo) {
-    <div class="page-grid">
-      <section class="top-grid">
-        <article class="info-card">
-          <h2>Espace administrateur</h2>
-          <p class="card-label">{{ scopeLabel() }}</p>
-          <p class="card-text">
-            Premi&egrave;re zone administrateur connect&eacute;e au backend via <code>GET /api/v1/admin/info</code>.
-          </p>
-        </article>
+    <div class="grid gap-4">
+      <section class="grid gap-4 md:grid-cols-2">
+        <mat-card>
+          <mat-card-header>
+            <mat-card-title>Espace administrateur</mat-card-title>
+            <mat-card-subtitle>{{ scopeLabel() }}</mat-card-subtitle>
+          </mat-card-header>
+          <mat-card-content>
+            <p class="card-text">
+              {{ adminAccessMessage() }}
+            </p>
+          </mat-card-content>
+        </mat-card>
 
-        <article class="info-card">
-          <p class="card-label">Statut API admin</p>
-          <p class="status-value" [class.is-ok]="isApiOperational()">{{ adminInfo.status }}</p>
-          <p class="page-state" [class.is-success]="isApiOperational()">
-            {{ apiStatusMessage() }}
-          </p>
-        </article>
+        <mat-card>
+          <mat-card-header>
+            <mat-card-title>Statut API admin</mat-card-title>
+          </mat-card-header>
+          <mat-card-content class="grid gap-3">
+            <p class="status-value" [class.is-ok]="isApiOperational()">{{ adminInfo.status }}</p>
+            <p class="page-state" [class.is-success]="isApiOperational()">
+              {{ apiStatusMessage() }}
+            </p>
+          </mat-card-content>
+        </mat-card>
       </section>
 
-      <section class="future-section">
-        <div class="section-heading">
-          <h2>Acc&egrave;s rapides</h2>
-          <p>Modules disponibles ou pr&eacute;paratoires.</p>
-        </div>
+      <mat-card>
+        <mat-card-header>
+          <mat-card-title>Accès rapides</mat-card-title>
+          <mat-card-subtitle>Accédez rapidement aux principales fonctions d’administration.</mat-card-subtitle>
+        </mat-card-header>
 
-        <div class="future-grid">
-          @for (card of shortcutCards(); track card.title) {
-            @if (card.route) {
-              <a [routerLink]="card.route" class="future-card future-card-link">
-                <div class="future-card-content">
-                  <h3>{{ card.title }}</h3>
-                  <p>{{ card.description }}</p>
-                  @if (card.route === '/admin/inscriptions') {
-                    <p class="future-summary">{{ registrationSummary() }}</p>
-                  }
-                </div>
-                <span class="future-badge is-active">Ouvrir</span>
-              </a>
-            } @else {
-              <article class="future-card">
-                <div class="future-card-content">
-                  <h3>{{ card.title }}</h3>
-                  <p>{{ card.description }}</p>
-                </div>
-                <span class="future-badge">&Agrave; venir</span>
-              </article>
+        <mat-card-content>
+          <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            @for (card of shortcutCards(); track card.title) {
+              @if (card.route) {
+                <a [routerLink]="card.route" class="future-card future-card-link">
+                  <div class="future-card-content">
+                    <div class="future-card-heading">
+                      <mat-icon aria-hidden="true">{{ card.icon }}</mat-icon>
+                      <h3>{{ card.title }}</h3>
+                    </div>
+                    <p>{{ card.description }}</p>
+                    @if (card.route === '/admin/inscriptions') {
+                      <p class="future-summary">{{ registrationSummary() }}</p>
+                    }
+                  </div>
+                  <span class="future-badge is-active">Ouvrir</span>
+                </a>
+              } @else {
+                <article class="future-card">
+                  <div class="future-card-content">
+                    <div class="future-card-heading">
+                      <mat-icon aria-hidden="true">{{ card.icon }}</mat-icon>
+                      <h3>{{ card.title }}</h3>
+                    </div>
+                    <p>{{ card.description }}</p>
+                  </div>
+                  <span class="future-badge">À venir</span>
+                </article>
+              }
             }
-          }
-        </div>
-      </section>
+          </div>
+        </mat-card-content>
+      </mat-card>
     </div>
   }
 </section>

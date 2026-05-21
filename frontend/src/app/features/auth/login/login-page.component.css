@@ -1,108 +1,25 @@
-.login-page {
-  display: flex;
-  justify-content: center;
-  padding: 4rem 1.5rem;
-}
-
-.login-card {
-  width: min(100%, 26rem);
-  display: grid;
-  gap: 1rem;
-  padding: 2rem;
+mat-card {
   border: 1px solid #d7e0eb;
-  border-radius: 1rem;
-  background: #ffffff;
-  box-shadow: 0 20px 45px rgba(15, 23, 42, 0.08);
+  box-shadow: var(--app-shadow);
 }
 
-h1 {
-  margin: 0;
-  font-size: 2rem;
-  color: #10233f;
-}
-
-.login-subtitle {
-  margin: 0;
-  color: #526277;
-}
-
-.field {
-  display: grid;
-  gap: 0.45rem;
-  color: #10233f;
-  font-weight: 600;
-}
-
-.password-field {
-  position: relative;
-  display: flex;
-  align-items: center;
-}
-
-input {
+mat-form-field {
   width: 100%;
-  padding: 0.8rem 0.9rem;
-  border: 1px solid #c3d0de;
-  border-radius: 0.75rem;
-  font: inherit;
 }
 
-.password-field input {
-  padding-right: 3rem;
+button[mat-flat-button] {
+  min-height: 2.75rem;
 }
 
-input:focus {
-  outline: 2px solid #8fd3c1;
-  outline-offset: 2px;
-}
-
-.submit-button {
-  padding: 0.9rem 1rem;
-  border: 0;
-  border-radius: 0.75rem;
-  background: #0f766e;
-  color: #ffffff;
-  font: inherit;
-  font-weight: 700;
-  cursor: pointer;
-}
-
-.submit-button:disabled {
-  opacity: 0.7;
-  cursor: wait;
-}
-
-.password-toggle {
-  position: absolute;
-  right: 0.35rem;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 2.25rem;
-  height: 2.25rem;
-  padding: 0;
-  border: 0;
-  border-radius: 999px;
-  background: transparent;
-  color: #526277;
-  font: inherit;
-  cursor: pointer;
-}
-
-.password-toggle:hover {
-  background: rgba(15, 118, 110, 0.08);
-  color: #10233f;
-}
-
-.password-toggle:focus-visible {
-  outline: 2px solid #8fd3c1;
-  outline-offset: 2px;
+button[mat-flat-button] mat-spinner {
+  display: inline-block;
+  margin-right: 0.5rem;
 }
 
 .error-message {
   margin: 0;
   padding: 0.8rem 0.9rem;
-  border-radius: 0.75rem;
+  border-radius: 0.5rem;
   background: #fef2f2;
   color: #b91c1c;
 }

@@ -1,127 +1,313 @@
-.home-page {
-  display: flex;
-  justify-content: center;
-  padding: 4rem 1.5rem;
+.home-shell {
+  width: min(100%, 72rem);
+  max-width: 100%;
+  min-width: 0;
+  margin: 0 auto;
+  padding: 1rem 0 2rem;
 }
 
 .home-card {
-  width: min(100%, 42rem);
-  display: grid;
-  gap: 1.25rem;
-  padding: 2rem;
+  max-width: 100%;
+  min-width: 0;
+  overflow: hidden;
   border: 1px solid #d7e0eb;
-  border-radius: 0.75rem;
+  border-radius: 0.5rem;
   background: #ffffff;
-  box-shadow: 0 20px 45px rgba(15, 23, 42, 0.08);
+  box-shadow: var(--app-shadow);
+}
+
+.home-content {
+  display: grid;
+  gap: 1.35rem;
+  min-width: 0;
+  padding: 1rem;
+}
+
+.hero-section {
+  display: grid;
+  gap: 1.35rem;
+  min-width: 0;
+}
+
+.hero-copy {
+  display: grid;
+  align-content: center;
+  gap: 1rem;
+  min-width: 0;
 }
 
 .eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  width: fit-content;
+  max-width: 100%;
   margin: 0;
-  color: #0f766e;
-  font-weight: 700;
-  text-transform: uppercase;
+  padding: 0.35rem 0.65rem;
+  border: 1px solid var(--app-primary-border);
+  border-radius: 999px;
+  background: var(--app-primary-soft);
+  color: var(--app-primary);
+  font-size: 0.82rem;
+  font-weight: 800;
   letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.eyebrow mat-icon {
+  width: 1rem;
+  height: 1rem;
+  font-size: 1rem;
 }
 
 h1 {
+  max-width: 54rem;
   margin: 0;
-  font-size: 2.2rem;
   color: #10233f;
+  font-size: clamp(1.85rem, 8vw, 2.35rem);
+  line-height: 1.08;
+  overflow-wrap: break-word;
+}
+
+.home-intro,
+.availability-note,
+.info-item p,
+.panel-row p {
+  margin: 0;
+  color: #526277;
+  line-height: 1.58;
 }
 
 .home-intro {
-  margin: 0;
-  color: #526277;
-  line-height: 1.6;
+  width: 100%;
+  max-width: 55rem;
+  font-size: 1rem;
+  overflow-wrap: break-word;
 }
 
 .action-group {
   display: flex;
-  flex-wrap: wrap;
+  flex-direction: column;
   gap: 0.75rem;
+  padding-top: 0.1rem;
 }
 
-.primary-action,
-.secondary-action,
-.disabled-action {
+.action-group a {
+  min-height: 2.9rem;
+  min-width: 0;
+  width: 100%;
+  max-width: 100%;
+  justify-content: center;
+  padding-inline: 1rem;
+  white-space: normal;
+  text-align: center;
+  line-height: 1.25;
+}
+
+.hero-panel {
+  display: grid;
+  gap: 0.65rem;
+  min-width: 0;
+  padding: 0.75rem;
+  border: 1px solid #d7e0eb;
+  border-radius: 0.5rem;
+  background: linear-gradient(180deg, #f8fbff 0%, #f1f7fb 100%);
+}
+
+.panel-row {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 0.75rem;
+  align-items: start;
+  min-width: 0;
+  padding: 0.7rem;
+  border-radius: 0.5rem;
+  background: rgba(255, 255, 255, 0.78);
+}
+
+.panel-row mat-icon,
+.feature-icon {
+  flex: 0 0 auto;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-height: 2.75rem;
-  padding: 0.8rem 1rem;
+  width: 2.5rem;
+  height: 2.5rem;
   border-radius: 0.5rem;
-  font-weight: 700;
-  text-decoration: none;
-  font: inherit;
+  background: #e0f2fe;
+  color: #075985;
 }
 
-.primary-action {
-  border: 0;
-  background: #10233f;
-  color: #ffffff;
+.panel-row mat-icon {
+  font-size: 1.35rem;
 }
 
-.secondary-action {
-  border: 1px solid #c7d3e0;
-  background: #f8fbff;
+.panel-row span {
+  display: block;
+  margin-bottom: 0.2rem;
   color: #10233f;
+  font-weight: 800;
+  overflow-wrap: break-word;
 }
 
-.disabled-action {
-  border: 1px solid #d7e0eb;
-  background: #f3f6fa;
-  color: #7a8899;
-  cursor: not-allowed;
+.panel-row div,
+.info-item {
+  min-width: 0;
 }
 
 .availability-note {
-  margin: 0;
-  color: #526277;
+  max-width: 100%;
+  padding: 0.8rem 1rem;
+  border: 1px solid #bfdbfe;
+  border-radius: 0.5rem;
+  background: #eff6ff;
 }
 
-.info-grid {
+.feature-grid {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 0.9rem;
+  grid-template-columns: 1fr;
+  gap: 1rem;
+  min-width: 0;
 }
 
 .info-item {
   display: grid;
-  gap: 0.5rem;
-  min-height: 10rem;
-  padding: 1rem;
+  align-content: start;
+  gap: 0.75rem;
+  min-height: 11.5rem;
+  padding: 1.1rem;
   border: 1px solid #d7e0eb;
   border-radius: 0.5rem;
+  background: #ffffff;
+  box-shadow: var(--app-shadow);
+  overflow-wrap: break-word;
+}
+
+.info-item:hover {
+  border-color: var(--app-primary-border);
   background: #f8fbff;
+}
+
+.feature-icon mat-icon {
+  font-size: 1.35rem;
 }
 
 .info-item h2 {
   margin: 0;
-  font-size: 1.05rem;
   color: #10233f;
+  font-size: 1.18rem;
+  line-height: 1.25;
 }
 
-.info-item p {
-  margin: 0;
-  color: #526277;
-  line-height: 1.55;
-}
-
-@media (max-width: 640px) {
-  .home-page {
-    padding: 2rem 1rem;
+@media (min-width: 640px) {
+  .home-shell {
+    padding-block: 2.25rem 3rem;
   }
 
-  .home-card {
-    padding: 1.5rem;
+  .home-content {
+    gap: 1.5rem;
+    padding: 1.6rem;
+  }
+
+  h1 {
+    font-size: clamp(2.25rem, 6vw, 2.75rem);
+    line-height: 1.06;
+  }
+
+  .home-intro {
+    font-size: clamp(1rem, 1.8vw, 1.1rem);
   }
 
   .action-group {
-    display: grid;
-    grid-template-columns: 1fr;
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 1rem;
   }
 
-  .info-grid {
-    grid-template-columns: 1fr;
+  .action-group a {
+    width: auto;
+    min-width: 11rem;
+  }
+
+  .feature-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1.15rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .home-shell {
+    padding-block: 1rem 2rem;
+  }
+
+  .home-content {
+    gap: 1rem;
+    padding: 1.5rem;
+  }
+
+  .hero-section {
+    grid-template-columns: minmax(0, 1fr) minmax(18rem, 22rem);
+    align-items: stretch;
+    gap: 1.5rem;
+  }
+
+  .hero-copy {
+    gap: 0.78rem;
+  }
+
+  h1 {
+    font-size: clamp(2.1rem, 4vw, 3.05rem);
+    line-height: 1.02;
+  }
+
+  .home-intro,
+  .availability-note,
+  .info-item p,
+  .panel-row p {
+    line-height: 1.5;
+  }
+
+  .home-intro {
+    font-size: 1.04rem;
+  }
+
+  .action-group a {
+    min-height: 2.65rem;
+  }
+
+  .hero-panel {
+    gap: 0.5rem;
+    padding: 0.65rem;
+  }
+
+  .panel-row {
+    gap: 0.65rem;
+    padding: 0.55rem;
+  }
+
+  .panel-row mat-icon,
+  .feature-icon {
+    width: 2.25rem;
+    height: 2.25rem;
+  }
+
+  .availability-note {
+    padding: 0.65rem 0.85rem;
+  }
+
+  .feature-grid {
+    gap: 0.9rem;
+  }
+
+  .info-item {
+    gap: 0.6rem;
+    min-height: 10rem;
+    padding: 1rem;
+  }
+}
+
+@media (min-width: 1280px) {
+  .feature-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
   }
 }

@@ -1,19 +1,20 @@
 <section class="admin-statistics-page">
-  <header class="page-header">
-    <p class="page-eyebrow">Administration</p>
-    <a routerLink="/admin" class="back-link">&larr; Retour &agrave; l&rsquo;administration</a>
-    <h1>Statistiques</h1>
-    <p class="page-intro">Consultez les statistiques disponibles dans votre p&eacute;rim&egrave;tre.</p>
-  </header>
+  <app-page-header
+    eyebrow="Administration"
+    title="Statistiques"
+    description="Consultez les statistiques disponibles dans votre périmètre."
+    backLink="/admin"
+    backLabel="Retour à l’administration"
+  />
 
   @if (isLoading()) {
-    <p class="page-state">Chargement en cours...</p>
+    <app-page-state type="loading" message="Chargement en cours..." />
   } @else if (errorMessage()) {
-    <p class="page-state is-error">{{ errorMessage() }}</p>
+    <app-page-state type="error" [message]="errorMessage()" />
   } @else {
     <section class="filters-panel">
       <div class="scope-block">
-        <span>P&eacute;rim&egrave;tre</span>
+        <span>Périmètre</span>
         <strong>{{ selectedScopeLabel() }}</strong>
       </div>
 
@@ -31,7 +32,7 @@
 
       <form class="period-form" [formGroup]="periodForm" (ngSubmit)="refreshStats()">
         <p class="period-help">
-          La p&eacute;riode s&rsquo;applique au chiffre d&rsquo;affaires et au nombre de matchs. Les dettes affichent l&rsquo;&eacute;tat actuel.
+          La période s’applique au chiffre d’affaires et au nombre de matchs. Les dettes affichent l’état actuel.
         </p>
 
         <label class="form-field">
@@ -51,27 +52,27 @@
     </section>
 
     @if (isLoadingStats()) {
-      <p class="page-state">Chargement des statistiques...</p>
+      <app-page-state type="loading" message="Chargement des statistiques..." />
     } @else if (statsError()) {
-      <p class="page-state is-error">{{ statsError() }}</p>
+      <app-page-state type="error" [message]="statsError()" />
     } @else if (hasStats()) {
       <div class="stats-grid">
         <article class="stat-card">
-          <span>Chiffre d&rsquo;affaires</span>
+          <span>Chiffre d’affaires</span>
           <strong>{{ formatCurrency(caStats()?.caTotal) }}</strong>
-          <p>Encaissements sur la p&eacute;riode.</p>
+          <p>Encaissements sur la période.</p>
         </article>
 
         <article class="stat-card">
           <span>Matchs</span>
           <strong>{{ formatNumber(matchsStats()?.nbMatchs) }}</strong>
-          <p>Matchs sur la p&eacute;riode.</p>
+          <p>Matchs sur la période.</p>
         </article>
 
         <article class="stat-card">
           <span>Dette totale</span>
           <strong>{{ formatCurrency(dettesStats()?.detteTotale) }}</strong>
-          <p>Solde total restant d&ucirc;.</p>
+          <p>Solde total restant dû.</p>
         </article>
 
         <article class="stat-card">
@@ -81,7 +82,7 @@
         </article>
       </div>
     } @else {
-      <p class="page-state">Aucune statistique charg&eacute;e.</p>
+      <app-page-state type="empty" message="Aucune statistique chargée." />
     }
   }
 </section>

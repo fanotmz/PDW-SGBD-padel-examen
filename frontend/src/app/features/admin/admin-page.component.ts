@@ -1,22 +1,33 @@
-import { CommonModule } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
+import { MatCardModule } from '@angular/material/card';
+import { MatIconModule } from '@angular/material/icon';
 import { RouterLink } from '@angular/router';
 import { finalize } from 'rxjs';
 import { AuthService } from '../../core/auth/auth.service';
 import { AdminInfoResponse, PendingRegistrationItem } from '../../core/admin/admin.models';
 import { AdminService } from '../../core/admin/admin.service';
+import { PageHeaderComponent } from '../../shared/ui/page-header/page-header.component';
+import { PageStateComponent } from '../../shared/ui/page-state/page-state.component';
+import { UI_MESSAGES } from '../../shared/ui/ui-messages';
 
 interface AdminShortcutCard {
   title: string;
   description: string;
+  icon: string;
   route?: string;
 }
 
 @Component({
   selector: 'app-admin-page',
   standalone: true,
-  imports: [CommonModule, RouterLink],
+  imports: [
+    RouterLink,
+    MatCardModule,
+    MatIconModule,
+    PageHeaderComponent,
+    PageStateComponent
+  ],
   templateUrl: './admin-page.component.html',
   styleUrl: './admin-page.component.css'
 })
@@ -30,6 +41,7 @@ export class AdminPageComponent implements OnInit {
   protected readonly errorMessage = signal('');
   protected readonly isLoadingRegistrations = signal(false);
   protected readonly registrationsError = signal(false);
+  protected readonly uiMessages = UI_MESSAGES;
   protected readonly canViewRegistrationRequests = computed(() => this.authService.hasRole('ROLE_ADMIN_GLOBAL'));
   protected readonly isSiteScopedAdmin = computed(
     () => this.adminInfo()?.adminType === 'SITE' || this.authService.hasRole('ROLE_ADMIN_SITE')
@@ -61,6 +73,20 @@ export class AdminPageComponent implements OnInit {
     }
 
     return 'P\u00e9rim\u00e8tre : acc\u00e8s administrateur';
+  });
+
+  protected readonly adminAccessMessage = computed(() => {
+    const adminInfo = this.adminInfo();
+
+    if (adminInfo?.adminType === 'SITE' && adminInfo.siteNom) {
+      return `Acc\u00e8s administrateur actif pour le site ${adminInfo.siteNom}.`;
+    }
+
+    if (this.authService.hasRole('ROLE_ADMIN_SITE')) {
+      return 'Acc\u00e8s administrateur actif pour le site rattach\u00e9 \u00e0 votre compte.';
+    }
+
+    return 'Acc\u00e8s administrateur actif pour votre p\u00e9rim\u00e8tre.';
   });
 
   protected readonly registrationSummary = computed(() => {
@@ -96,22 +122,24 @@ export class AdminPageComponent implements OnInit {
       cards.push({
         title: "Demandes d'inscription",
         description: 'Consultez les comptes en attente de validation.',
+        icon: 'how_to_reg',
         route: '/admin/inscriptions'
       });
     }
 
     cards.push(
-      { title: 'Joueurs', description: 'Consultez les joueurs enregistr\u00e9s dans votre p\u00e9rim\u00e8tre.', route: '/admin/joueurs' },
+      { title: 'Joueurs', description: 'Consultez les joueurs enregistr\u00e9s dans votre p\u00e9rim\u00e8tre.', icon: 'groups', route: '/admin/joueurs' },
       {
         title: this.isSiteScopedAdmin() ? 'Détail du site' : 'Détail des sites',
         description: this.isSiteScopedAdmin()
           ? 'Consultez les informations du site : terrains, jours de fermeture, horaires et matchs planifiés.'
           : 'Consultez les sites, leurs terrains, leurs jours de fermeture, leurs horaires et leurs matchs planifiés.',
+        icon: 'location_on',
         route: '/admin/sites'
       },
-      { title: 'Fermetures', description: 'Consultez les fermetures globales et les fermetures de site.', route: '/admin/fermetures' },
-      { title: 'Horaires', description: 'Consultez les horaires configur\u00e9s par site.', route: '/admin/horaires' },
-      { title: 'Statistiques', description: "Consultez le chiffre d'affaires, les matchs et les dettes.", route: '/admin/statistiques' }
+      { title: 'Fermetures', description: 'Consultez les fermetures globales et les fermetures de site.', icon: 'event_busy', route: '/admin/fermetures' },
+      { title: 'Horaires', description: 'Consultez les horaires configur\u00e9s par site.', icon: 'schedule', route: '/admin/horaires' },
+      { title: 'Statistiques', description: "Consultez le chiffre d'affaires, les matchs et les dettes.", icon: 'bar_chart', route: '/admin/statistiques' }
     );
 
     return cards;

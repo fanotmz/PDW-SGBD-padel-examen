@@ -5,6 +5,7 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { finalize } from 'rxjs';
 import { AdminMatchScope, AdminMatchStateFilter, AdminSiteMatchSummaryResponse } from '../../../core/admin/admin.models';
 import { AdminService } from '../../../core/admin/admin.service';
+import { getTemporalStatusLabel } from '../../../shared/matches/match-status.utils';
 
 @Component({
   selector: 'app-admin-site-matches-page',
@@ -104,15 +105,10 @@ export class AdminSiteMatchesPageComponent implements OnInit {
   }
 
   protected getMatchStateLabel(match: AdminSiteMatchSummaryResponse): string {
-    if (match.statut === 'ANNULE') {
-      return 'Annulé';
-    }
-
-    if (this.isPastMatch(match)) {
-      return 'Déjà joué';
-    }
-
-    return 'À venir';
+    return getTemporalStatusLabel({
+      ...match,
+      passe: this.isPastMatch(match)
+    });
   }
 
   protected isCancelled(match: AdminSiteMatchSummaryResponse): boolean {

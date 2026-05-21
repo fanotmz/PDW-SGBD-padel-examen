@@ -1,4 +1,4 @@
-import { CommonModule } from '@angular/common';
+import { DatePipe } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
@@ -10,11 +10,12 @@ import { PaiementService } from '../../../core/payments/paiement.service';
 import { Regularisation } from '../../../core/regularisations/regularisation.models';
 import { RegularisationsResponse } from '../../../core/regularisations/regularisation.models';
 import { RegularisationService } from '../../../core/regularisations/regularisation.service';
+import { PageHeaderComponent } from '../../../shared/ui/page-header/page-header.component';
 
 @Component({
   selector: 'app-espace-prive-page',
   standalone: true,
-  imports: [CommonModule, RouterLink],
+  imports: [DatePipe, RouterLink, PageHeaderComponent],
   templateUrl: './espace-prive-page.component.html',
   styleUrl: './espace-prive-page.component.css'
 })

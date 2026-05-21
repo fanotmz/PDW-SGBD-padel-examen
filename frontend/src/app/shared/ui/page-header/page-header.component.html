@@ -1,0 +1,12 @@
+<div class="page-header">
+  <p class="eyebrow">{{ eyebrow }}</p>
+  @if (backLink) {
+    <a class="back-link" [routerLink]="backLink">← {{ backLabel }}</a>
+  } @else if (backButton) {
+    <button type="button" class="back-link" (click)="emitBackClick()">← {{ backLabel }}</button>
+  }
+  <h1>{{ title }}</h1>
+  @if (description) {
+    <p class="page-intro">{{ description }}</p>
+  }
+</div>

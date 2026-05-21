@@ -3,7 +3,6 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { Component, DestroyRef, OnInit, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { RouterLink } from '@angular/router';
 import { finalize } from 'rxjs';
 import {
   PendingRegistrationItem,
@@ -15,11 +14,12 @@ import { AdminService } from '../../../core/admin/admin.service';
 import { ApiErrorResponse } from '../../../core/auth/auth.models';
 import { SiteOption } from '../../../core/sites/site.models';
 import { SitesService } from '../../../core/sites/sites.service';
+import { PageHeaderComponent } from '../../../shared/ui/page-header/page-header.component';
 
 @Component({
   selector: 'app-admin-registrations-page',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, RouterLink],
+  imports: [CommonModule, ReactiveFormsModule, PageHeaderComponent],
   templateUrl: './admin-registrations-page.component.html',
   styleUrl: './admin-registrations-page.component.css'
 })

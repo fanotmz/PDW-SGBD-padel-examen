@@ -1,16 +1,46 @@
-import { CommonModule, CurrencyPipe, DatePipe } from '@angular/common';
+import { CurrencyPipe, DatePipe, SlicePipe } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
+import { MatButtonModule } from '@angular/material/button';
+import { MatCardModule } from '@angular/material/card';
+import { MatDatepickerModule } from '@angular/material/datepicker';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatInputModule } from '@angular/material/input';
 import { RouterLink } from '@angular/router';
-import { finalize } from 'rxjs';
+import { catchError, finalize, forkJoin, of } from 'rxjs';
+import { AuthService } from '../../../core/auth/auth.service';
+import { PlayerMatchRole } from '../../../core/matches/player-match-summary.models';
+import { PlayerMatchesService } from '../../../core/matches/player-matches.service';
 import { PublicMatch } from '../../../core/matches/public-match.models';
 import { PublicMatchesService } from '../../../core/matches/public-matches.service';
+import {
+  BELGIAN_DATE_PROVIDERS,
+  formatDateForApi,
+  parseApiDateForPicker
+} from '../../../shared/date/belgian-date-formats';
+import {
+  getSecondaryMatchBadge,
+  getTemporalStatusClassName,
+  getTemporalStatusLabel
+} from '../../../shared/matches/match-status.utils';
+import { PageHeaderComponent } from '../../../shared/ui/page-header/page-header.component';
+import { PageStateComponent } from '../../../shared/ui/page-state/page-state.component';
+import { UI_MESSAGES } from '../../../shared/ui/ui-messages';
 
 type PublicMatchDisplayFilter = 'TOUS' | 'DISPONIBLES' | 'COMPLETS' | 'DEJA_JOUES';
 
 interface PublicMatchFilterOption {
   value: PublicMatchDisplayFilter;
   label: string;
+}
+
+interface PublicMatchCard {
+  match: PublicMatch;
+  temporalBadgeLabel: string;
+  temporalBadgeClass: string;
+  secondaryBadgeLabel: string;
+  secondaryBadgeClass: string;
+  detailLinkLabel: string;
 }
 
 const DISPLAY_FILTER_OPTIONS: PublicMatchFilterOption[] = [
@@ -23,14 +53,30 @@ const DISPLAY_FILTER_OPTIONS: PublicMatchFilterOption[] = [
 @Component({
   selector: 'app-public-matches-page',
   standalone: true,
-  imports: [CommonModule, RouterLink, CurrencyPipe, DatePipe],
+  imports: [
+    RouterLink,
+    CurrencyPipe,
+    DatePipe,
+    SlicePipe,
+    MatButtonModule,
+    MatCardModule,
+    MatDatepickerModule,
+    MatFormFieldModule,
+    MatInputModule,
+    PageHeaderComponent,
+    PageStateComponent
+  ],
+  providers: BELGIAN_DATE_PROVIDERS,
   templateUrl: './public-matches-page.component.html',
   styleUrl: './public-matches-page.component.css'
 })
 export class PublicMatchesPageComponent implements OnInit {
+  private readonly authService = inject(AuthService);
+  private readonly playerMatchesService = inject(PlayerMatchesService);
   private readonly publicMatchesService = inject(PublicMatchesService);
 
   protected readonly matches = signal<PublicMatch[]>([]);
+  protected readonly playerMatchRoles = signal(new Map<number, PlayerMatchRole>());
   protected readonly isLoading = signal(true);
   protected readonly errorMessage = signal('');
   protected readonly displayFilterOptions = DISPLAY_FILTER_OPTIONS;
@@ -39,7 +85,10 @@ export class PublicMatchesPageComponent implements OnInit {
     to: '',
     siteId: ''
   });
+  protected readonly fromDate = computed(() => parseApiDateForPicker(this.filters().from));
+  protected readonly toDate = computed(() => parseApiDateForPicker(this.filters().to));
   protected readonly selectedDisplayFilter = signal<PublicMatchDisplayFilter>('TOUS');
+  protected readonly uiMessages = UI_MESSAGES;
   protected readonly filteredMatches = computed(() => {
     const selectedFilter = this.selectedDisplayFilter();
 
@@ -57,21 +106,31 @@ export class PublicMatchesPageComponent implements OnInit {
       }
     });
   });
+  protected readonly filteredMatchCards = computed<PublicMatchCard[]>(() =>
+    this.filteredMatches().map((match) => ({
+      match,
+      temporalBadgeLabel: getTemporalStatusLabel(match),
+      temporalBadgeClass: getTemporalStatusClassName(match),
+      secondaryBadgeLabel: this.getSecondaryBadge(match).label,
+      secondaryBadgeClass: this.getSecondaryBadge(match).className,
+      detailLinkLabel: this.getDetailLinkLabel(match)
+    }))
+  );
   protected readonly emptyStateMessage = computed(() => {
     if (this.matches().length === 0) {
-      return 'Aucun match public disponible pour le moment.';
+      return UI_MESSAGES.publicMatches.empty;
     }
 
     switch (this.selectedDisplayFilter()) {
       case 'DISPONIBLES':
-        return 'Aucun match public disponible \u00e0 afficher pour ce filtre.';
+        return UI_MESSAGES.publicMatches.noAvailable;
       case 'COMPLETS':
-        return 'Aucun match complet \u00e0 afficher pour ce filtre.';
+        return UI_MESSAGES.publicMatches.noFull;
       case 'DEJA_JOUES':
-        return 'Aucun match d\u00e9j\u00e0 jou\u00e9 \u00e0 afficher pour ce filtre.';
+        return UI_MESSAGES.publicMatches.noPast;
       case 'TOUS':
       default:
-        return 'Aucun match public disponible pour le moment.';
+        return UI_MESSAGES.publicMatches.empty;
     }
   });
 
@@ -84,6 +143,10 @@ export class PublicMatchesPageComponent implements OnInit {
       ...current,
       [field]: value
     }));
+  }
+
+  protected updateDateFilter(field: 'from' | 'to', value: Date | null): void {
+    this.updateFilter(field, formatDateForApi(value));
   }
 
   protected submitFilters(event: Event): void {
@@ -99,9 +162,13 @@ export class PublicMatchesPageComponent implements OnInit {
     return this.selectedDisplayFilter() === filter;
   }
 
-  protected getDetailLinkLabel(match: PublicMatch): string {
-    if (!this.isMatchJoinable(match)) {
-      return 'Voir le d\u00e9tail';
+  private getSecondaryBadge(match: PublicMatch) {
+    return getSecondaryMatchBadge(match, this.getPlayerRoleForMatch(match));
+  }
+
+  private getDetailLinkLabel(match: PublicMatch): string {
+    if (this.getPlayerRoleForMatch(match) || !this.isMatchJoinable(match)) {
+      return 'Voir le détail';
     }
 
     const montant = new Intl.NumberFormat('fr-BE', {
@@ -109,34 +176,14 @@ export class PublicMatchesPageComponent implements OnInit {
       maximumFractionDigits: 2
     }).format(match.montantParJoueur);
 
-    return `Voir le d\u00e9tail / rejoindre et payer ${montant} \u20ac`;
-  }
-
-  protected getMatchBadgeLabel(match: PublicMatch): string {
-    if (match.statut === 'ANNULE') {
-      return 'Annul\u00e9';
-    }
-
-    if (this.isPastMatch(match)) {
-      return 'D\u00e9j\u00e0 jou\u00e9';
-    }
-
-    return match.complet ? 'Complet' : 'Places disponibles';
-  }
-
-  protected getMatchBadgeClass(match: PublicMatch): string {
-    if (match.statut === 'ANNULE') {
-      return 'is-cancelled';
-    }
-
-    if (this.isPastMatch(match)) {
-      return 'is-past';
-    }
-
-    return match.complet ? 'is-full' : 'is-open';
+    return `Voir le détail / rejoindre et payer ${montant} €`;
   }
 
   private isMatchJoinable(match: PublicMatch): boolean {
+    if (this.getPlayerRoleForMatch(match)) {
+      return false;
+    }
+
     if (match.complet || this.isPastMatch(match)) {
       return false;
     }
@@ -163,6 +210,10 @@ export class PublicMatchesPageComponent implements OnInit {
     return new Date(year, month - 1, day, hours, minutes);
   }
 
+  private getPlayerRoleForMatch(match: PublicMatch): PlayerMatchRole | null {
+    return this.playerMatchRoles().get(match.id) ?? null;
+  }
+
   private loadMatches(): void {
     this.isLoading.set(true);
     this.errorMessage.set('');
@@ -170,12 +221,15 @@ export class PublicMatchesPageComponent implements OnInit {
     const trimmedSiteId = filters.siteId.trim();
     const siteId = trimmedSiteId ? Number(trimmedSiteId) : null;
 
-    this.publicMatchesService
-      .getPublicMatches({
+    const publicMatches$ = this.publicMatchesService.getPublicMatches({
         from: filters.from || undefined,
         to: filters.to || undefined,
         siteId: Number.isNaN(siteId) ? null : siteId
-      })
+      });
+
+    if (!this.authService.hasPlayerProfile()) {
+      this.playerMatchRoles.set(new Map<number, PlayerMatchRole>());
+      publicMatches$
       .pipe(finalize(() => this.isLoading.set(false)))
       .subscribe({
         next: (matches) => {
@@ -183,11 +237,37 @@ export class PublicMatchesPageComponent implements OnInit {
         },
         error: (error: HttpErrorResponse) => {
           if (error.status === 0) {
-            this.errorMessage.set('Backend inaccessible.');
+            this.errorMessage.set(UI_MESSAGES.backendUnavailable);
             return;
           }
 
-          this.errorMessage.set('Impossible de charger les matchs publics.');
+          this.errorMessage.set(UI_MESSAGES.publicMatches.loadError);
+        }
+      });
+      return;
+    }
+
+    forkJoin({
+      matches: publicMatches$,
+      playerMatches: this.playerMatchesService.getMyMatches().pipe(catchError(() => of([])))
+    })
+      .pipe(finalize(() => this.isLoading.set(false)))
+      .subscribe({
+        next: ({ matches, playerMatches }) => {
+          this.matches.set(matches);
+          this.playerMatchRoles.set(
+            new Map(playerMatches.map((match) => [match.id, match.roleJoueur]))
+          );
+        },
+        error: (error: HttpErrorResponse) => {
+          this.playerMatchRoles.set(new Map<number, PlayerMatchRole>());
+
+          if (error.status === 0) {
+            this.errorMessage.set(UI_MESSAGES.backendUnavailable);
+            return;
+          }
+
+          this.errorMessage.set(UI_MESSAGES.publicMatches.loadError);
         }
       });
   }

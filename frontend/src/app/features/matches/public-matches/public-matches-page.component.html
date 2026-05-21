@@ -1,41 +1,52 @@
-<section class="matches-page">
-  <div class="page-header">
-    <p class="eyebrow">Matchs</p>
-    <h1>Matchs publics</h1>
-    <p>Consultez les matchs publics actuellement disponibles.</p>
-  </div>
+<section class="py-8 sm:py-12">
+  <app-page-header
+    eyebrow="Matchs"
+    title="Matchs publics"
+    description="Consultez les matchs publics actuellement disponibles."
+  />
 
-  <form class="filters-card" (submit)="submitFilters($event)">
-    <label class="filter-field">
-      <span>From</span>
-      <input
-        type="date"
-        [value]="filters().from"
-        (input)="updateFilter('from', $any($event.target).value)"
-      />
-    </label>
+  <mat-card class="mb-5">
+    <mat-card-content>
+      <form class="grid gap-4 md:grid-cols-[1fr_1fr_1fr_auto] md:items-start" (submit)="submitFilters($event)">
+        <mat-form-field appearance="outline">
+          <mat-label>Du</mat-label>
+          <input
+            matInput
+            [matDatepicker]="fromDatePicker"
+            [value]="fromDate()"
+            (dateChange)="updateDateFilter('from', $event.value)"
+          />
+          <mat-datepicker-toggle matIconSuffix [for]="fromDatePicker" />
+          <mat-datepicker #fromDatePicker />
+        </mat-form-field>
 
-    <label class="filter-field">
-      <span>To</span>
-      <input
-        type="date"
-        [value]="filters().to"
-        (input)="updateFilter('to', $any($event.target).value)"
-      />
-    </label>
+        <mat-form-field appearance="outline">
+          <mat-label>Au</mat-label>
+          <input
+            matInput
+            [matDatepicker]="toDatePicker"
+            [value]="toDate()"
+            (dateChange)="updateDateFilter('to', $event.value)"
+          />
+          <mat-datepicker-toggle matIconSuffix [for]="toDatePicker" />
+          <mat-datepicker #toDatePicker />
+        </mat-form-field>
 
-    <label class="filter-field">
-      <span>Site ID</span>
-      <input
-        type="number"
-        min="1"
-        [value]="filters().siteId"
-        (input)="updateFilter('siteId', $any($event.target).value)"
-      />
-    </label>
+        <mat-form-field appearance="outline">
+          <mat-label>Site ID</mat-label>
+          <input
+            matInput
+            type="number"
+            min="1"
+            [value]="filters().siteId"
+            (input)="updateFilter('siteId', $any($event.target).value)"
+          />
+        </mat-form-field>
 
-    <button type="submit" class="filters-submit">Charger</button>
-  </form>
+        <button mat-flat-button type="submit" color="primary">Charger</button>
+      </form>
+    </mat-card-content>
+  </mat-card>
 
   <div class="display-filters" aria-label="Filtrer les matchs publics">
     @for (filter of displayFilterOptions; track filter.value) {
@@ -51,55 +62,66 @@
   </div>
 
   @if (isLoading()) {
-    <p class="state-message">Chargement des matchs...</p>
+    <app-page-state type="loading" [message]="uiMessages.publicMatches.loading" />
   } @else if (errorMessage()) {
-    <p class="state-message is-error">{{ errorMessage() }}</p>
-  } @else if (filteredMatches().length === 0) {
-    <p class="state-message">{{ emptyStateMessage() }}</p>
+    <app-page-state type="error" [message]="errorMessage()" />
+  } @else if (filteredMatchCards().length === 0) {
+    <app-page-state type="empty" [message]="emptyStateMessage()" />
   } @else {
-    <div class="match-list">
-      @for (match of filteredMatches(); track match.id) {
-        <article class="match-card">
-          <div class="match-card-top">
-            <div>
-              <p class="match-site">{{ match.siteNom }}</p>
-              <h2>{{ match.terrainNom }}</h2>
+    <div class="grid gap-4">
+      @for (card of filteredMatchCards(); track card.match.id) {
+        <mat-card>
+          <mat-card-content>
+            <div class="mb-4 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+              <div>
+                <p class="match-site">{{ card.match.siteNom }}</p>
+                <h2>{{ card.match.terrainNom }}</h2>
+              </div>
+
+              <div class="badge-group">
+                <span class="status-badge" [class]=" 'status-badge ' + card.temporalBadgeClass ">
+                  {{ card.temporalBadgeLabel }}
+                </span>
+                @if (card.secondaryBadgeLabel) {
+                  <span class="status-badge" [class]=" 'status-badge ' + card.secondaryBadgeClass ">
+                    {{ card.secondaryBadgeLabel }}
+                  </span>
+                }
+              </div>
             </div>
 
-            <span class="status" [class]=" 'status ' + getMatchBadgeClass(match) ">
-              {{ getMatchBadgeLabel(match) }}
-            </span>
-          </div>
+            <dl class="match-details">
+              <div>
+                <dt>Date</dt>
+                <dd>{{ card.match.dateDebut | date:'dd/MM/yyyy' }}</dd>
+              </div>
+              <div>
+                <dt>Heure</dt>
+                <dd>{{ card.match.heureDebut | slice:0:5 }}</dd>
+              </div>
+              <div>
+                <dt>Organisateur</dt>
+                <dd>{{ card.match.organisateurMatricule }}</dd>
+              </div>
+              <div>
+                <dt>Participants</dt>
+                <dd>{{ card.match.nbParticipants }}</dd>
+              </div>
+              <div>
+                <dt>Places restantes</dt>
+                <dd>{{ card.match.placesRestantes }}</dd>
+              </div>
+              <div>
+                <dt>Montant par joueur</dt>
+                <dd>{{ card.match.montantParJoueur | currency:'EUR' }}</dd>
+              </div>
+            </dl>
 
-          <dl class="match-details">
-            <div>
-              <dt>Date</dt>
-              <dd>{{ match.dateDebut | date:'dd/MM/yyyy' }}</dd>
-            </div>
-            <div>
-              <dt>Heure</dt>
-              <dd>{{ match.heureDebut | slice:0:5 }}</dd>
-            </div>
-            <div>
-              <dt>Organisateur</dt>
-              <dd>{{ match.organisateurMatricule }}</dd>
-            </div>
-            <div>
-              <dt>Participants</dt>
-              <dd>{{ match.nbParticipants }}</dd>
-            </div>
-            <div>
-              <dt>Places restantes</dt>
-              <dd>{{ match.placesRestantes }}</dd>
-            </div>
-            <div>
-              <dt>Montant par joueur</dt>
-              <dd>{{ match.montantParJoueur | currency:'EUR' }}</dd>
-            </div>
-          </dl>
-
-          <a [routerLink]="['/matchs', match.id]" class="detail-link">{{ getDetailLinkLabel(match) }}</a>
-        </article>
+            <a mat-button [routerLink]="['/matchs', card.match.id]" color="primary">
+              {{ card.detailLinkLabel }}
+            </a>
+          </mat-card-content>
+        </mat-card>
       }
     </div>
   }

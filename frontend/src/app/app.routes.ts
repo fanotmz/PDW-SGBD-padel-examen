@@ -1,18 +1,5 @@
 import { Routes } from '@angular/router';
 import { authGuard } from './core/auth/auth.guard';
-import { LoginPageComponent } from './features/auth/login/login-page.component';
-import { RegisterPageComponent } from './features/auth/register/register-page.component';
-import { AdminClosuresPageComponent } from './features/admin/fermetures/admin-closures-page.component';
-import { AdminPlayersPageComponent } from './features/admin/joueurs/admin-players-page.component';
-import { AdminRegistrationsPageComponent } from './features/admin/inscriptions/admin-registrations-page.component';
-import { AdminPageComponent } from './features/admin/admin-page.component';
-import { HomePageComponent } from './features/home/home-page.component';
-import { CreateMatchPageComponent } from './features/matches/create-match/create-match-page.component';
-import { MatchDetailPageComponent } from './features/matches/match-detail/match-detail-page.component';
-import { MyMatchesPageComponent } from './features/matches/my-matches/my-matches-page.component';
-import { OrganizedMatchesPageComponent } from './features/matches/organized-matches/organized-matches-page.component';
-import { PublicMatchesPageComponent } from './features/matches/public-matches/public-matches-page.component';
-import { EspacePrivePageComponent } from './features/player/espace-prive/espace-prive-page.component';
 import { MainLayoutComponent } from './layout/main-layout.component';
 
 export const routes: Routes = [
@@ -20,43 +7,131 @@ export const routes: Routes = [
     path: '',
     component: MainLayoutComponent,
     children: [
-      { path: '', component: HomePageComponent },
-      { path: 'login', component: LoginPageComponent },
-      { path: 'inscription', component: RegisterPageComponent },
-      { path: 'espace-prive', component: EspacePrivePageComponent, canActivate: [authGuard] },
-      { path: 'matchs/creer', component: CreateMatchPageComponent, canActivate: [authGuard] },
-      { path: 'matchs/:id', component: MatchDetailPageComponent, canActivate: [authGuard] },
-      { path: 'me/matchs', component: MyMatchesPageComponent, canActivate: [authGuard] },
-      { path: 'me/matchs/organises', component: OrganizedMatchesPageComponent, canActivate: [authGuard] },
-      { path: 'matchs', component: PublicMatchesPageComponent, canActivate: [authGuard] },
-      { path: 'admin', component: AdminPageComponent, canActivate: [authGuard] },
-      { path: 'admin/fermetures', component: AdminClosuresPageComponent, canActivate: [authGuard] },
+      {
+        path: '',
+        loadComponent: () =>
+          import('./features/home/home-page.component').then((m) => m.HomePageComponent)
+      },
+      {
+        path: 'login',
+        loadComponent: () =>
+          import('./features/auth/login/login-page.component').then((m) => m.LoginPageComponent)
+      },
+      {
+        path: 'inscription',
+        loadComponent: () =>
+          import('./features/auth/register/register-page.component').then((m) => m.RegisterPageComponent)
+      },
+      {
+        path: 'espace-prive',
+        loadComponent: () =>
+          import('./features/player/espace-prive/espace-prive-page.component').then(
+            (m) => m.EspacePrivePageComponent
+          ),
+        canActivate: [authGuard]
+      },
+      {
+        path: 'matchs/creer',
+        loadComponent: () =>
+          import('./features/matches/create-match/create-match-page.component').then(
+            (m) => m.CreateMatchPageComponent
+          ),
+        canActivate: [authGuard]
+      },
+      {
+        path: 'matchs/:id',
+        loadComponent: () =>
+          import('./features/matches/match-detail/match-detail-page.component').then(
+            (m) => m.MatchDetailPageComponent
+          ),
+        canActivate: [authGuard]
+      },
+      {
+        path: 'me/matchs',
+        loadComponent: () =>
+          import('./features/matches/my-matches/my-matches-page.component').then(
+            (m) => m.MyMatchesPageComponent
+          ),
+        canActivate: [authGuard]
+      },
+      {
+        path: 'me/matchs/organises',
+        loadComponent: () =>
+          import('./features/matches/organized-matches/organized-matches-page.component').then(
+            (m) => m.OrganizedMatchesPageComponent
+          ),
+        canActivate: [authGuard]
+      },
+      {
+        path: 'matchs',
+        loadComponent: () =>
+          import('./features/matches/public-matches/public-matches-page.component').then(
+            (m) => m.PublicMatchesPageComponent
+          ),
+        canActivate: [authGuard]
+      },
+      {
+        path: 'admin',
+        loadComponent: () =>
+          import('./features/admin/admin-page.component').then((m) => m.AdminPageComponent),
+        canActivate: [authGuard]
+      },
+      {
+        path: 'admin/fermetures',
+        loadComponent: () =>
+          import('./features/admin/fermetures/admin-closures-page.component').then(
+            (m) => m.AdminClosuresPageComponent
+          ),
+        canActivate: [authGuard]
+      },
       {
         path: 'admin/horaires',
-        loadComponent: () => import('./features/admin/horaires/admin-schedules-page.component')
-          .then((m) => m.AdminSchedulesPageComponent),
+        loadComponent: () =>
+          import('./features/admin/horaires/admin-schedules-page.component').then(
+            (m) => m.AdminSchedulesPageComponent
+          ),
         canActivate: [authGuard]
       },
       {
         path: 'admin/sites',
-        loadComponent: () => import('./features/admin/sites/admin-sites-page.component')
-          .then((m) => m.AdminSitesPageComponent),
+        loadComponent: () =>
+          import('./features/admin/sites/admin-sites-page.component').then(
+            (m) => m.AdminSitesPageComponent
+          ),
         canActivate: [authGuard]
       },
       {
         path: 'admin/sites/:siteId/matchs',
-        loadComponent: () => import('./features/admin/site-matches/admin-site-matches-page.component')
-          .then((m) => m.AdminSiteMatchesPageComponent),
+        loadComponent: () =>
+          import('./features/admin/site-matches/admin-site-matches-page.component').then(
+            (m) => m.AdminSiteMatchesPageComponent
+          ),
         canActivate: [authGuard]
       },
       {
         path: 'admin/statistiques',
-        loadComponent: () => import('./features/admin/statistiques/admin-statistics-page.component')
-          .then((m) => m.AdminStatisticsPageComponent),
+        loadComponent: () =>
+          import('./features/admin/statistiques/admin-statistics-page.component').then(
+            (m) => m.AdminStatisticsPageComponent
+          ),
         canActivate: [authGuard]
       },
-      { path: 'admin/joueurs', component: AdminPlayersPageComponent, canActivate: [authGuard] },
-      { path: 'admin/inscriptions', component: AdminRegistrationsPageComponent, canActivate: [authGuard] }
+      {
+        path: 'admin/joueurs',
+        loadComponent: () =>
+          import('./features/admin/joueurs/admin-players-page.component').then(
+            (m) => m.AdminPlayersPageComponent
+          ),
+        canActivate: [authGuard]
+      },
+      {
+        path: 'admin/inscriptions',
+        loadComponent: () =>
+          import('./features/admin/inscriptions/admin-registrations-page.component').then(
+            (m) => m.AdminRegistrationsPageComponent
+          ),
+        canActivate: [authGuard]
+      }
     ]
   },
   { path: '**', redirectTo: '' }

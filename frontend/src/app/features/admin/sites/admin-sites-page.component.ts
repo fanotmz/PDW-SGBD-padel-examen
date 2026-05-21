@@ -1,32 +1,34 @@
-import { CommonModule } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
+import { MatButtonModule } from '@angular/material/button';
+import { MatCardModule } from '@angular/material/card';
 import { RouterLink } from '@angular/router';
 import { finalize } from 'rxjs';
+import { AuthService } from '../../../core/auth/auth.service';
 import { AdminSiteConsultationResponse, AdminSiteScheduleResponse } from '../../../core/admin/admin.models';
 import { AdminService } from '../../../core/admin/admin.service';
+import { PageHeaderComponent } from '../../../shared/ui/page-header/page-header.component';
+import { PageStateComponent } from '../../../shared/ui/page-state/page-state.component';
 
 @Component({
   selector: 'app-admin-sites-page',
   standalone: true,
-  imports: [CommonModule, RouterLink],
+  imports: [RouterLink, MatButtonModule, MatCardModule, PageHeaderComponent, PageStateComponent],
   templateUrl: './admin-sites-page.component.html',
   styleUrl: './admin-sites-page.component.css'
 })
 export class AdminSitesPageComponent implements OnInit {
+  private readonly authService = inject(AuthService);
   private readonly adminService = inject(AdminService);
 
   protected readonly sites = signal<AdminSiteConsultationResponse[]>([]);
   protected readonly isLoading = signal(true);
   protected readonly errorMessage = signal('');
-  protected readonly isSingleSiteView = computed(
-    () => !this.isLoading() && !this.errorMessage() && this.sites().length === 1
-  );
-  protected readonly pageTitle = computed(() => (this.isSingleSiteView() ? 'Détail du site' : 'Détail des sites'));
+  protected readonly pageTitle = computed(() => (this.isAdminGlobal() ? 'Détail des sites' : 'Détail du site'));
   protected readonly pageIntro = computed(() =>
-    this.isSingleSiteView()
-      ? 'Consultez les informations du site : terrains, jours de fermeture, horaires et matchs.'
-      : 'Consultez les informations des sites : terrains, jours de fermeture, horaires et matchs.'
+    this.isAdminGlobal()
+      ? 'Consultez les informations des sites : terrains, jours de fermeture, horaires et matchs.'
+      : 'Consultez les informations du site : terrains, jours de fermeture, horaires et matchs.'
   );
 
   private readonly dayLabels: Record<string, string> = {
@@ -45,6 +47,10 @@ export class AdminSitesPageComponent implements OnInit {
 
   protected hasNoSites(): boolean {
     return !this.isLoading() && !this.errorMessage() && this.sites().length === 0;
+  }
+
+  private isAdminGlobal(): boolean {
+    return this.authService.hasRole('ROLE_ADMIN_GLOBAL');
   }
 
   protected trackSite(site: AdminSiteConsultationResponse): number {

@@ -1,9 +1,9 @@
 <section class="space-page">
-  <header class="page-header">
-    <p class="page-eyebrow">Espace joueur</p>
-    <h1>Mon espace</h1>
-    <p class="page-intro">Consultez vos informations personnelles, votre solde et vos accès rapides.</p>
-  </header>
+  <app-page-header
+    eyebrow="Espace joueur"
+    title="Mon espace"
+    description="Consultez vos informations personnelles, votre solde et vos accès rapides."
+  />
 
   @if (isLoading()) {
     <p class="page-state">Chargement en cours...</p>

@@ -1,16 +1,16 @@
 <section class="my-matches-page">
-  <div class="page-header">
-    <p class="eyebrow">Mes matchs</p>
-    <h1>Mes matchs</h1>
-    <p>Retrouvez ici les matchs associ&eacute;s &agrave; votre compte joueur.</p>
-  </div>
+  <app-page-header
+    eyebrow="Mes matchs"
+    title="Mes matchs"
+    description="Retrouvez ici les matchs associés à votre compte joueur."
+  />
 
   @if (isLoading()) {
-    <p class="state-message">Chargement de vos matchs...</p>
+    <app-page-state type="loading" message="Chargement de vos matchs..." />
   } @else if (errorMessage()) {
-    <p class="state-message is-error">{{ errorMessage() }}</p>
+    <app-page-state type="error" [message]="errorMessage()" />
   } @else if (matches().length === 0) {
-    <p class="state-message">Vous n'avez aucun match pour le moment.</p>
+    <app-page-state type="empty" message="Vous n'avez aucun match pour le moment." />
   } @else {
     <div class="match-list">
       @for (match of matches(); track match.id) {
@@ -21,15 +21,19 @@
               <h2>{{ match.terrainNom }}</h2>
             </div>
 
-            <span
-              class="status-badge"
-              [class.is-cancelled]="match.statut === 'ANNULE'"
-              [class.temporal-passe]="match.statut !== 'ANNULE' && match.statutTemporel === 'PASSE'"
-              [class.temporal-aujourd_hui]="match.statut !== 'ANNULE' && match.statutTemporel === 'AUJOURD_HUI'"
-              [class.temporal-futur]="match.statut !== 'ANNULE' && match.statutTemporel === 'FUTUR'"
-            >
-              {{ getDisplayStatusLabel(match) }}
-            </span>
+            <div class="badge-group">
+              <span
+                class="status-badge"
+                [ngClass]="getStatusClassMap(match)"
+              >
+                {{ getDisplayStatusLabel(match) }}
+              </span>
+              @if (getUserBadgeLabel(match)) {
+                <span class="status-badge" [class]=" 'status-badge ' + getUserBadgeClass(match) ">
+                  {{ getUserBadgeLabel(match) }}
+                </span>
+              }
+            </div>
           </div>
 
           <dl class="match-details">
@@ -42,7 +46,7 @@
               <dd>{{ match.dateDebut | date:'HH:mm' }}</dd>
             </div>
             <div>
-              <dt>Visibilit&eacute;</dt>
+              <dt>Visibilité</dt>
               <dd>{{ match.visibilite }}</dd>
             </div>
             <div>
@@ -50,11 +54,11 @@
               <dd>{{ getDisplayStatusLabel(match) }}</dd>
             </div>
             <div>
-              <dt>R&ocirc;le du joueur</dt>
+              <dt>Rôle du joueur</dt>
               <dd>{{ match.roleJoueur }}</dd>
             </div>
             <div>
-              <dt>Paiement effectu&eacute;</dt>
+              <dt>Paiement effectué</dt>
               <dd>{{ match.paiementJoueurEffectue ? 'Oui' : 'Non' }}</dd>
             </div>
             @if (match.joursAvantMatch !== null) {
@@ -65,7 +69,7 @@
             }
           </dl>
 
-          <a [routerLink]="['/matchs', match.id]" class="detail-link">Voir le d&eacute;tail</a>
+          <a [routerLink]="['/matchs', match.id]" class="detail-link">Voir le détail</a>
         </article>
       }
     </div>

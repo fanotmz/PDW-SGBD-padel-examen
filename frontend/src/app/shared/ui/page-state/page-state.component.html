@@ -1,0 +1,12 @@
+<div
+  class="page-state"
+  [class.is-error]="type === 'error'"
+  [class.is-success]="type === 'success'"
+  [attr.role]="role"
+  aria-live="polite"
+>
+  @if (isLoading) {
+    <mat-spinner [diameter]="spinnerDiameter" />
+  }
+  <span>{{ message }}</span>
+</div>

@@ -1,4 +1,4 @@
-import { CommonModule, CurrencyPipe, DatePipe, Location } from '@angular/common';
+import { CurrencyPipe, DatePipe, KeyValuePipe, Location, SlicePipe } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
@@ -9,6 +9,13 @@ import { MatchDetail } from '../../../core/matches/match-detail.models';
 import { MatchDetailService } from '../../../core/matches/match-detail.service';
 import { MeProfile } from '../../../core/me/me.models';
 import { MeService } from '../../../core/me/me.service';
+import {
+  getSecondaryMatchBadge,
+  getTemporalStatusClassName,
+  getTemporalStatusLabel,
+  MatchUserRole
+} from '../../../shared/matches/match-status.utils';
+import { PageHeaderComponent } from '../../../shared/ui/page-header/page-header.component';
 
 interface ApiErrorBody {
   message?: string;
@@ -18,7 +25,7 @@ interface ApiErrorBody {
 @Component({
   selector: 'app-match-detail-page',
   standalone: true,
-  imports: [CommonModule, RouterLink, DatePipe, CurrencyPipe],
+  imports: [RouterLink, DatePipe, CurrencyPipe, KeyValuePipe, SlicePipe, PageHeaderComponent],
   templateUrl: './match-detail-page.component.html',
   styleUrl: './match-detail-page.component.css'
 })
@@ -67,7 +74,53 @@ export class MatchDetailPageComponent implements OnInit {
       && !!currentProfile
       && detail.participants.some((participant) => participant.matricule === currentProfile.matricule);
   });
+  protected readonly isCurrentUserOrganizer = computed(() => {
+    const detail = this.match();
+    const currentProfile = this.currentProfile();
+
+    return !!detail
+      && !!currentProfile
+      && detail.organisateurMatricule === currentProfile.matricule;
+  });
+  protected readonly currentUserRole = computed<MatchUserRole>(() => {
+    if (this.isCurrentUserOrganizer()) {
+      return 'ORGANISATEUR';
+    }
+
+    if (this.isAlreadyParticipant()) {
+      return 'PARTICIPANT';
+    }
+
+    return null;
+  });
+  protected readonly secondaryStatusLabel = computed(() => {
+    const detail = this.match();
+
+    if (!detail) {
+      return '';
+    }
+
+    return getSecondaryMatchBadge(detail, this.currentUserRole()).label;
+  });
+  protected readonly secondaryStatusClass = computed(() => {
+    const detail = this.match();
+
+    if (!detail) {
+      return '';
+    }
+
+    return getSecondaryMatchBadge(detail, this.currentUserRole()).className;
+  });
   protected readonly canShowPrivateAddForm = computed(() => this.match()?.peutAjouterJoueurPrive === true);
+  protected readonly displayStatusLabel = computed(() => {
+    const detail = this.match();
+    return detail ? getTemporalStatusLabel(detail) : '';
+  });
+  protected readonly displayStatusClass = computed(() => {
+    const detail = this.match();
+
+    return detail ? getTemporalStatusClassName(detail) : '';
+  });
 
   ngOnInit(): void {
     const idParam = this.route.snapshot.paramMap.get('id');
@@ -200,22 +253,7 @@ export class MatchDetailPageComponent implements OnInit {
   }
 
   protected getDisplayStatusLabel(detail: MatchDetail): string {
-    if (detail.statut === 'ANNULE') {
-      return 'Annul\u00e9';
-    }
-
-    const matchDay = this.getDayTimestamp(detail.dateDebut);
-    const today = this.getCurrentDayTimestamp();
-
-    if (matchDay < today) {
-      return 'D\u00e9j\u00e0 jou\u00e9';
-    }
-
-    if (matchDay > today) {
-      return '\u00c0 venir';
-    }
-
-    return 'Aujourd\u2019hui';
+    return getTemporalStatusLabel(detail);
   }
 
   protected isCancelled(detail: MatchDetail): boolean {
@@ -366,15 +404,4 @@ export class MatchDetailPageComponent implements OnInit {
     return {};
   }
 
-  private getCurrentDayTimestamp(): number {
-    const now = new Date();
-
-    return new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
-  }
-
-  private getDayTimestamp(dateValue: string): number {
-    const [year, month, day] = dateValue.split('-').map((value) => Number(value));
-
-    return new Date(year, month - 1, day).getTime();
-  }
 }

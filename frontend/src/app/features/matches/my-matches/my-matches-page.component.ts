@@ -1,15 +1,22 @@
-import { CommonModule, DatePipe } from '@angular/common';
+import { DatePipe, NgClass } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { finalize } from 'rxjs';
 import { PlayerMatchSummary } from '../../../core/matches/player-match-summary.models';
 import { PlayerMatchesService } from '../../../core/matches/player-matches.service';
+import {
+  getMatchStatusClassMap,
+  getMatchStatusLabel,
+  getSecondaryMatchBadge
+} from '../../../shared/matches/match-status.utils';
+import { PageHeaderComponent } from '../../../shared/ui/page-header/page-header.component';
+import { PageStateComponent } from '../../../shared/ui/page-state/page-state.component';
 
 @Component({
   selector: 'app-my-matches-page',
   standalone: true,
-  imports: [CommonModule, RouterLink, DatePipe],
+  imports: [NgClass, RouterLink, DatePipe, PageHeaderComponent, PageStateComponent],
   templateUrl: './my-matches-page.component.html',
   styleUrl: './my-matches-page.component.css'
 })
@@ -25,19 +32,19 @@ export class MyMatchesPageComponent implements OnInit {
   }
 
   protected getDisplayStatusLabel(match: PlayerMatchSummary): string {
-    if (match.statut === 'ANNULE') {
-      return 'Annul\u00e9';
-    }
+    return getMatchStatusLabel(match);
+  }
 
-    switch (match.statutTemporel) {
-      case 'PASSE':
-        return 'D\u00e9j\u00e0 jou\u00e9';
-      case 'AUJOURD_HUI':
-        return 'Aujourd\u2019hui';
-      case 'FUTUR':
-      default:
-        return '\u00c0 venir';
-    }
+  protected getStatusClassMap(match: PlayerMatchSummary): Record<string, boolean> {
+    return getMatchStatusClassMap(match);
+  }
+
+  protected getUserBadgeLabel(match: PlayerMatchSummary): string {
+    return getSecondaryMatchBadge(match, match.roleJoueur).label;
+  }
+
+  protected getUserBadgeClass(match: PlayerMatchSummary): string {
+    return getSecondaryMatchBadge(match, match.roleJoueur).className;
   }
 
   private loadMatches(): void {

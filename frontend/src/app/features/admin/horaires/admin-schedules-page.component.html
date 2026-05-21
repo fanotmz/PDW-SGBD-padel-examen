@@ -1,10 +1,11 @@
 <section class="admin-schedules-page">
-  <header class="page-header">
-    <p class="page-eyebrow">Administration</p>
-    <a routerLink="/admin" class="back-link">&larr; Retour &agrave; l&rsquo;administration</a>
-    <h1>Horaires</h1>
-    <p class="page-intro">Consultez et g&eacute;rez les horaires configur&eacute;s par site.</p>
-  </header>
+  <app-page-header
+    eyebrow="Administration"
+    title="Horaires"
+    description="Consultez et gérez les horaires configurés par site."
+    backLink="/admin"
+    backLabel="Retour à l’administration"
+  />
 
   @if (isLoading()) {
     <p class="page-state">Chargement en cours...</p>
@@ -39,24 +40,24 @@
     @if (canManageSchedules()) {
       <form class="schedule-form" [formGroup]="createScheduleForm" (ngSubmit)="requestCreateSchedule()">
         <div class="form-header">
-          <h2>Cr&eacute;er un horaire</h2>
+          <h2>Créer un horaire</h2>
           <p>Ajoutez une configuration annuelle pour le site courant.</p>
         </div>
 
         <div class="form-grid">
           <label class="form-field">
-            <span>Ann&eacute;e</span>
+            <span>Année</span>
             <input type="number" formControlName="annee" inputmode="numeric">
             @if (showCreateYearError()) {
-              <small>L&rsquo;ann&eacute;e est obligatoire.</small>
+              <small>L’année est obligatoire.</small>
             }
           </label>
 
           <label class="form-field">
-            <span>Heure d&rsquo;ouverture</span>
+            <span>Heure d’ouverture</span>
             <input type="time" formControlName="heureOuverture">
             @if (showCreateOpeningError()) {
-              <small>L&rsquo;heure d&rsquo;ouverture est obligatoire.</small>
+              <small>L’heure d’ouverture est obligatoire.</small>
             }
           </label>
 
@@ -64,7 +65,7 @@
             <span>Heure de fermeture</span>
             <input type="time" formControlName="heureFermeture">
             @if (showCreateClosingError()) {
-              <small>L&rsquo;heure de fermeture est obligatoire.</small>
+              <small>L’heure de fermeture est obligatoire.</small>
             }
           </label>
         </div>
@@ -75,7 +76,7 @@
 
         @if (pendingCreateConfirmation()) {
           <div class="confirmation-box">
-            <p>Confirmer la cr&eacute;ation de cet horaire ?</p>
+            <p>Confirmer la création de cet horaire ?</p>
             <div class="form-actions">
               <button type="button" class="button button-primary" (click)="confirmCreateSchedule()" [disabled]="isSubmittingCreate()">
                 Confirmer
@@ -88,7 +89,7 @@
         } @else {
           <div class="form-actions">
             <button type="submit" class="button button-primary" [disabled]="isSubmittingCreate()">
-              Cr&eacute;er un horaire
+              Créer un horaire
             </button>
           </div>
         }
@@ -100,14 +101,14 @@
     } @else if (schedulesError()) {
       <p class="page-state is-error">{{ schedulesError() }}</p>
     } @else if (hasNoSchedules()) {
-      <p class="page-state">Aucun horaire enregistr&eacute; pour ce site.</p>
+      <p class="page-state">Aucun horaire enregistré pour ce site.</p>
     } @else {
       <div class="schedules-list">
         @for (schedule of schedules(); track trackSchedule(schedule)) {
           <article class="schedule-card">
             <div class="schedule-heading">
               <div>
-                <span>Ann&eacute;e</span>
+                <span>Année</span>
                 <h2>{{ schedule.annee }}</h2>
               </div>
 
@@ -146,23 +147,23 @@
             @if (isEditingSchedule(schedule.id)) {
               <form class="schedule-form is-inline" [formGroup]="editScheduleForm" (ngSubmit)="requestUpdateSchedule(schedule)">
                 <div class="form-header">
-                  <h3>Modifier l&rsquo;horaire</h3>
+                  <h3>Modifier l’horaire</h3>
                 </div>
 
                 <div class="form-grid">
                   <label class="form-field">
-                    <span>Ann&eacute;e</span>
+                    <span>Année</span>
                     <input type="number" formControlName="annee" inputmode="numeric">
                     @if (showEditYearError()) {
-                      <small>L&rsquo;ann&eacute;e est obligatoire.</small>
+                      <small>L’année est obligatoire.</small>
                     }
                   </label>
 
                   <label class="form-field">
-                    <span>Heure d&rsquo;ouverture</span>
+                    <span>Heure d’ouverture</span>
                     <input type="time" formControlName="heureOuverture">
                     @if (showEditOpeningError()) {
-                      <small>L&rsquo;heure d&rsquo;ouverture est obligatoire.</small>
+                      <small>L’heure d’ouverture est obligatoire.</small>
                     }
                   </label>
 
@@ -170,7 +171,7 @@
                     <span>Heure de fermeture</span>
                     <input type="time" formControlName="heureFermeture">
                     @if (showEditClosingError()) {
-                      <small>L&rsquo;heure de fermeture est obligatoire.</small>
+                      <small>L’heure de fermeture est obligatoire.</small>
                     }
                   </label>
                 </div>

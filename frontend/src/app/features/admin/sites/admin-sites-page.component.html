@@ -1,68 +1,70 @@
-<section class="admin-sites-page">
-  <header class="page-header">
-    <p class="page-eyebrow">Administration</p>
-    <a routerLink="/admin" class="back-link">← Retour à l’administration</a>
-    <h1>{{ pageTitle() }}</h1>
-    <p class="page-intro">{{ pageIntro() }}</p>
-  </header>
+<section class="mx-auto grid max-w-5xl gap-6 py-8 sm:py-12">
+  <app-page-header
+    eyebrow="Administration"
+    [title]="pageTitle()"
+    [description]="pageIntro()"
+    backLink="/admin"
+    backLabel="Retour à l'administration"
+  />
 
   @if (isLoading()) {
-    <p class="page-state">Chargement en cours...</p>
+    <app-page-state type="loading" message="Chargement en cours..." />
   } @else if (errorMessage()) {
-    <p class="page-state is-error">{{ errorMessage() }}</p>
+    <app-page-state type="error" [message]="errorMessage()" />
   } @else if (hasNoSites()) {
-    <p class="page-state">Aucun site accessible.</p>
+    <app-page-state type="empty" message="Aucun site accessible." />
   } @else {
-    <div class="sites-list">
+    <div class="grid gap-4">
       @for (site of sites(); track trackSite(site)) {
-        <article class="site-card">
-          <div class="site-heading">
-            <div>
-              <span>Site</span>
-              <h2>{{ site.nom }}</h2>
-            </div>
-            <div class="site-actions">
-              <p>{{ site.ville }}</p>
-              <a class="site-action-link" [routerLink]="['/admin/sites', site.id, 'matchs']">
+        <mat-card>
+          <mat-card-header>
+            <mat-card-title>{{ site.nom }}</mat-card-title>
+            <mat-card-subtitle>{{ site.ville }}</mat-card-subtitle>
+          </mat-card-header>
+
+          <mat-card-content class="grid gap-4">
+            <div class="flex flex-col gap-3 border-b border-slate-200 pb-4 sm:flex-row sm:items-center sm:justify-between">
+              <p class="site-meta">Site</p>
+              <a mat-stroked-button color="primary" [routerLink]="['/admin/sites', site.id, 'matchs']">
                 Consulter les matchs
               </a>
             </div>
-          </div>
 
-          <section class="site-section">
-            <h3>Jours de fermeture récurrents</h3>
-            <p>{{ getClosingDaysLabel(site) }}</p>
-          </section>
+            <section class="site-section">
+              <h3>Jours de fermeture récurrents</h3>
+              <p>{{ getClosingDaysLabel(site) }}</p>
+            </section>
 
-          <section class="site-section">
-            <h3>Terrains</h3>
-            @if (site.terrains.length === 0) {
-              <p>Aucun terrain enregistré pour ce site.</p>
-            } @else {
-              <ul class="compact-list">
-                @for (terrain of site.terrains; track terrain.id) {
-                  <li>{{ terrain.nom }}</li>
-                }
-              </ul>
-            }
-          </section>
+            <section class="site-section">
+              <h3>Terrains</h3>
+              @if (site.terrains.length === 0) {
+                <p>Aucun terrain enregistré pour ce site.</p>
+              } @else {
+                <ul class="compact-list">
+                  @for (terrain of site.terrains; track terrain.id) {
+                    <li>{{ terrain.nom }}</li>
+                  }
+                </ul>
+              }
+            </section>
 
-          <section class="site-section">
-            <h3>Horaires configurés</h3>
-            @if (site.horaires.length === 0) {
-              <p>Aucun horaire configuré pour ce site.</p>
-            } @else {
-              <div class="schedules-grid">
-                @for (schedule of site.horaires; track trackSchedule(schedule)) {
-                  <article class="schedule-card">
-                    <span>Année {{ schedule.annee }}</span>
-                    <p>{{ formatTime(schedule.heureOuverture) }} → {{ formatTime(schedule.heureFermeture) }}</p>
-                  </article>
-                }
-              </div>
-            }
-          </section>
-        </article>
+            <section class="site-section">
+              <h3>Horaires configurés</h3>
+              @if (site.horaires.length === 0) {
+                <p>Aucun horaire configuré pour ce site.</p>
+              } @else {
+                <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                  @for (schedule of site.horaires; track trackSchedule(schedule)) {
+                    <article class="schedule-card">
+                      <span>Année {{ schedule.annee }}</span>
+                      <p>{{ formatTime(schedule.heureOuverture) }} → {{ formatTime(schedule.heureFermeture) }}</p>
+                    </article>
+                  }
+                </div>
+              }
+            </section>
+          </mat-card-content>
+        </mat-card>
       }
     </div>
   }

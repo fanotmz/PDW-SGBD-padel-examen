@@ -1,40 +1,147 @@
-<div class="layout-shell">
+<div class="layout-shell min-h-screen">
   <header class="main-header">
-    <div class="header-inner">
-      <div class="header-start">
-        <a class="brand" routerLink="/">Padel Manager</a>
+    <div class="toolbar-inner" role="navigation" aria-label="Navigation principale">
+      <a class="brand" routerLink="/">Padel Manager</a>
 
-        <nav class="main-nav" aria-label="Navigation principale">
-          <a routerLink="/" routerLinkActive="is-active" [routerLinkActiveOptions]="{ exact: true }">Accueil</a>
+      <nav class="desktop-nav" aria-label="Navigation principale">
+        <a
+          class="nav-link"
+          routerLink="/"
+          routerLinkActive="is-active"
+          [routerLinkActiveOptions]="{ exact: true }"
+        >
+          Accueil
+        </a>
 
-          @if (authService.isAuthenticatedState()) {
-            @if (authService.isAdmin()) {
-              <a routerLink="/admin" routerLinkActive="is-active">Administration</a>
-            }
+        @if (authService.hasPlayerProfile()) {
+          <a class="nav-link" routerLink="/espace-prive" routerLinkActive="is-active">Mon espace</a>
+          <a class="nav-link" routerLink="/matchs" routerLinkActive="is-active">Matchs publics</a>
+          <a class="nav-link" routerLink="/matchs/creer" routerLinkActive="is-active">Créer un match</a>
+          <button class="nav-link" type="button" [matMenuTriggerFor]="playerMenu">Mes matchs</button>
+        }
 
-            @if (!authService.isAdmin() && authService.hasPlayerProfile()) {
-              <a routerLink="/espace-prive" routerLinkActive="is-active">Mon espace</a>
-              <a routerLink="/matchs/creer" routerLinkActive="is-active">Cr&eacute;er un match</a>
-              <a routerLink="/me/matchs" routerLinkActive="is-active">Mes matchs</a>
-              <a routerLink="/me/matchs/organises" routerLinkActive="is-active">Matchs organis&eacute;s</a>
-              <a routerLink="/matchs" routerLinkActive="is-active">Matchs</a>
-            }
-          } @else {
-            <a routerLink="/login" routerLinkActive="is-active">Connexion</a>
-          }
-        </nav>
-      </div>
+        @if (authService.isAdmin()) {
+          <a class="nav-link" routerLink="/admin" routerLinkActive="is-active">Administration</a>
+          <a class="nav-link" routerLink="/admin/sites" routerLinkActive="is-active">{{ adminSitesLabel() }}</a>
+          <a class="nav-link" routerLink="/admin/statistiques" routerLinkActive="is-active">Statistiques</a>
+          <button class="nav-link" type="button" [matMenuTriggerFor]="adminMenu">Gestion</button>
+        }
 
-      <div class="header-actions">
+        @if (!authService.isAuthenticatedState()) {
+          <a class="nav-link" routerLink="/login" routerLinkActive="is-active">Connexion</a>
+        }
+      </nav>
+
+      <div class="desktop-actions">
         @if (authService.isAuthenticatedState()) {
-          <span class="session-badge">Connect&eacute;</span>
-          <button type="button" class="logout-button" (click)="logout()">Se d&eacute;connecter</button>
+          <span class="session-badge">Connecté</span>
+          <button class="logout-button" type="button" (click)="logout()">
+            Se déconnecter
+          </button>
         }
       </div>
+
+      <button
+        type="button"
+        class="mobile-menu-button"
+        aria-label="Ouvrir le menu"
+        [matMenuTriggerFor]="mobileMenu"
+      >
+        <mat-icon>menu</mat-icon>
+      </button>
     </div>
   </header>
 
-  <main class="main-content">
+  <mat-menu #playerMenu="matMenu">
+    <a mat-menu-item routerLink="/me/matchs">
+      <mat-icon>event_available</mat-icon>
+      <span>Mes matchs</span>
+    </a>
+    <a mat-menu-item routerLink="/me/matchs/organises">
+      <mat-icon>groups</mat-icon>
+      <span>Matchs organisés</span>
+    </a>
+  </mat-menu>
+
+  <mat-menu #adminMenu="matMenu">
+    <a mat-menu-item routerLink="/admin/fermetures">
+      <mat-icon>event_busy</mat-icon>
+      <span>Fermetures</span>
+    </a>
+    <a mat-menu-item routerLink="/admin/horaires">
+      <mat-icon>schedule</mat-icon>
+      <span>Horaires</span>
+    </a>
+  </mat-menu>
+
+  <mat-menu #mobileMenu="matMenu">
+    <a mat-menu-item routerLink="/">
+      <mat-icon>home</mat-icon>
+      <span>Accueil</span>
+    </a>
+
+    @if (authService.hasPlayerProfile()) {
+      <a mat-menu-item routerLink="/espace-prive">
+        <mat-icon>account_circle</mat-icon>
+        <span>Mon espace</span>
+      </a>
+      <a mat-menu-item routerLink="/matchs">
+        <mat-icon>sports_tennis</mat-icon>
+        <span>Matchs publics</span>
+      </a>
+      <a mat-menu-item routerLink="/matchs/creer">
+        <mat-icon>add_circle</mat-icon>
+        <span>Créer un match</span>
+      </a>
+      <a mat-menu-item routerLink="/me/matchs">
+        <mat-icon>event_available</mat-icon>
+        <span>Mes matchs</span>
+      </a>
+      <a mat-menu-item routerLink="/me/matchs/organises">
+        <mat-icon>groups</mat-icon>
+        <span>Matchs organisés</span>
+      </a>
+    }
+
+    @if (authService.isAdmin()) {
+      <a mat-menu-item routerLink="/admin">
+        <mat-icon>admin_panel_settings</mat-icon>
+        <span>Administration</span>
+      </a>
+      <a mat-menu-item routerLink="/admin/sites">
+        <mat-icon>location_on</mat-icon>
+        <span>{{ adminSitesLabel() }}</span>
+      </a>
+      <a mat-menu-item routerLink="/admin/statistiques">
+        <mat-icon>bar_chart</mat-icon>
+        <span>Statistiques</span>
+      </a>
+      <a mat-menu-item routerLink="/admin/fermetures">
+        <mat-icon>event_busy</mat-icon>
+        <span>Fermetures</span>
+      </a>
+      <a mat-menu-item routerLink="/admin/horaires">
+        <mat-icon>schedule</mat-icon>
+        <span>Horaires</span>
+      </a>
+    }
+
+    @if (!authService.isAuthenticatedState()) {
+      <a mat-menu-item routerLink="/login">
+        <mat-icon>login</mat-icon>
+        <span>Connexion</span>
+      </a>
+    }
+
+    @if (authService.isAuthenticatedState()) {
+      <button mat-menu-item type="button" (click)="logout()">
+        <mat-icon>logout</mat-icon>
+        <span>Se déconnecter</span>
+      </button>
+    }
+  </mat-menu>
+
+  <main class="main-content mx-auto w-full max-w-6xl px-4 pb-10 sm:px-6 lg:px-8">
     <router-outlet />
   </main>
 </div>

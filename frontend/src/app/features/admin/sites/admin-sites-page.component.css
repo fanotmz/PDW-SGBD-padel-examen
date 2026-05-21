@@ -1,125 +1,29 @@
-.admin-sites-page {
-  width: min(100%, 64rem);
-  margin: 0 auto;
-  display: grid;
-  gap: 1.5rem;
-  padding: 3rem 0;
-}
-
-.page-header {
-  display: grid;
-  gap: 0.5rem;
-}
-
-.page-eyebrow {
-  margin: 0;
-  color: #0f766e;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
-
-.back-link {
-  width: fit-content;
-  color: #0f766e;
-  font-weight: 700;
-  text-decoration: none;
-}
-
-.back-link:hover {
-  text-decoration: underline;
-}
-
-.page-header h1 {
-  margin: 0;
-  font-size: 2.2rem;
-  color: #10233f;
-}
-
-.page-intro,
-.site-section p,
-.site-heading p {
+.site-section p {
   margin: 0;
   color: #526277;
 }
 
-.page-state {
-  margin: 0;
-  padding: 1rem 1.25rem;
+mat-card {
   border: 1px solid #d7e0eb;
-  border-radius: 0.5rem;
-  background: #ffffff;
-  color: #2c3a4b;
+  box-shadow: var(--app-shadow);
 }
 
-.page-state.is-error {
-  border-color: #ef4444;
-  background: #fef2f2;
-  color: #b91c1c;
-}
-
-.sites-list {
-  display: grid;
-  gap: 1rem;
-}
-
-.site-card {
-  display: grid;
-  gap: 1rem;
-  padding: 1.35rem;
-  border: 1px solid #d7e0eb;
-  border-radius: 0.5rem;
-  background: #ffffff;
-  box-shadow: 0 18px 38px rgba(15, 23, 42, 0.06);
-}
-
-.site-heading {
-  display: flex;
-  justify-content: space-between;
-  gap: 1rem;
-  border-bottom: 1px solid #e5edf6;
-  padding-bottom: 0.9rem;
-}
-
-.site-actions {
-  display: grid;
-  justify-items: end;
-  gap: 0.55rem;
-}
-
-.site-action-link {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 2.35rem;
-  padding: 0.45rem 0.8rem;
-  border: 1px solid #0f766e;
-  border-radius: 0.5rem;
-  color: #0f766e;
-  font-weight: 800;
-  text-decoration: none;
-}
-
-.site-action-link:hover {
-  background: #ecfdf5;
-}
-
-.site-heading span,
+.site-meta,
 .schedule-card span {
+  margin: 0;
   color: #526277;
   font-size: 0.86rem;
   font-weight: 700;
 }
 
-.site-heading h2,
-.site-section h3 {
-  margin: 0;
-  color: #10233f;
-}
-
 .site-section {
   display: grid;
   gap: 0.55rem;
+}
+
+.site-section h3 {
+  margin: 0;
+  color: #10233f;
 }
 
 .compact-list {
@@ -138,12 +42,6 @@
   background: #f8fbff;
   color: #10233f;
   font-weight: 700;
-}
-
-.schedules-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
-  gap: 0.75rem;
 }
 
 .schedule-card {

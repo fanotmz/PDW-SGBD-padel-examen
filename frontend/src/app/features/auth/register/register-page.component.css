@@ -12,12 +12,12 @@
   border: 1px solid #d7e0eb;
   border-radius: 0.75rem;
   background: #ffffff;
-  box-shadow: 0 20px 45px rgba(15, 23, 42, 0.08);
+  box-shadow: var(--app-shadow);
 }
 
 .eyebrow {
   margin: 0;
-  color: #0f766e;
+  color: var(--app-primary);
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.08em;
@@ -61,7 +61,7 @@ select {
 
 input:focus,
 select:focus {
-  outline: 2px solid #8fd3c1;
+  outline: 2px solid var(--app-primary-border);
   outline-offset: 2px;
 }
 
@@ -103,7 +103,7 @@ select:disabled {
 }
 
 .password-toggle:focus-visible {
-  outline: 2px solid #8fd3c1;
+  outline: 2px solid var(--app-primary-border);
   outline-offset: 2px;
 }
 
