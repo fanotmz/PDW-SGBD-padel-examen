@@ -77,7 +77,7 @@ public class JoueurService {
 
         if (type == TypeJoueur.SITE) {
             if (siteId == null) {
-                throw new BusinessException("Un joueur SITE doit etre lie a un site");
+                throw new BusinessException("Un joueur SITE doit être lié à un site");
             }
             site = siteRepository.findById(siteId)
                     .orElseThrow(() -> new NotFoundException("Site introuvable"));

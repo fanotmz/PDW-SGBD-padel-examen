@@ -97,11 +97,11 @@ class MeControllerTest {
     @Test
     void getMe_forbidden_si_aucun_joueur_lie() throws Exception {
         when(joueurService.getCurrentJoueurProfile())
-                .thenThrow(new ForbiddenException("Aucun joueur lie a l'utilisateur authentifie."));
+                .thenThrow(new ForbiddenException("Aucun joueur lié à l'utilisateur authentifié."));
 
         mvc.perform(get("/api/v1/me"))
                 .andExpect(status().isForbidden())
-                .andExpect(jsonPath("$.message").value("Aucun joueur lie a l'utilisateur authentifie."));
+                .andExpect(jsonPath("$.message").value("Aucun joueur lié à l'utilisateur authentifié."));
     }
 
     @Test
@@ -279,10 +279,10 @@ class MeControllerTest {
     @Test
     void getMyStats_forbidden_si_aucun_joueur_lie() throws Exception {
         when(meStatsService.getCurrentUserStats())
-                .thenThrow(new ForbiddenException("Aucun joueur lie a l'utilisateur authentifie."));
+                .thenThrow(new ForbiddenException("Aucun joueur lié à l'utilisateur authentifié."));
 
         mvc.perform(get("/api/v1/me/stats"))
                 .andExpect(status().isForbidden())
-                .andExpect(jsonPath("$.message").value("Aucun joueur lie a l'utilisateur authentifie."));
+                .andExpect(jsonPath("$.message").value("Aucun joueur lié à l'utilisateur authentifié."));
     }
 }

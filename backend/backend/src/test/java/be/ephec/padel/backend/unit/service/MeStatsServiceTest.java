@@ -130,10 +130,10 @@ class MeStatsServiceTest {
     @Test
     void getCurrentUserStats_propage_forbidden_si_aucun_joueur_lie() {
         when(currentUserFacade.getCurrentJoueur())
-                .thenThrow(new ForbiddenException("Aucun joueur lie a l'utilisateur authentifie."));
+                .thenThrow(new ForbiddenException("Aucun joueur lié à l'utilisateur authentifié."));
 
         assertThatThrownBy(() -> service.getCurrentUserStats())
                 .isInstanceOf(ForbiddenException.class)
-                .hasMessage("Aucun joueur lie a l'utilisateur authentifie.");
+                .hasMessage("Aucun joueur lié à l'utilisateur authentifié.");
     }
 }

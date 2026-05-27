@@ -91,13 +91,13 @@ class ParticipationControllerTest {
         long matchId = 10L;
 
         when(participationService.rejoindreEtPayerMatchPublic(eq(matchId)))
-                .thenThrow(new BusinessException("Match dÃ©jÃ  complet"));
+                .thenThrow(new BusinessException("Match déjà complet"));
 
         mvc.perform(post("/api/v1/matchs/{matchId}/participants/public", matchId)
                         .with(csrf()))
                 .andExpect(status().isBadRequest())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-                .andExpect(jsonPath("$.message").value("Match dÃ©jÃ  complet"));
+                .andExpect(jsonPath("$.message").value("Match déjà complet"));
     }
 
     @Test
@@ -157,7 +157,7 @@ class ParticipationControllerTest {
         long matchId = 11L;
 
         when(participationService.ajouterJoueurParOrganisateur(eq(matchId), eq("J009")))
-                .thenThrow(new BusinessException("Seul l'organisateur peut ajouter des joueurs Ã  ce match."));
+                .thenThrow(new BusinessException("Seul l'organisateur peut ajouter des joueurs à ce match."));
 
         mvc.perform(post("/api/v1/matchs/{matchId}/participants/prive", matchId)
                         .with(csrf())
@@ -167,6 +167,6 @@ class ParticipationControllerTest {
                                 """))
                 .andExpect(status().isBadRequest())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-                .andExpect(jsonPath("$.message").value("Seul l'organisateur peut ajouter des joueurs Ã  ce match."));
+                .andExpect(jsonPath("$.message").value("Seul l'organisateur peut ajouter des joueurs à ce match."));
     }
 }

@@ -122,12 +122,12 @@ public class AnnulationMatchService {
                 .orElseThrow(() -> new NotFoundException("Match introuvable"));
 
         if (match.getStatut() != MatchStatut.PLANIFIE) {
-            throw new BusinessException("Seul un match planifie peut etre annule.");
+            throw new BusinessException("Seul un match planifié peut être annulé.");
         }
 
         LocalDateTime now = LocalDateTime.now(clock);
         if (match.getDateDebut() == null || !match.getDateDebut().isAfter(now)) {
-            throw new BusinessException("Seul un match futur peut etre annule.");
+            throw new BusinessException("Seul un match futur peut être annulé.");
         }
 
         annulerMatchCharge(match, mode);

@@ -103,10 +103,10 @@ public class RegularisationService {
         );
 
         if (montantRestant.signum() <= 0) {
-            throw new BusinessException("Aucune dette d'annulation tardive a regulariser.");
+            throw new BusinessException("Aucune dette d'annulation tardive à régulariser.");
         }
         if (montantValide.compareTo(montantRestant) > 0) {
-            throw new BusinessException("Montant trop eleve. Reste a regulariser = " + montantRestant);
+            throw new BusinessException("Montant trop élevé. Reste à régulariser = " + montantRestant);
         }
 
         Long matchId = participation.getMatch() == null ? null : participation.getMatch().getId();
@@ -174,7 +174,7 @@ public class RegularisationService {
     private void verifierParticipationCourante(Joueur joueur, Participation participation) {
         if (joueur == null || participation.getJoueur() == null
                 || !joueur.getMatricule().equals(participation.getJoueur().getMatricule())) {
-            throw new ForbiddenException("Seul le joueur concerne peut regulariser cette dette.");
+            throw new ForbiddenException("Seul le joueur concerné peut régulariser cette dette.");
         }
     }
 
@@ -182,7 +182,7 @@ public class RegularisationService {
         MatchPadel match = participation.getMatch();
         if (match == null || match.getOrganisateur() == null
                 || !joueur.getMatricule().equals(match.getOrganisateur().getMatricule())) {
-            throw new BusinessException("Cette regularisation est reservee a l'organisateur du match.");
+            throw new BusinessException("Cette régularisation est réservée à l'organisateur du match.");
         }
     }
 }

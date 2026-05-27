@@ -559,10 +559,10 @@ export class CreateMatchPageComponent implements OnInit {
     const date = this.extractIsoDateFromMessage(message);
 
     if (date) {
-      return `Vous \u00eates actuellement p\u00e9nalis\u00e9 et ne pouvez pas cr\u00e9er de nouveau match jusqu\u2019au ${date} inclus.`;
+      return `Vous êtes actuellement pénalisé et ne pouvez pas créer de nouveau match jusqu’au ${date} inclus.`;
     }
 
-    return 'Vous \u00eates actuellement p\u00e9nalis\u00e9 et ne pouvez pas cr\u00e9er de nouveau match pour le moment.';
+    return 'Vous êtes actuellement pénalisé et ne pouvez pas créer de nouveau match pour le moment.';
   }
 
   private extractIsoDateFromMessage(message: string): string | null {

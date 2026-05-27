@@ -142,7 +142,7 @@ class AdminGlobalControllerTest {
         LocalDate to = LocalDate.of(2026, 1, 1);
 
         when(adminStatsService.getCa(from, to))
-                .thenThrow(new BusinessException("La date 'from' doit etre <= a la date 'to'."));
+                .thenThrow(new BusinessException("La date 'from' doit être <= à la date 'to'."));
 
         mvc.perform(get("/api/v1/admin/stats/ca")
                         .param("from", "2026-01-31")

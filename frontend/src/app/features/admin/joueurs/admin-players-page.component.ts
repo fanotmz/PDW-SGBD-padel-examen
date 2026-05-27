@@ -83,7 +83,7 @@ export class AdminPlayersPageComponent implements OnInit {
       return 'Indisponible';
     }
 
-    return `${this.currencyFormatter.format(solde)} \u20ac`;
+    return `${this.currencyFormatter.format(solde)} €`;
   }
 
   protected hasActivePenalty(player: AdminPlayerListItem): boolean {
@@ -112,7 +112,7 @@ export class AdminPlayersPageComponent implements OnInit {
           }
 
           if (adminInfo.siteId == null) {
-            throw new Error("Perimetre administrateur introuvable.");
+            throw new Error("Périmètre administrateur introuvable.");
           }
 
           return this.adminService
@@ -169,11 +169,11 @@ export class AdminPlayersPageComponent implements OnInit {
       }
 
       if (error.status === 403) {
-        return 'Acces administrateur refuse.';
+        return 'Accès administrateur refusé.';
       }
 
       if (error.status === 404) {
-        return 'Perimetre administrateur introuvable.';
+        return 'Périmètre administrateur introuvable.';
       }
 
       return "Impossible de charger la liste des joueurs.";

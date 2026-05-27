@@ -61,7 +61,7 @@ public class PaiementService {
             throw new BusinessException("Participation obligatoire");
         }
         if (participation.getMatch() == null || participation.getMatch().getStatut() != MatchStatut.ANNULE) {
-            throw new BusinessException("Remboursement impossible : le match doit etre annule");
+            throw new BusinessException("Remboursement impossible : le match doit être annulé");
         }
 
         BigDecimal montant = validerMontant(
@@ -85,7 +85,7 @@ public class PaiementService {
         Participation participation = getParticipationByIdOrThrow(participationId);
 
         if (participation.getMatch() != null && participation.getMatch().getStatut() == MatchStatut.ANNULE) {
-            throw new BusinessException("Match annule : aucun paiement n'est possible.");
+            throw new BusinessException("Match annulé : aucun paiement n'est possible.");
         }
 
         BigDecimal m = validerMontant(montant, typePaiement);
@@ -94,7 +94,7 @@ public class PaiementService {
         BigDecimal restePart = PART_JOUEUR.subtract(dejaPaye).setScale(2, RoundingMode.HALF_UP);
 
         if (restePart.signum() <= 0) {
-            throw new BusinessException("Participation deja payee en totalite.");
+            throw new BusinessException("Participation déjà payée en totalité.");
         }
 
         BigDecimal montantMaximumAutorise = restePart;
@@ -107,11 +107,11 @@ public class PaiementService {
         if (m.compareTo(montantMaximumAutorise) > 0) {
             if (autoriserRattrapageDette) {
                 throw new BusinessException(
-                        "Paiement trop eleve. Total du (part + dette) = " + montantMaximumAutorise
+                        "Paiement trop élevé. Total dû (part + dette) = " + montantMaximumAutorise
                 );
             }
             throw new BusinessException(
-                    "Paiement trop eleve. Reste a payer = " + montantMaximumAutorise
+                    "Paiement trop élevé. Reste à payer = " + montantMaximumAutorise
             );
         }
 
@@ -181,7 +181,7 @@ public class PaiementService {
         String joueurCourantMatricule = currentUserFacade.getCurrentJoueur().getMatricule();
         String joueurParticipationMatricule = participation.getJoueur().getMatricule();
         if (!joueurCourantMatricule.equals(joueurParticipationMatricule)) {
-            throw new ForbiddenException("Seul le participant concerne peut payer sa participation.");
+            throw new ForbiddenException("Seul le participant concerné peut payer sa participation.");
         }
     }
 

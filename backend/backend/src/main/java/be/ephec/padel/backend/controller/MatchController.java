@@ -43,12 +43,12 @@ public class MatchController {
     }
 
     @Operation(
-            summary = "Lister les creneaux reservables",
-            description = "Retourne les creneaux reservables pour un terrain et une date, selon l'utilisateur authentifie."
+            summary = "Lister les créneaux réservables",
+            description = "Retourne les créneaux réservables pour un terrain et une date, selon l'utilisateur authentifié."
     )
     @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "Creneaux recuperes"),
-            @ApiResponse(responseCode = "400", description = "Parametres invalides",
+            @ApiResponse(responseCode = "200", description = "Créneaux récupérés"),
+            @ApiResponse(responseCode = "400", description = "Paramètres invalides",
                     content = @Content(schema = @Schema(implementation = ApiErrorDto.class))),
             @ApiResponse(responseCode = "404", description = "Terrain introuvable",
                     content = @Content(schema = @Schema(implementation = ApiErrorDto.class)))
@@ -64,13 +64,13 @@ public class MatchController {
     }
 
     @Operation(
-            summary = "Récupérer le detail d'un match",
-            description = "Retourne le detail d'un match. Un match PUBLIC est visible par tous. "
+            summary = "Récupérer le détail d'un match",
+            description = "Retourne le détail d'un match. Un match PUBLIC est visible par tous. "
                     + "Un match PRIVE est visible uniquement par l'organisateur, les participants et les admins."
     )
     @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "Match trouve"),
-            @ApiResponse(responseCode = "403", description = "Accès refuse a ce match prive",
+            @ApiResponse(responseCode = "200", description = "Match trouvé"),
+            @ApiResponse(responseCode = "403", description = "Accès refusé à ce match privé",
                     content = @Content(schema = @Schema(implementation = ApiErrorDto.class))),
             @ApiResponse(responseCode = "404", description = "Match introuvable",
                     content = @Content(schema = @Schema(implementation = ApiErrorDto.class)))
@@ -82,13 +82,13 @@ public class MatchController {
 
     @Operation(
             summary = "Annuler un match",
-            description = "Annule un match planifie futur si l'utilisateur authentifie est autorise."
+            description = "Annule un match planifié futur si l'utilisateur authentifié est autorisé."
     )
     @ApiResponses({
-            @ApiResponse(responseCode = "204", description = "Match annule"),
-            @ApiResponse(responseCode = "400", description = "Regle metier non respectee",
+            @ApiResponse(responseCode = "204", description = "Match annulé"),
+            @ApiResponse(responseCode = "400", description = "Règle métier non respectée",
                     content = @Content(schema = @Schema(implementation = ApiErrorDto.class))),
-            @ApiResponse(responseCode = "403", description = "Annulation non autorisee",
+            @ApiResponse(responseCode = "403", description = "Annulation non autorisée",
                     content = @Content(schema = @Schema(implementation = ApiErrorDto.class))),
             @ApiResponse(responseCode = "404", description = "Match introuvable",
                     content = @Content(schema = @Schema(implementation = ApiErrorDto.class)))
@@ -102,7 +102,7 @@ public class MatchController {
     @Operation(summary = "Créer un match", description = "Crée un match (PUBLIC ou PRIVE) pour l'utilisateur authentifié.")
     @ApiResponses({
             @ApiResponse(responseCode = "201", description = "Match créé"),
-            @ApiResponse(responseCode = "400", description = "Validation ou règle metier non respectée",
+            @ApiResponse(responseCode = "400", description = "Validation ou règle métier non respectée",
                     content = @Content(schema = @Schema(implementation = ApiErrorDto.class))),
             @ApiResponse(responseCode = "404", description = "Terrain introuvable",
                     content = @Content(schema = @Schema(implementation = ApiErrorDto.class)))
@@ -122,7 +122,7 @@ public class MatchController {
 
     @Operation(
             summary = "Lister les matchs publics",
-            description = "Retourne la liste des matchs PUBLIC avec un resumé utile pour le frontend."
+            description = "Retourne la liste des matchs PUBLIC avec un résumé utile pour le frontend."
     )
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Liste récupérée"),

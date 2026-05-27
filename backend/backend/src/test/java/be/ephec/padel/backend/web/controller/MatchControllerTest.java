@@ -269,7 +269,7 @@ class MatchControllerTest {
                 eq(LocalDate.of(2030, 1, 1)),
                 eq(null)
         )).thenThrow(new BusinessException(
-                "Le paramÃ¨tre 'from' doit Ãªtre antÃ©rieur ou Ã©gal Ã  'to'."
+                "Le paramètre 'from' doit être antérieur ou égal à 'to'."
         ));
 
         mvc.perform(get("/api/v1/matchs/public")
@@ -308,7 +308,7 @@ class MatchControllerTest {
     @Test
     void getOne_prive_refuse_403() throws Exception {
         when(matchPadelService.getMatchDetailDto(1L))
-                .thenThrow(new ForbiddenException("AccÃ¨s refusÃ© Ã  ce match privÃ©."));
+                .thenThrow(new ForbiddenException("Accès refusé à ce match privé."));
 
         mvc.perform(get("/api/v1/matchs/1"))
                 .andExpect(status().isForbidden());
@@ -353,7 +353,7 @@ class MatchControllerTest {
 
     @Test
     void cancel_business_400() throws Exception {
-        org.mockito.Mockito.doThrow(new BusinessException("Seul un match planifie peut etre annule."))
+        org.mockito.Mockito.doThrow(new BusinessException("Seul un match planifié peut être annulé."))
                 .when(matchPadelService).annulerMatchParUtilisateurCourant(1L);
 
         mvc.perform(post("/api/v1/matchs/1/annulation"))
@@ -362,7 +362,7 @@ class MatchControllerTest {
 
     @Test
     void cancel_forbidden_403() throws Exception {
-        org.mockito.Mockito.doThrow(new ForbiddenException("Acces interdit"))
+        org.mockito.Mockito.doThrow(new ForbiddenException("Accès interdit"))
                 .when(matchPadelService).annulerMatchParUtilisateurCourant(1L);
 
         mvc.perform(post("/api/v1/matchs/1/annulation"))

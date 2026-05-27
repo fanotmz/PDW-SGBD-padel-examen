@@ -83,7 +83,7 @@ public class AdminSiteStatsService {
             throw new BusinessException("Les parametres 'from' et 'to' sont obligatoires.");
         }
         if (from.isAfter(to)) {
-            throw new BusinessException("La date 'from' doit etre <= a la date 'to'.");
+            throw new BusinessException("La date 'from' doit être <= à la date 'to'.");
         }
     }
 
