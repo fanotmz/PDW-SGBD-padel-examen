@@ -160,7 +160,7 @@ export class MatchDetailPageComponent implements OnInit {
       .pipe(finalize(() => this.isJoining.set(false)))
       .subscribe({
         next: () => {
-          this.joinSuccessMessage.set('Vous avez rejoint le match et pay\u00e9 votre participation avec succ\u00e8s.');
+          this.joinSuccessMessage.set('Vous avez rejoint le match et payé votre participation avec succès.');
           this.loadMatchDetail(detail.id);
         },
         error: (error: HttpErrorResponse) => {
@@ -204,7 +204,7 @@ export class MatchDetailPageComponent implements OnInit {
       .subscribe({
         next: () => {
           this.isCancelConfirmationOpen.set(false);
-          this.cancelSuccessMessage.set('Le match a \u00e9t\u00e9 annul\u00e9.');
+          this.cancelSuccessMessage.set('Le match a été annulé.');
           this.loadMatchDetail(detail.id);
         },
         error: (error: HttpErrorResponse) => {
@@ -243,7 +243,7 @@ export class MatchDetailPageComponent implements OnInit {
       .subscribe({
         next: () => {
           this.privatePlayerMatricule.set('');
-          this.addPrivateSuccessMessage.set('Le joueur a \u00e9t\u00e9 ajout\u00e9 avec succ\u00e8s.');
+          this.addPrivateSuccessMessage.set('Le joueur a été ajouté avec succès.');
           this.loadMatchDetail(detail.id);
         },
         error: (error: HttpErrorResponse) => {
@@ -262,23 +262,23 @@ export class MatchDetailPageComponent implements OnInit {
 
   protected getCancelConfirmationTitle(): string {
     return this.authService.isAdmin()
-      ? 'Confirmer l\u2019annulation administrative de ce match ?'
+      ? 'Confirmer l’annulation administrative de ce match ?'
       : 'Annuler ce match ?';
   }
 
   protected getCancelConfirmationMessages(): string[] {
     if (this.authService.isAdmin()) {
       return [
-        'Les participants seront rembours\u00e9s ou compens\u00e9s si n\u00e9cessaire.',
-        'Aucune p\u00e9nalit\u00e9 ne sera appliqu\u00e9e \u00e0 l\u2019organisateur et aucun paiement ne lui sera impos\u00e9.',
-        'Cette action est d\u00e9finitive.'
+        'Les participants seront remboursés ou compensés si nécessaire.',
+        'Aucune pénalité ne sera appliquée à l’organisateur et aucun paiement ne lui sera imposé.',
+        'Cette action est définitive.'
       ];
     }
 
     return [
-      'Si le match commence dans moins de 24h, vous devrez prendre en charge le prix complet du match et une p\u00e9nalit\u00e9 de r\u00e9servation sera appliqu\u00e9e.',
-      'Les autres participants seront rembours\u00e9s ou compens\u00e9s si n\u00e9cessaire.',
-      'Cette action est d\u00e9finitive.'
+      'Si le match commence dans moins de 24h, vous devrez prendre en charge le prix complet du match et une pénalité de réservation sera appliquée.',
+      'Les autres participants seront remboursés ou compensés si nécessaire.',
+      'Cette action est définitive.'
     ];
   }
 
@@ -307,7 +307,7 @@ export class MatchDetailPageComponent implements OnInit {
       this.match.set(null);
       this.currentProfile.set(null);
       this.isLoading.set(false);
-      this.errorMessage.set('Aucun profil joueur n\u2019est li\u00e9 \u00e0 cet utilisateur.');
+      this.errorMessage.set('Aucun profil joueur n’est lié à cet utilisateur.');
       return;
     }
 
@@ -336,7 +336,7 @@ export class MatchDetailPageComponent implements OnInit {
     }
 
     if (error.status === 403) {
-      this.errorMessage.set(apiError.message ?? 'Acc\u00e8s refus\u00e9 \u00e0 ce match.');
+      this.errorMessage.set(apiError.message ?? 'Accès refusé à ce match.');
       return;
     }
 
@@ -345,7 +345,7 @@ export class MatchDetailPageComponent implements OnInit {
       return;
     }
 
-    this.errorMessage.set(apiError.message ?? 'Impossible de charger le d\u00e9tail du match.');
+    this.errorMessage.set(apiError.message ?? 'Impossible de charger le détail du match.');
   }
 
   private handleJoinError(error: HttpErrorResponse): void {
@@ -373,7 +373,7 @@ export class MatchDetailPageComponent implements OnInit {
       return;
     }
 
-    this.cancelErrorMessage.set(apiError.message ?? 'Impossible d\u2019annuler le match.');
+    this.cancelErrorMessage.set(apiError.message ?? 'Impossible d’annuler le match.');
   }
 
   private handleAddPrivatePlayerError(error: HttpErrorResponse): void {

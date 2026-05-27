@@ -47,7 +47,7 @@ const DISPLAY_FILTER_OPTIONS: PublicMatchFilterOption[] = [
   { value: 'TOUS', label: 'Tous' },
   { value: 'DISPONIBLES', label: 'Disponibles' },
   { value: 'COMPLETS', label: 'Complets' },
-  { value: 'DEJA_JOUES', label: 'D\u00e9j\u00e0 jou\u00e9s' }
+  { value: 'DEJA_JOUES', label: 'Déjà joués' }
 ];
 
 @Component({

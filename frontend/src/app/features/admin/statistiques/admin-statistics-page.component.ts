@@ -52,7 +52,7 @@ export class AdminStatisticsPageComponent implements OnInit {
     const adminInfo = this.adminInfo();
 
     if (adminInfo?.adminType === 'SITE') {
-      return adminInfo.siteNom ?? 'Site administr\u00e9';
+      return adminInfo.siteNom ?? 'Site administré';
     }
 
     const selectedSiteId = this.selectedSiteId();
@@ -89,12 +89,12 @@ export class AdminStatisticsPageComponent implements OnInit {
   protected refreshStats(): void {
     if (this.periodForm.invalid) {
       this.periodForm.markAllAsTouched();
-      this.statsError.set('S\u00e9lectionnez une date de d\u00e9but et une date de fin.');
+      this.statsError.set('Sélectionnez une date de début et une date de fin.');
       return;
     }
 
     if (!this.isPeriodValid()) {
-      this.statsError.set('La date de d\u00e9but doit \u00eatre ant\u00e9rieure ou \u00e9gale \u00e0 la date de fin.');
+      this.statsError.set('La date de début doit être antérieure ou égale à la date de fin.');
       return;
     }
 
@@ -132,7 +132,7 @@ export class AdminStatisticsPageComponent implements OnInit {
           }
 
           if (adminInfo.siteId == null) {
-            throw new Error('P\u00e9rim\u00e8tre administrateur introuvable.');
+            throw new Error('Périmètre administrateur introuvable.');
           }
 
           this.selectedSiteId.set(adminInfo.siteId);
@@ -162,12 +162,12 @@ export class AdminStatisticsPageComponent implements OnInit {
     const to = this.periodForm.controls.to.value;
 
     if (!from || !to) {
-      this.statsError.set('S\u00e9lectionnez une date de d\u00e9but et une date de fin.');
+      this.statsError.set('Sélectionnez une date de début et une date de fin.');
       return;
     }
 
     if (!this.isPeriodValid()) {
-      this.statsError.set('La date de d\u00e9but doit \u00eatre ant\u00e9rieure ou \u00e9gale \u00e0 la date de fin.');
+      this.statsError.set('La date de début doit être antérieure ou égale à la date de fin.');
       return;
     }
 
@@ -181,7 +181,7 @@ export class AdminStatisticsPageComponent implements OnInit {
     const siteId = this.getCurrentSiteId();
 
     if (adminInfo.adminType === 'SITE' && siteId == null) {
-      this.statsError.set('P\u00e9rim\u00e8tre administrateur introuvable.');
+      this.statsError.set('Périmètre administrateur introuvable.');
       return;
     }
 
@@ -272,7 +272,7 @@ export class AdminStatisticsPageComponent implements OnInit {
       }
 
       if (error.status === 403) {
-        return 'Acc\u00e8s administrateur refus\u00e9.';
+        return 'Accès administrateur refusé.';
       }
 
       if (error.status === 404) {

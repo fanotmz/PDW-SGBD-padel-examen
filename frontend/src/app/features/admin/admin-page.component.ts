@@ -51,7 +51,7 @@ export class AdminPageComponent implements OnInit {
     const status = this.adminInfo()?.status;
 
     if (status === 'ok') {
-      return 'API admin op\u00e9rationnelle';
+      return 'API admin opérationnelle';
     }
 
     return `Statut API admin : ${status ?? 'inconnu'}`;
@@ -61,32 +61,32 @@ export class AdminPageComponent implements OnInit {
     const adminInfo = this.adminInfo();
 
     if (adminInfo?.adminType === 'GLOBAL') {
-      return 'P\u00e9rim\u00e8tre : tous les sites';
+      return 'Périmètre : tous les sites';
     }
 
     if (adminInfo?.adminType === 'SITE' && adminInfo.siteNom) {
-      return `P\u00e9rim\u00e8tre : ${adminInfo.siteNom}`;
+      return `Périmètre : ${adminInfo.siteNom}`;
     }
 
     if (this.authService.hasRole('ROLE_ADMIN_SITE')) {
-      return 'P\u00e9rim\u00e8tre : site administr\u00e9';
+      return 'Périmètre : site administré';
     }
 
-    return 'P\u00e9rim\u00e8tre : acc\u00e8s administrateur';
+    return 'Périmètre : accès administrateur';
   });
 
   protected readonly adminAccessMessage = computed(() => {
     const adminInfo = this.adminInfo();
 
     if (adminInfo?.adminType === 'SITE' && adminInfo.siteNom) {
-      return `Acc\u00e8s administrateur actif pour le site ${adminInfo.siteNom}.`;
+      return `Accès administrateur actif pour le site ${adminInfo.siteNom}.`;
     }
 
     if (this.authService.hasRole('ROLE_ADMIN_SITE')) {
-      return 'Acc\u00e8s administrateur actif pour le site rattach\u00e9 \u00e0 votre compte.';
+      return 'Accès administrateur actif pour le site rattaché à votre compte.';
     }
 
-    return 'Acc\u00e8s administrateur actif pour votre p\u00e9rim\u00e8tre.';
+    return 'Accès administrateur actif pour votre périmètre.';
   });
 
   protected readonly registrationSummary = computed(() => {
@@ -99,7 +99,7 @@ export class AdminPageComponent implements OnInit {
     }
 
     if (this.registrationsError()) {
-      return 'Demandes non charg\u00e9es';
+      return 'Demandes non chargées';
     }
 
     const count = this.pendingRegistrations().length;
@@ -128,7 +128,7 @@ export class AdminPageComponent implements OnInit {
     }
 
     cards.push(
-      { title: 'Joueurs', description: 'Consultez les joueurs enregistr\u00e9s dans votre p\u00e9rim\u00e8tre.', icon: 'groups', route: '/admin/joueurs' },
+      { title: 'Joueurs', description: 'Consultez les joueurs enregistrés dans votre périmètre.', icon: 'groups', route: '/admin/joueurs' },
       {
         title: this.isSiteScopedAdmin() ? 'Détail du site' : 'Détail des sites',
         description: this.isSiteScopedAdmin()
@@ -138,7 +138,7 @@ export class AdminPageComponent implements OnInit {
         route: '/admin/sites'
       },
       { title: 'Fermetures', description: 'Consultez les fermetures globales et les fermetures de site.', icon: 'event_busy', route: '/admin/fermetures' },
-      { title: 'Horaires', description: 'Consultez les horaires configur\u00e9s par site.', icon: 'schedule', route: '/admin/horaires' },
+      { title: 'Horaires', description: 'Consultez les horaires configurés par site.', icon: 'schedule', route: '/admin/horaires' },
       { title: 'Statistiques', description: "Consultez le chiffre d'affaires, les matchs et les dettes.", icon: 'bar_chart', route: '/admin/statistiques' }
     );
 
@@ -202,7 +202,7 @@ export class AdminPageComponent implements OnInit {
     }
 
     if (error.status === 403) {
-      return 'Acc\u00e8s administrateur refus\u00e9.';
+      return 'Accès administrateur refusé.';
     }
 
     return "Impossible de charger l'espace d'administration.";

@@ -67,7 +67,7 @@ export class AdminClosuresPageComponent implements OnInit {
 
   protected readonly siteClosureModes: Array<{ value: SiteClosureMode; label: string }> = [
     { value: 'date', label: 'Date unique' },
-    { value: 'period', label: 'P\u00e9riode' }
+    { value: 'period', label: 'Période' }
   ];
 
   protected readonly globalClosureForm = this.fb.group({
@@ -466,11 +466,11 @@ export class AdminClosuresPageComponent implements OnInit {
         next: () => {
           this.pendingAction.set(null);
           this.globalClosureForm.reset({ date: '', motif: null });
-          this.successMessage.set('Fermeture globale cr\u00e9\u00e9e.');
+          this.successMessage.set('Fermeture globale créée.');
           this.loadGlobalClosures();
         },
         error: (error: HttpErrorResponse) => {
-          this.globalCreateError.set(this.getCreateErrorMessage(error, 'Impossible de cr\u00e9er la fermeture globale.'));
+          this.globalCreateError.set(this.getCreateErrorMessage(error, 'Impossible de créer la fermeture globale.'));
         }
       });
   }
@@ -542,11 +542,11 @@ export class AdminClosuresPageComponent implements OnInit {
             motif: null
           });
           this.applySiteModeValidators('date');
-          this.successMessage.set('Fermeture du site cr\u00e9\u00e9e.');
+          this.successMessage.set('Fermeture du site créée.');
           this.loadSiteClosures(siteId);
         },
         error: (error: HttpErrorResponse) => {
-          this.siteCreateError.set(this.getCreateErrorMessage(error, 'Impossible de cr\u00e9er la fermeture du site.'));
+          this.siteCreateError.set(this.getCreateErrorMessage(error, 'Impossible de créer la fermeture du site.'));
         }
       });
   }
@@ -577,7 +577,7 @@ export class AdminClosuresPageComponent implements OnInit {
       .subscribe({
         next: () => {
           this.pendingDeleteAction.set(null);
-          this.successMessage.set('Fermeture globale supprim\u00e9e.');
+          this.successMessage.set('Fermeture globale supprimée.');
           this.loadGlobalClosures();
         },
         error: (error: HttpErrorResponse) => {
@@ -604,7 +604,7 @@ export class AdminClosuresPageComponent implements OnInit {
       .subscribe({
         next: () => {
           this.pendingDeleteAction.set(null);
-          this.successMessage.set('Fermeture du site supprim\u00e9e.');
+          this.successMessage.set('Fermeture du site supprimée.');
           this.loadSiteClosures(siteId);
         },
         error: (error: HttpErrorResponse) => {
@@ -673,7 +673,7 @@ export class AdminClosuresPageComponent implements OnInit {
         next: () => {
           this.activeEditClosureId.set(null);
           this.pendingEditAction.set(null);
-          this.successMessage.set('Fermeture du site modifi\u00e9e.');
+          this.successMessage.set('Fermeture du site modifiée.');
           this.loadSiteClosures(siteId);
         },
         error: (error: HttpErrorResponse) => {
@@ -833,7 +833,7 @@ export class AdminClosuresPageComponent implements OnInit {
     }
 
     if (error.status === 403) {
-      return 'Acc\u00e8s refus\u00e9.';
+      return 'Accès refusé.';
     }
 
     if (error.status === 404) {
@@ -859,7 +859,7 @@ export class AdminClosuresPageComponent implements OnInit {
     }
 
     if (error.status === 403) {
-      return 'Acc\u00e8s refus\u00e9.';
+      return 'Accès refusé.';
     }
 
     if (error.status === 404) {
@@ -885,7 +885,7 @@ export class AdminClosuresPageComponent implements OnInit {
     }
 
     if (error.status === 403) {
-      return 'Acc\u00e8s refus\u00e9.';
+      return 'Accès refusé.';
     }
 
     if (error.status === 404) {

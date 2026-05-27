@@ -190,7 +190,7 @@ class RegularisationServiceTest {
 
         assertThatThrownBy(() -> service.payerAnnulationTardiveOrganisateur(10L, new BigDecimal("45.01")))
                 .isInstanceOf(be.ephec.padel.backend.exception.BusinessException.class)
-                .hasMessageContaining("Montant trop eleve");
+                .hasMessageContaining("Montant trop élevé");
 
         verify(soldeService, never()).crediter(eq("G9001"), org.mockito.ArgumentMatchers.any(), org.mockito.ArgumentMatchers.any());
     }

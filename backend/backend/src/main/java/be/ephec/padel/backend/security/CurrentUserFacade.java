@@ -27,22 +27,22 @@ public class CurrentUserFacade {
         if (authentication == null
                 || !authentication.isAuthenticated()
                 || authentication instanceof AnonymousAuthenticationToken) {
-            throw new ForbiddenException("Utilisateur authentifie requis.");
+            throw new ForbiddenException("Utilisateur authentifié requis.");
         }
 
         String login = authentication.getName();
         if (login == null || login.isBlank()) {
-            throw new ForbiddenException("Utilisateur authentifie introuvable.");
+            throw new ForbiddenException("Utilisateur authentifié introuvable.");
         }
 
         return userRepository.findByLogin(login)
-                .orElseThrow(() -> new ForbiddenException("Utilisateur authentifie introuvable."));
+                .orElseThrow(() -> new ForbiddenException("Utilisateur authentifié introuvable."));
     }
 
     public Joueur getCurrentJoueur() {
         Joueur joueur = getCurrentUser().getJoueur();
         if (joueur == null) {
-            throw new ForbiddenException("Aucun joueur lie a l'utilisateur authentifie.");
+            throw new ForbiddenException("Aucun joueur lié à l'utilisateur authentifié.");
         }
         return joueur;
     }

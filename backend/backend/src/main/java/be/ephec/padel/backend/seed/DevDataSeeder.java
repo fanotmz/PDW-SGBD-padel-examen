@@ -102,7 +102,7 @@ public class DevDataSeeder {
         validateAdminBootstrapOrderAndConfiguration();
 
         if (userRepository.existsByLogin(SEED_MARKER_LOGIN)) {
-            log.info("Seed dev deja present (marqueur detecte: {}). Aucun reseed des matchs et donnees metier.", SEED_MARKER_LOGIN);
+            log.info("Seed dev déjà présent (marqueur détecté: {}). Aucun reseed des matchs et données métier.", SEED_MARKER_LOGIN);
             return;
         }
 
@@ -272,7 +272,7 @@ public class DevDataSeeder {
         if (dataExists) {
             throw new IllegalStateException(
                     "app.seed.enabled=true requiert une DB locale propre / vide avant le premier seed. "
-                            + "Des donnees metier existent deja, le seed dev one-shot est donc refuse."
+                            + "Des données métier existent déjà, le seed dev one-shot est donc refusé."
             );
         }
     }

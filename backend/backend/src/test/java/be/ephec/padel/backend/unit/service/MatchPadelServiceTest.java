@@ -1035,7 +1035,7 @@ class MatchPadelServiceTest {
 
     @Test
     void getMatchDetailDto_prive_sansMatricule_refuse() {
-        when(currentUserFacade.getCurrentJoueur()).thenThrow(new ForbiddenException("Utilisateur authentifie requis."));
+        when(currentUserFacade.getCurrentJoueur()).thenThrow(new ForbiddenException("Utilisateur authentifié requis."));
 
         MatchPadel match = mock(MatchPadel.class);
         when(match.getVisibilite()).thenReturn(MatchVisibilite.PRIVE);

@@ -43,7 +43,7 @@ public class AuthenticationService {
         UserDetails userDetails = (UserDetails) authentication.getPrincipal();
         String token = jwtService.generateToken(userDetails);
         User authenticatedUser = userRepository.findByLogin(userDetails.getUsername())
-                .orElseThrow(() -> new ForbiddenException("Utilisateur authentifie introuvable."));
+                .orElseThrow(() -> new ForbiddenException("Utilisateur authentifié introuvable."));
 
         List<String> roles = authenticatedUser.getRoles().stream()
                 .map(Enum::name)

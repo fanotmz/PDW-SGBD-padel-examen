@@ -602,14 +602,14 @@ public class MatchPadelService {
 
         if (currentUserFacade.hasRole(SecurityRole.ROLE_ADMIN_SITE)) {
             if (!serviceAutorisationAdmin.peutAdministrerSite(getSiteId(match))) {
-                throw new ForbiddenException("Acces interdit : site non autorise");
+                throw new ForbiddenException("Accès interdit : site non autorisé");
             }
             return buildMatchDetailDto(match);
         }
 
         String matricule = currentUserFacade.getCurrentJoueur().getMatricule();
         if (match.getVisibilite() == MatchVisibilite.PRIVE && !peutVoirMatchPrive(match, matricule)) {
-            throw new ForbiddenException("Acc\u00e8s refus\u00e9 \u00e0 ce match priv\u00e9.");
+            throw new ForbiddenException("Accès refusé à ce match privé.");
         }
 
         return buildMatchDetailDto(match);
@@ -632,11 +632,11 @@ public class MatchPadelService {
             if (serviceAutorisationAdmin.peutAdministrerSite(getSiteId(match))) {
                 return ModeAnnulationMatch.ADMIN_OU_FERMETURE;
             }
-            throw new ForbiddenException("Acces interdit : site non autorise");
+            throw new ForbiddenException("Accès interdit : site non autorisé");
         }
 
         if (!estOrganisateur(match)) {
-            throw new ForbiddenException("Seul l'organisateur ou un administrateur autorise peut annuler ce match.");
+            throw new ForbiddenException("Seul l'organisateur ou un administrateur autorisé peut annuler ce match.");
         }
 
         return estAnnulationTardive(match.getDateDebut())
@@ -646,10 +646,10 @@ public class MatchPadelService {
 
     private void verifierMatchAnnulable(MatchPadel match) {
         if (match.getStatut() != MatchStatut.PLANIFIE) {
-            throw new BusinessException("Seul un match planifie peut etre annule.");
+            throw new BusinessException("Seul un match planifié peut être annulé.");
         }
         if (match.getDateDebut() == null || !match.getDateDebut().isAfter(LocalDateTime.now(clock))) {
-            throw new BusinessException("Seul un match futur peut etre annule.");
+            throw new BusinessException("Seul un match futur peut être annulé.");
         }
     }
 

@@ -60,7 +60,7 @@ public class ParticipationService {
         verifierMatchNonAnnule(match);
 
         if (match.getVisibilite() != MatchVisibilite.PUBLIC) {
-            throw new BusinessException("Match priv\u00e9 : seule l'organisation peut ajouter des joueurs.");
+            throw new BusinessException("Match privé : seule l'organisation peut ajouter des joueurs.");
         }
 
         String joueurMatricule = joueur.getMatricule();
@@ -98,7 +98,7 @@ public class ParticipationService {
         verifierMatchNonAnnule(match);
 
         if (match.getVisibilite() != MatchVisibilite.PUBLIC) {
-            throw new BusinessException("Match priv\u00e9 : ce calcul n'est valable que pour un match public.");
+            throw new BusinessException("Match privé : ce calcul n'est valable que pour un match public.");
         }
 
         BigDecimal dette = joueur.getSolde() == null ? BigDecimal.ZERO : joueur.getSolde().setScale(2, RoundingMode.HALF_UP);
@@ -114,12 +114,12 @@ public class ParticipationService {
         }
 
         if (match.getStatut() != MatchStatut.PLANIFIE) {
-            throw new BusinessException("Ajout impossible : seuls les matchs planifi\u00e9s acceptent de nouveaux joueurs.");
+            throw new BusinessException("Ajout impossible : seuls les matchs planifiés acceptent de nouveaux joueurs.");
         }
 
         if (!peutAjouterJoueurPrive(match)) {
             throw new BusinessException(
-                    "Seul l'organisateur ou un admin autoris\u00e9 sur le site peut ajouter des joueurs \u00e0 ce match."
+                    "Seul l'organisateur ou un admin autorisé sur le site peut ajouter des joueurs à ce match."
             );
         }
 
@@ -150,7 +150,7 @@ public class ParticipationService {
 
     private void verifierMatchNonAnnule(MatchPadel match) {
         if (match.getStatut() == MatchStatut.ANNULE) {
-            throw new BusinessException("Match annule : aucune nouvelle participation n'est possible.");
+            throw new BusinessException("Match annulé : aucune nouvelle participation n'est possible.");
         }
     }
 
@@ -161,14 +161,14 @@ public class ParticipationService {
 
     private void verifierNonDejaInscrit(Long matchId, String joueurMatricule) {
         if (participationRepository.existsByMatch_IdAndJoueur_Matricule(matchId, joueurMatricule)) {
-            throw new BusinessException("Joueur d\u00e9j\u00e0 inscrit \u00e0 ce match");
+            throw new BusinessException("Joueur déjà inscrit à ce match");
         }
     }
 
     private void verifierPlaceDisponible(Long matchId) {
         int nb = participationRepository.countByMatch_Id(matchId);
         if (nb >= 4) {
-            throw new BusinessException("Match d\u00e9j\u00e0 complet");
+            throw new BusinessException("Match déjà complet");
         }
     }
 

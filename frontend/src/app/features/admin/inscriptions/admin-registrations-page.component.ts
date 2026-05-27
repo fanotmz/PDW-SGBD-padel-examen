@@ -212,7 +212,7 @@ export class AdminRegistrationsPageComponent implements OnInit {
       .pipe(finalize(() => this.processingUserId.set(null)))
       .subscribe({
         next: (response) => {
-          this.handleActionSuccess(response, 'Demande refusee.');
+          this.handleActionSuccess(response, 'Demande refusée.');
         },
         error: (error: HttpErrorResponse) => {
           this.feedbackTone.set('error');
@@ -321,7 +321,7 @@ export class AdminRegistrationsPageComponent implements OnInit {
     }
 
     if (error.status === 403) {
-      return 'Acc\u00e8s administrateur refus\u00e9.';
+      return 'Accès administrateur refusé.';
     }
 
     return "Impossible de charger les demandes d'inscription.";
@@ -353,7 +353,7 @@ export class AdminRegistrationsPageComponent implements OnInit {
       }
 
       if (backendMessage.includes("n'est plus en attente")) {
-        return 'Demande deja traitee.';
+        return 'Demande déjà traitée.';
       }
 
       if (backendMessage.includes('siteIdFinal') && backendMessage.includes('obligatoire')) {
@@ -361,7 +361,7 @@ export class AdminRegistrationsPageComponent implements OnInit {
       }
 
       if (backendMessage.includes('siteIdFinal') && backendMessage.includes('interdit')) {
-        return 'Aucun site ne doit etre envoye pour ce type.';
+        return 'Aucun site ne doit être envoyé pour ce type.';
       }
 
       return backendMessage || 'Demande invalide.';
@@ -372,7 +372,7 @@ export class AdminRegistrationsPageComponent implements OnInit {
     }
 
     if (error.status === 403) {
-      return 'Acces administrateur refuse.';
+      return 'Accès administrateur refusé.';
     }
 
     return "Impossible de traiter cette demande pour le moment.";
@@ -380,7 +380,7 @@ export class AdminRegistrationsPageComponent implements OnInit {
 
   private getSitesErrorMessage(error: HttpErrorResponse): string {
     if (error.status === 0) {
-      return 'La liste des sites est momentanement indisponible.';
+      return 'La liste des sites est momentanément indisponible.';
     }
 
     return 'Impossible de charger les sites pour le moment.';

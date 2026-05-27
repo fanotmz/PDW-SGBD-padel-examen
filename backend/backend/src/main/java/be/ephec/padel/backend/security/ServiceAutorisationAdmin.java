@@ -32,15 +32,15 @@ public class ServiceAutorisationAdmin {
             Long siteAutoriseId = perimetreAdminsSiteParLogin.get(login);
 
             if (siteAutoriseId == null) {
-                throw new AccessDeniedException("ADMIN_SITE sans site associe");
+                throw new AccessDeniedException("ADMIN_SITE sans site associé");
             }
             if (!siteAutoriseId.equals(siteDemandeId)) {
-                throw new AccessDeniedException("Acces interdit : site non autorise");
+                throw new AccessDeniedException("Accès interdit : site non autorisé");
             }
             return;
         }
 
-        throw new AccessDeniedException("Acces refuse");
+        throw new AccessDeniedException("Accès refusé");
     }
 
     public boolean peutAdministrerSite(Long siteDemandeId) {
@@ -72,13 +72,13 @@ public class ServiceAutorisationAdmin {
             Long siteAutoriseId = perimetreAdminsSiteParLogin.get(login);
 
             if (siteAutoriseId == null) {
-                throw new AccessDeniedException("ADMIN_SITE sans site associe");
+                throw new AccessDeniedException("ADMIN_SITE sans site associé");
             }
 
             return siteAutoriseId;
         }
 
-        throw new AccessDeniedException("Acces refuse");
+        throw new AccessDeniedException("Accès refusé");
     }
 
     private Map<String, Long> parserAdminsSite(String adminsSite) {

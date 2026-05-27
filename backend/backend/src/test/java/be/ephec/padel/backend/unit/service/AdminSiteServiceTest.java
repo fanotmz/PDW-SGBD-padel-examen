@@ -310,7 +310,7 @@ class AdminSiteServiceTest {
 
     @Test
     void getMatchsBySite_adminSite_hors_perimetre_est_refuse() {
-        doThrow(new ForbiddenException("Acces interdit")).when(serviceAutorisationAdmin).verifierAccesAuSite(2L);
+        doThrow(new ForbiddenException("Accès interdit")).when(serviceAutorisationAdmin).verifierAccesAuSite(2L);
 
         assertThrows(ForbiddenException.class, () -> service.getMatchsBySite(
                 2L,
