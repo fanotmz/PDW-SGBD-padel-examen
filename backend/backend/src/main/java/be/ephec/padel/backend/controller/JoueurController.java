@@ -5,7 +5,9 @@ import be.ephec.padel.backend.dto.response.JoueurDto;
 import be.ephec.padel.backend.mapper.JoueurMapper;
 import be.ephec.padel.backend.model.entities.Joueur;
 import be.ephec.padel.backend.service.JoueurService;
+import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -17,6 +19,7 @@ import org.springframework.web.bind.annotation.RestController;
 import java.net.URI;
 import java.util.List;
 
+@Tag(name = "Joueurs", description = "Consultation et création des joueurs")
 @RestController
 @RequestMapping("/api/v1/joueurs")
 public class JoueurController {
@@ -28,6 +31,7 @@ public class JoueurController {
     }
 
     @SecurityRequirement(name = "bearerAuth")
+    @Operation(summary = "Lister les joueurs")
     @GetMapping
     public ResponseEntity<List<JoueurDto>> list() {
         List<JoueurDto> dtos = joueurService.lister().stream()
@@ -37,6 +41,7 @@ public class JoueurController {
     }
 
     @SecurityRequirement(name = "bearerAuth")
+    @Operation(summary = "Créer un joueur")
     @PostMapping
     public ResponseEntity<JoueurDto> create(@Valid @RequestBody JoueurCreateRequest req) {
         Joueur created = joueurService.creerJoueur(

@@ -11,7 +11,9 @@ import be.ephec.padel.backend.mapper.JoueurMapper;
 import be.ephec.padel.backend.service.JoueurService;
 import be.ephec.padel.backend.service.MeStatsService;
 import be.ephec.padel.backend.service.RegularisationService;
+import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -25,6 +27,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/v1/me")
 @SecurityRequirement(name = "bearerAuth")
+@Tag(name = "Espace joueur", description = "Profil, matchs, dettes et statistiques du joueur connecté")
 public class MeController {
 
     private final JoueurService joueurService;
@@ -39,31 +42,37 @@ public class MeController {
         this.regularisationService = regularisationService;
     }
 
+    @Operation(summary = "Récupérer mon profil")
     @GetMapping
     public ResponseEntity<JoueurDto> getMe() {
         return ResponseEntity.ok(JoueurMapper.toDto(joueurService.getCurrentJoueurProfile()));
     }
 
+    @Operation(summary = "Lister mes matchs")
     @GetMapping("/matchs")
     public ResponseEntity<List<PlayerMatchSummaryDto>> getMyMatches() {
         return ResponseEntity.ok(joueurService.getCurrentPlayerMatches());
     }
 
+    @Operation(summary = "Lister mes matchs organisés")
     @GetMapping("/matchs/organises")
     public ResponseEntity<List<OrganizerMatchSummaryDto>> getMyOrganizedMatches() {
         return ResponseEntity.ok(joueurService.getCurrentOrganizedMatches());
     }
 
+    @Operation(summary = "Vérifier ma dette")
     @GetMapping("/dette")
     public ResponseEntity<DetteDto> getMyDette() {
         return ResponseEntity.ok(new DetteDto(joueurService.currentUserADette()));
     }
 
+    @Operation(summary = "Lister mes régularisations")
     @GetMapping("/regularisations")
     public ResponseEntity<RegularisationsResponseDto> getMyRegularisations() {
         return ResponseEntity.ok(regularisationService.getCurrentUserRegularisations());
     }
 
+    @Operation(summary = "Payer une régularisation")
     @PostMapping("/regularisations/{participationId}/paiement")
     public ResponseEntity<Void> payRegularisation(@PathVariable Long participationId,
                                                   @Valid @org.springframework.web.bind.annotation.RequestBody PayRequest request) {
@@ -71,6 +80,7 @@ public class MeController {
         return ResponseEntity.noContent().build();
     }
 
+    @Operation(summary = "Consulter mes statistiques")
     @GetMapping("/stats")
     public ResponseEntity<MeStatsDto> getMyStats() {
         return ResponseEntity.ok(meStatsService.getCurrentUserStats());
