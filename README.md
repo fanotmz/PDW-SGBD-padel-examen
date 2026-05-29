@@ -1,34 +1,33 @@
-\# Projet PDW / SGBD – Padel
+# Projet PDW / SGBD — Padel Manager
 
+Application web de gestion de réservations de matchs de padel.
 
+## Technologies
 
-Application Web de gestion de réservations de padel.
+- Frontend : Angular
+- Backend : Spring Boot / Java 21
+- Base de données : SQL Server
+- Migrations : Liquibase
+- API : REST + Swagger/OpenAPI
+- Conteneurisation : Docker Compose
 
+## Structure
 
+- `backend/backend/` : backend Spring Boot, configuration Docker, Liquibase et tests backend
+- `frontend/` : application Angular et tests frontend
+- `DOCUMENT_EXPLOITATION.md` : commandes pour lancer et tester le projet
+- `DOSSIER_ARCHITECTURE.md` : architecture frontend/backend et outils utilisés
 
-\## Stack
+## Lancement
 
-\- Frontend : Angular
+Voir `DOCUMENT_EXPLOITATION.md`.
 
-\- Backend : Spring Boot (Java)
+## Architecture
 
-\- Base de données : SQL Server
+Voir `DOSSIER_ARCHITECTURE.md`.
 
+## Swagger
 
+Après lancement du backend Docker :
 
-\## Organisation
-
-\- /backend : API REST
-
-\- /frontend : application Angular
-
-\- /docs : documentation et schémas
-
-\- /planning : planning du projet
-
-
-
-Projet réalisé dans le cadre des cours PDW et SGBD.
-
-
-
+http://localhost:8080/swagger-ui/index.html

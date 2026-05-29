@@ -8,7 +8,9 @@ import be.ephec.padel.backend.dto.response.FermetureSiteDto;
 import be.ephec.padel.backend.mapper.FermetureSiteMapper;
 import be.ephec.padel.backend.model.entities.FermetureSite;
 import be.ephec.padel.backend.service.FermetureSiteService;
+import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
@@ -19,6 +21,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/v1/admin/sites/{siteId}/fermetures")
 @SecurityRequirement(name = "bearerAuth")
+@Tag(name = "Fermetures des sites", description = "Gestion des fermetures d'un site")
 public class FermetureSiteAdminController {
 
     private final FermetureSiteService fermetureSiteService;
@@ -27,6 +30,7 @@ public class FermetureSiteAdminController {
         this.fermetureSiteService = fermetureSiteService;
     }
 
+    @Operation(summary = "Créer une fermeture ponctuelle pour un site")
     @PostMapping("/date")
     public ResponseEntity<FermetureSiteDto> createDate(@PathVariable Long siteId,
                                                        @RequestBody CreateFermetureSiteDateRequest request) {
@@ -43,6 +47,7 @@ public class FermetureSiteAdminController {
                 .body(FermetureSiteMapper.toDto(created));
     }
 
+    @Operation(summary = "Créer une fermeture sur une période pour un site")
     @PostMapping("/periode")
     public ResponseEntity<FermetureSiteDto> createPeriode(@PathVariable Long siteId,
                                                           @RequestBody CreateFermetureSitePeriodeRequest request) {
@@ -59,6 +64,7 @@ public class FermetureSiteAdminController {
                 .body(FermetureSiteMapper.toDto(created));
     }
 
+    @Operation(summary = "Lister les fermetures d'un site")
     @GetMapping
     public ResponseEntity<List<FermetureSiteDto>> getAllBySite(@PathVariable Long siteId) {
         List<FermetureSiteDto> result = fermetureSiteService.listerParSite(siteId)
@@ -69,6 +75,7 @@ public class FermetureSiteAdminController {
         return ResponseEntity.ok(result);
     }
 
+    @Operation(summary = "Récupérer une fermeture d'un site")
     @GetMapping("/{fermetureId}")
     public ResponseEntity<FermetureSiteDto> getOne(@PathVariable Long siteId,
                                                    @PathVariable Long fermetureId) {
@@ -76,6 +83,7 @@ public class FermetureSiteAdminController {
         return ResponseEntity.ok(FermetureSiteMapper.toDto(fermeture));
     }
 
+    @Operation(summary = "Modifier une fermeture ponctuelle")
     @PutMapping("/{fermetureId}/date")
     public ResponseEntity<FermetureSiteDto> updateDate(@PathVariable Long siteId,
                                                        @PathVariable Long fermetureId,
@@ -84,6 +92,7 @@ public class FermetureSiteAdminController {
         return ResponseEntity.ok(FermetureSiteMapper.toDto(updated));
     }
 
+    @Operation(summary = "Modifier une fermeture sur une période")
     @PutMapping("/{fermetureId}/periode")
     public ResponseEntity<FermetureSiteDto> updatePeriode(@PathVariable Long siteId,
                                                           @PathVariable Long fermetureId,
@@ -92,6 +101,7 @@ public class FermetureSiteAdminController {
         return ResponseEntity.ok(FermetureSiteMapper.toDto(updated));
     }
 
+    @Operation(summary = "Supprimer une fermeture d'un site")
     @DeleteMapping("/{fermetureId}")
     public ResponseEntity<Void> delete(@PathVariable Long siteId,
                                        @PathVariable Long fermetureId) {

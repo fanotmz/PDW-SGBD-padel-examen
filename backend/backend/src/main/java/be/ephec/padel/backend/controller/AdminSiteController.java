@@ -11,6 +11,7 @@ import be.ephec.padel.backend.model.enums.MatchStatut;
 import be.ephec.padel.backend.model.enums.MatchVisibilite;
 import be.ephec.padel.backend.service.AdminSiteService;
 import be.ephec.padel.backend.service.AdminSiteStatsService;
+import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -22,7 +23,7 @@ import java.util.List;
 @SecurityRequirement(name = "bearerAuth")
 @RestController
 @RequestMapping("/api/v1/admin/sites")
-@Tag(name = "Admin Site")
+@Tag(name = "Administration des sites", description = "Consultation des sites, joueurs, matchs et statistiques")
 public class AdminSiteController {
 
     private final AdminSiteService adminSiteService;
@@ -34,16 +35,19 @@ public class AdminSiteController {
         this.adminSiteStatsService = adminSiteStatsService;
     }
 
+    @Operation(summary = "Lister les sites consultables")
     @GetMapping
     public List<AdminSiteConsultationDto> getSites() {
         return adminSiteService.getSitesConsultables();
     }
 
+    @Operation(summary = "Lister les joueurs d'un site")
     @GetMapping("/{siteId}/joueurs")
     public List<JoueurAdminDto> getJoueurs(@PathVariable Long siteId) {
         return adminSiteService.getJoueursBySite(siteId);
     }
 
+    @Operation(summary = "Lister les matchs d'un site")
     @GetMapping("/{siteId}/matchs")
     public List<AdminSiteMatchSummaryDto> getMatchs(@PathVariable Long siteId,
                                                     @RequestParam(required = false)
@@ -58,6 +62,7 @@ public class AdminSiteController {
         return adminSiteService.getMatchsBySite(siteId, from, to, statut, visibilite, scope);
     }
 
+    @Operation(summary = "Consulter le chiffre d'affaires d'un site")
     @GetMapping("/{siteId}/stats/ca")
     public AdminCaStatsDto ca(@PathVariable Long siteId,
                               @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
@@ -65,6 +70,7 @@ public class AdminSiteController {
         return adminSiteStatsService.getCa(siteId, from, to);
     }
 
+    @Operation(summary = "Consulter les statistiques des matchs d'un site")
     @GetMapping("/{siteId}/stats/matchs")
     public AdminMatchsStatsDto matchs(@PathVariable Long siteId,
                                       @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
@@ -72,6 +78,7 @@ public class AdminSiteController {
         return adminSiteStatsService.getNbMatchs(siteId, from, to);
     }
 
+    @Operation(summary = "Consulter les dettes d'un site")
     @GetMapping("/{siteId}/stats/dettes")
     public AdminDettesStatsDto dettes(@PathVariable Long siteId) {
         return adminSiteStatsService.getDettes(siteId);
