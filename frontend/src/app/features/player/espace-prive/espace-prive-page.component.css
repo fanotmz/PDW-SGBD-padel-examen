@@ -96,6 +96,48 @@
   margin-top: 0.5rem;
 }
 
+.player-stats-layout {
+  display: grid;
+  gap: 1rem;
+}
+
+.stats-group {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.stats-group h3 {
+  color: var(--app-text);
+  font-weight: 800;
+}
+
+.stats-metrics {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
+  gap: 0.75rem;
+  margin: 0;
+}
+
+.stats-metrics div {
+  display: grid;
+  gap: 0.25rem;
+  padding: 0.85rem;
+  border: 1px solid var(--app-border);
+  border-radius: var(--app-radius);
+  background: var(--app-surface-muted);
+}
+
+.stats-metrics dt {
+  color: var(--app-muted);
+  font-weight: 800;
+}
+
+.stats-metrics dd {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 800;
+}
+
 .traceable-total {
   display: flex;
   align-items: baseline;
