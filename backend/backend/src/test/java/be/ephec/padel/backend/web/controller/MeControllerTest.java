@@ -3,6 +3,9 @@ package be.ephec.padel.backend.web.controller;
 import be.ephec.padel.backend.config.SecurityConfig;
 import be.ephec.padel.backend.controller.MeController;
 import be.ephec.padel.backend.dto.enums.MatchTemporalStatusDto;
+import be.ephec.padel.backend.dto.response.MeMatchRoleStatsDto;
+import be.ephec.padel.backend.dto.response.MeNextMatchDto;
+import be.ephec.padel.backend.dto.response.MePaymentStatsDto;
 import be.ephec.padel.backend.dto.response.MeStatsDto;
 import be.ephec.padel.backend.dto.enums.PlayerMatchRoleDto;
 import be.ephec.padel.backend.dto.response.OrganizerMatchSummaryDto;
@@ -255,25 +258,54 @@ class MeControllerTest {
     @Test
     void getMyStats_ok_200() throws Exception {
         when(meStatsService.getCurrentUserStats()).thenReturn(new MeStatsDto(
-                5L,
-                2L,
-                3L,
-                1L,
-                1L,
-                new BigDecimal("42.00"),
-                new BigDecimal("7.50")
+                new MeNextMatchDto(
+                        12L,
+                        LocalDateTime.of(2030, 1, 10, 10, 0),
+                        "Site Delta",
+                        "Terrain 1",
+                        PlayerMatchRoleDto.ORGANISATEUR
+                ),
+                new MeMatchRoleStatsDto(2L, 1L, 1L),
+                new MeMatchRoleStatsDto(6L, 3L, 0L),
+                new MePaymentStatsDto(7L, 2L, new BigDecimal("105.00"), new BigDecimal("15.00"))
         ));
 
         mvc.perform(get("/api/v1/me/stats"))
                 .andExpect(status().isOk())
                 .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
-                .andExpect(jsonPath("$.nbMatchsParticipes").value(5))
-                .andExpect(jsonPath("$.nbMatchsOrganises").value(2))
-                .andExpect(jsonPath("$.nbMatchsPasses").value(3))
-                .andExpect(jsonPath("$.nbMatchsFuturs").value(1))
-                .andExpect(jsonPath("$.nbMatchsAnnules").value(1))
-                .andExpect(jsonPath("$.montantTotalPaye").value(42.00))
-                .andExpect(jsonPath("$.detteActuelle").value(7.50));
+                .andExpect(jsonPath("$.prochainMatch.id").value(12))
+                .andExpect(jsonPath("$.prochainMatch.dateDebut").value("2030-01-10T10:00:00"))
+                .andExpect(jsonPath("$.prochainMatch.siteNom").value("Site Delta"))
+                .andExpect(jsonPath("$.prochainMatch.terrainNom").value("Terrain 1"))
+                .andExpect(jsonPath("$.prochainMatch.roleJoueur").value("ORGANISATEUR"))
+                .andExpect(jsonPath("$.matchsCommeOrganisateur.joues").value(2))
+                .andExpect(jsonPath("$.matchsCommeOrganisateur.aVenir").value(1))
+                .andExpect(jsonPath("$.matchsCommeOrganisateur.annules").value(1))
+                .andExpect(jsonPath("$.matchsCommeParticipant.joues").value(6))
+                .andExpect(jsonPath("$.matchsCommeParticipant.aVenir").value(3))
+                .andExpect(jsonPath("$.matchsCommeParticipant.annules").value(0))
+                .andExpect(jsonPath("$.paiements.participationsPayees").value(7))
+                .andExpect(jsonPath("$.paiements.participationsAPayer").value(2))
+                .andExpect(jsonPath("$.paiements.montantNetPaye").value(105.00))
+                .andExpect(jsonPath("$.paiements.montantRembourse").value(15.00));
+    }
+
+    @Test
+    void getMyStats_accepte_prochain_match_null() throws Exception {
+        when(meStatsService.getCurrentUserStats()).thenReturn(new MeStatsDto(
+                null,
+                new MeMatchRoleStatsDto(0L, 0L, 0L),
+                new MeMatchRoleStatsDto(0L, 0L, 0L),
+                new MePaymentStatsDto(0L, 0L, BigDecimal.ZERO, BigDecimal.ZERO)
+        ));
+
+        mvc.perform(get("/api/v1/me/stats"))
+                .andExpect(status().isOk())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.prochainMatch").value(nullValue()))
+                .andExpect(jsonPath("$.matchsCommeOrganisateur.joues").value(0))
+                .andExpect(jsonPath("$.matchsCommeParticipant.joues").value(0))
+                .andExpect(jsonPath("$.paiements.montantNetPaye").value(0));
     }
 
     @Test

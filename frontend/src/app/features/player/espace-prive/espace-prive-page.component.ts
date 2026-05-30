@@ -4,7 +4,7 @@ import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { finalize, forkJoin, Observable } from 'rxjs';
 import { AuthService } from '../../../core/auth/auth.service';
-import { MeProfile } from '../../../core/me/me.models';
+import { MeProfile, MeStats } from '../../../core/me/me.models';
 import { MeService } from '../../../core/me/me.service';
 import { PaiementService } from '../../../core/payments/paiement.service';
 import { Regularisation } from '../../../core/regularisations/regularisation.models';
@@ -30,8 +30,11 @@ export class EspacePrivePageComponent implements OnInit {
     totalTracable: 0,
     items: []
   });
+  protected readonly stats = signal<MeStats | null>(null);
   protected readonly isLoading = signal(true);
+  protected readonly isLoadingStats = signal(false);
   protected readonly errorMessage = signal('');
+  protected readonly statsErrorMessage = signal('');
   protected readonly paymentSuccessMessage = signal('');
   protected readonly paymentErrorMessage = signal('');
   protected readonly payingParticipationId = signal<number | null>(null);
@@ -96,6 +99,10 @@ export class EspacePrivePageComponent implements OnInit {
       minimumFractionDigits: 2,
       maximumFractionDigits: 2
     }).format(amount) + ' €';
+  }
+
+  protected formatNumber(value: number): string {
+    return new Intl.NumberFormat('fr-BE').format(value);
   }
 
   protected isPaying(participationId: number): boolean {
@@ -180,14 +187,19 @@ export class EspacePrivePageComponent implements OnInit {
   private loadPageData(): void {
     if (this.authService.isAdmin() && !this.authService.hasPlayerProfile()) {
       this.isLoading.set(false);
+      this.stats.set(null);
+      this.isLoadingStats.set(false);
+      this.statsErrorMessage.set('');
       this.errorMessage.set('Cet espace est réservé aux joueurs.');
       return;
     }
 
     this.isLoading.set(true);
     this.errorMessage.set('');
+    this.statsErrorMessage.set('');
     this.paymentSuccessMessage.set('');
     this.paymentErrorMessage.set('');
+    this.loadStats();
 
     forkJoin({
       profile: this.meService.getMe(),
@@ -228,6 +240,24 @@ export class EspacePrivePageComponent implements OnInit {
         this.paymentErrorMessage.set('Le paiement a été enregistré, mais la mise à jour de l’espace a échoué.');
       }
     });
+    this.loadStats();
+  }
+
+  private loadStats(): void {
+    this.isLoadingStats.set(true);
+    this.statsErrorMessage.set('');
+
+    this.meService.getMyStats()
+      .pipe(finalize(() => this.isLoadingStats.set(false)))
+      .subscribe({
+        next: (stats) => {
+          this.stats.set(stats);
+        },
+        error: () => {
+          this.stats.set(null);
+          this.statsErrorMessage.set('Les statistiques ne sont pas disponibles actuellement.');
+        }
+      });
   }
 
   private getPaymentErrorMessage(error: HttpErrorResponse): string {

@@ -123,9 +123,9 @@ Le projet contient plusieurs niveaux de tests :
 Résultats validés avant remise :
 
 ```text
-539 tests backend réussis
+541 tests backend réussis
 Package backend réussi
-91 tests Angular réussis
+96 tests Angular réussis
 Build Angular réussi
 6 tests Cypress E2E réussis
 ```
