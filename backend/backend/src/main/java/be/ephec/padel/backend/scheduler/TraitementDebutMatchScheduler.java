@@ -13,9 +13,8 @@ public class TraitementDebutMatchScheduler {
         this.service = service;
     }
 
-    @Scheduled(fixedDelay = 60_000) // toutes les 1 minute
+    @Scheduled(fixedDelay = 60_000)
     public void run() {
-        // fenêtre de 5 minutes "dans le passé" pour ne rater aucun match
         service.traiterDebutMatchFenetreMinutes(5);
     }
 }

@@ -10,7 +10,6 @@ import be.ephec.padel.backend.model.enums.MatchVisibilite;
 import be.ephec.padel.backend.model.enums.TypeJoueur;
 import be.ephec.padel.backend.repository.MatchPadelRepository;
 import be.ephec.padel.backend.repository.PaiementRepository;
-import be.ephec.padel.backend.repository.ParticipationRepository;
 import be.ephec.padel.backend.service.SoldeOriginContext;
 import be.ephec.padel.backend.service.SoldeService;
 import be.ephec.padel.backend.service.PenaliteJoueurService;
@@ -34,7 +33,6 @@ import static org.mockito.Mockito.*;
 class TraitementJ1ServiceTest {
 
     @Mock MatchPadelRepository matchPadelRepository;
-    @Mock ParticipationRepository participationRepository;
     @Mock PaiementRepository paiementRepository;
     @Mock
     SoldeService soldeService;
@@ -44,7 +42,6 @@ class TraitementJ1ServiceTest {
 
     @BeforeEach
     void setUp() {
-        // now = 2026-02-27 10:00 (Europe/Brussels)
         ZoneId zone = ZoneId.of("Europe/Brussels");
         Instant fixedInstant = LocalDateTime.of(2026, 2, 27, 10, 0)
                 .atZone(zone).toInstant();
@@ -53,7 +50,6 @@ class TraitementJ1ServiceTest {
 
         service = new TraitementJ1Service(
                 matchPadelRepository,
-                participationRepository,
                 paiementRepository,
                 soldeService,
                 new PenaliteJoueurService(clock),
@@ -65,7 +61,6 @@ class TraitementJ1ServiceTest {
     void prive_incomplet_devient_public_penalite_sans_paiement_solde_orga_a_J1() {
         LocalDateTime now = LocalDateTime.now(clock);
 
-        // Match PRIVÉ avec seulement 2 participants (orga + 1) => incomplet => devient PUBLIC + pénalité
         MatchPadel match = new MatchPadel(null, null, now.plusHours(24).plusMinutes(1), MatchVisibilite.PRIVE);
         setId(match, 10L);
 
@@ -87,31 +82,23 @@ class TraitementJ1ServiceTest {
         when(matchPadelRepository.save(any(MatchPadel.class)))
                 .thenAnswer(inv -> inv.getArgument(0));
 
-        // Tout le monde est payé (>= 15) => pas d'impayé => pas de suppression
         when(paiementRepository.sumMontantByParticipationId(100L)).thenReturn(Tarifs.PART_PAR_JOUEUR);
         when(paiementRepository.sumMontantByParticipationId(101L)).thenReturn(Tarifs.PART_PAR_JOUEUR);
 
-        // Act
         int treated = service.traiterJ1FenetreMinutes(5);
 
-        // Assert
         assertThat(treated).isEqualTo(1);
 
-        // devient PUBLIC
         assertThat(match.getVisibilite()).isEqualTo(MatchVisibilite.PUBLIC);
 
-        // pénalité jusqu'à la fin du 7e jour
         assertThat(orga.getPenaliteJusqua()).isEqualTo(
                 now.toLocalDate().plusDays(7).atTime(LocalTime.MAX)
         );
 
-        // ✅ IMPORTANT : pas de paiement "solde organisateur" ici,
-        // car le match n'était pas PUBLIC avant le traitement J-1.
         verify(soldeService, never()).debiter(eq("O1"), any());
         verify(soldeService, never()).crediter(eq("O1"), any());
         verify(paiementRepository, never()).save(any());
 
-        // flag idempotent
         assertThat(match.getJ1TraiteLe()).isEqualTo(now);
     }
 
@@ -140,24 +127,18 @@ class TraitementJ1ServiceTest {
         when(matchPadelRepository.save(any(MatchPadel.class)))
                 .thenAnswer(inv -> inv.getArgument(0));
 
-        // Orga payé, impayé = 0
         when(paiementRepository.sumMontantByParticipationId(200L)).thenReturn(new BigDecimal("15.00"));
         when(paiementRepository.sumMontantByParticipationId(201L)).thenReturn(new BigDecimal("0.00"));
 
-        // Act
         int treated = service.traiterJ1FenetreMinutes(5);
 
-        // Assert
         assertThat(treated).isEqualTo(1);
 
-        // match passe PUBLIC
         assertThat(match.getVisibilite()).isEqualTo(MatchVisibilite.PUBLIC);
 
-        // la participation impayée est retirée (place libérée)
         assertThat(match.getParticipations()).hasSize(1);
         assertThat(match.getParticipations().get(0).getJoueur().getMatricule()).isEqualTo("O1");
 
-        // dette restante annulée = 15 - 0 = 15
         verify(soldeService).crediter(
                 eq("JX"),
                 eq(new BigDecimal("15.00")),
@@ -168,12 +149,10 @@ class TraitementJ1ServiceTest {
                 )
         );
 
-        // pas de paiement solde orga à J-1 dans ce scénario non plus
         verify(soldeService, never()).debiter(eq("O1"), any());
         verify(soldeService, never()).crediter(eq("O1"), any());
         verify(paiementRepository, never()).save(any());
 
-        // flag idempotent
         assertThat(match.getJ1TraiteLe()).isEqualTo(now);
     }
 
@@ -198,7 +177,6 @@ class TraitementJ1ServiceTest {
         verifyNoInteractions(paiementRepository);
     }
 
-    // ---- helpers (IDs JPA) ----
     private static void setId(Object entity, Long id) {
         ReflectionTestUtils.setField(entity, "id", id);
     }

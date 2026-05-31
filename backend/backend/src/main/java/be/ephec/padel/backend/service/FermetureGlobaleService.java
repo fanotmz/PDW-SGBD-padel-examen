@@ -30,7 +30,7 @@ public class FermetureGlobaleService {
     }
 
     public FermetureGlobale creer(CreateFermetureGlobaleRequest req) {
-        LocalDate date = req.getDate(); // @NotNull déjà, mais on reste safe
+        LocalDate date = req.getDate();
         if (date == null) throw new BusinessException("Date de fermeture obligatoire");
 
         if (repo.existsByDate(date)) {

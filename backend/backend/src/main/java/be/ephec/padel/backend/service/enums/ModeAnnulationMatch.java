@@ -1,4 +1,4 @@
-package be.ephec.padel.backend.service;
+package be.ephec.padel.backend.service.enums;
 
 public enum ModeAnnulationMatch {
     ADMIN_OU_FERMETURE,

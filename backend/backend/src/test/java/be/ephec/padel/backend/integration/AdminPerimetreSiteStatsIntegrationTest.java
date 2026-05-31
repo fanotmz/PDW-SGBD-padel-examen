@@ -19,7 +19,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @SpringBootTest
 @AutoConfigureMockMvc
 @TestPropertySource(properties = {
-        // IMPORTANT : c’est cette propriété que lit ServiceAutorisationAdmin
         "app.security.admin.site.users=adminSite1:1,adminSite2:2"
 })
 class AdminPerimetreSiteStatsIntegrationTest extends SqlServerTestContainerConfig {
@@ -30,7 +29,6 @@ class AdminPerimetreSiteStatsIntegrationTest extends SqlServerTestContainerConfi
 
     @BeforeEach
     void preparerDonnees() {
-        // Nettoyage dans l'ordre des FK (enfants -> parents)
         jdbcTemplate.execute("DELETE FROM participation");
         jdbcTemplate.execute("DELETE FROM paiement");
         jdbcTemplate.execute("DELETE FROM match_padel");
@@ -39,7 +37,6 @@ class AdminPerimetreSiteStatsIntegrationTest extends SqlServerTestContainerConfi
         jdbcTemplate.execute("DELETE FROM terrain");
         jdbcTemplate.execute("DELETE FROM site");
 
-        // Reset identity (si tables en IDENTITY)
         jdbcTemplate.execute("DBCC CHECKIDENT ('site', RESEED, 0)");
         jdbcTemplate.execute("DBCC CHECKIDENT ('horaire_site', RESEED, 0)");
         jdbcTemplate.execute("DBCC CHECKIDENT ('terrain', RESEED, 0)");

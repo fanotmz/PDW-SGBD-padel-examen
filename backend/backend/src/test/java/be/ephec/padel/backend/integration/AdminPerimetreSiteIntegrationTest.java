@@ -27,7 +27,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @SpringBootTest
 @AutoConfigureMockMvc
 @TestPropertySource(properties = {
-        // IMPORTANT : c’est cette propriété que lit ServiceAutorisationAdmin
         "app.security.admin.site.users=adminSite1:1,adminSite2:2"
 })
 class AdminPerimetreSiteIntegrationTest extends SqlServerTestContainerConfig {
@@ -39,22 +38,16 @@ class AdminPerimetreSiteIntegrationTest extends SqlServerTestContainerConfig {
 
     @BeforeEach
     void preparerDonnees() {
-        // Nettoyage (ordre important pour FK)
         jdbcTemplate.execute("DELETE FROM horaire_site");
         joueurRepository.deleteAll();
         siteRepository.deleteAll();
 
-        // 🔧 IMPORTANT : reset IDENTITY pour que les prochains sites reprennent id=1,2
-        // Sans ça, deleteAll() n’efface pas le compteur IDENTITY => ids 3,4,... au prochain run
         try {
             jdbcTemplate.execute("DBCC CHECKIDENT ('horaire_site', RESEED, 0)");
             jdbcTemplate.execute("DBCC CHECKIDENT ('site', RESEED, 0)");
         } catch (Exception ignored) {
-            // Si jamais permissions/problème dans un environnement différent,
-            // on évite de casser le test ici (mais sur container SQL Server ça passe généralement).
         }
 
-        // Création sites (ville obligatoire car @Column(nullable=false))
         Site site1 = new Site();
         site1.setNom("Site 1");
         site1.setVille("Bruxelles");
@@ -65,7 +58,6 @@ class AdminPerimetreSiteIntegrationTest extends SqlServerTestContainerConfig {
         site2.setVille("Bruxelles");
         site2 = siteRepository.save(site2);
 
-        // Joueurs (constructeurs car pas de setMatricule)
         Joueur j1 = new Joueur("J001", "Dupont", TypeJoueur.SITE, site1);
         j1.setSolde(new BigDecimal("15.00"));
         j1.setPenaliteJusqua(LocalDateTime.of(2030, 1, 10, 12, 30));

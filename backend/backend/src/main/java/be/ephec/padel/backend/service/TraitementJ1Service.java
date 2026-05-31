@@ -1,7 +1,6 @@
 package be.ephec.padel.backend.service;
 
 import be.ephec.padel.backend.common.Tarifs;
-import be.ephec.padel.backend.model.entities.Joueur;
 import be.ephec.padel.backend.model.entities.MatchPadel;
 import be.ephec.padel.backend.model.entities.Participation;
 import be.ephec.padel.backend.model.enums.MatchStatut;
@@ -9,14 +8,12 @@ import be.ephec.padel.backend.model.enums.MatchVisibilite;
 import be.ephec.padel.backend.model.enums.OrigineMouvementSoldeType;
 import be.ephec.padel.backend.repository.MatchPadelRepository;
 import be.ephec.padel.backend.repository.PaiementRepository;
-import be.ephec.padel.backend.repository.ParticipationRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.Clock;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -27,20 +24,17 @@ public class TraitementJ1Service {
     private static final BigDecimal PART_JOUEUR = Tarifs.PART_PAR_JOUEUR;
 
     private final MatchPadelRepository matchPadelRepository;
-    private final ParticipationRepository participationRepository;
     private final PaiementRepository paiementRepository;
     private final SoldeService soldeService;
     private final PenaliteJoueurService penaliteJoueurService;
     private final Clock clock;
 
     public TraitementJ1Service(MatchPadelRepository matchPadelRepository,
-                               ParticipationRepository participationRepository,
                                PaiementRepository paiementRepository,
                                SoldeService soldeService,
                                PenaliteJoueurService penaliteJoueurService,
                                Clock clock) {
         this.matchPadelRepository = matchPadelRepository;
-        this.participationRepository = participationRepository;
         this.paiementRepository = paiementRepository;
         this.soldeService = soldeService;
         this.penaliteJoueurService = penaliteJoueurService;
@@ -50,7 +44,6 @@ public class TraitementJ1Service {
     public int traiterJ1FenetreMinutes(int windowMinutes) {
         LocalDateTime now = LocalDateTime.now(clock);
 
-        // On traite les matchs dont dateDebut est dans [now+24h ; now+24h+window]
         LocalDateTime from = now.plusHours(24);
         LocalDateTime to = from.plusMinutes(windowMinutes);
 
@@ -71,7 +64,6 @@ public class TraitementJ1Service {
     }
 
     private void appliquerReglesJ1(MatchPadel match, LocalDateTime now) {
-        // 1) Impayés => match PUBLIC + place libérée
         List<Participation> participationsSnapshot = List.copyOf(match.getParticipations());
 
         for (Participation part : participationsSnapshot) {
@@ -80,10 +72,8 @@ public class TraitementJ1Service {
                     .setScale(2, RoundingMode.HALF_UP);
 
             if (paye.compareTo(PART_JOUEUR) < 0) {
-                // impayé => bascule public + libère place
                 match.setVisibilite(MatchVisibilite.PUBLIC);
 
-                // Annule la dette restante de CE match pour ce joueur (on avait débité 15 à l'inscription)
                 BigDecimal resteDu = PART_JOUEUR.subtract(paye).setScale(2, RoundingMode.HALF_UP);
                 if (resteDu.signum() > 0) {
                     soldeService.crediter(
@@ -98,14 +88,12 @@ public class TraitementJ1Service {
                     );
                 }
 
-                // Supprime la participation (place redevient réservable)
                 match.removeParticipation(part);
             }
         }
 
         int nbParticipants = match.getParticipations().size();
 
-        // 2) Privé incomplet => PUBLIC + pénalité 1 semaine organisateur
         if (match.getVisibilite() == MatchVisibilite.PRIVE && nbParticipants < 4) {
             match.setVisibilite(MatchVisibilite.PUBLIC);
             penaliteJoueurService.appliquerPenaliteReservation(match.getOrganisateur());

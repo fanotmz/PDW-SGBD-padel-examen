@@ -11,6 +11,7 @@ import be.ephec.padel.backend.model.enums.OrigineMouvementSoldeType;
 import be.ephec.padel.backend.model.enums.TypePaiement;
 import be.ephec.padel.backend.repository.MatchPadelRepository;
 import be.ephec.padel.backend.repository.PaiementRepository;
+import be.ephec.padel.backend.service.enums.ModeAnnulationMatch;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 

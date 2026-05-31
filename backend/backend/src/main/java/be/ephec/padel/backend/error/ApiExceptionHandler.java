@@ -54,7 +54,6 @@ public class ApiExceptionHandler {
         return ResponseEntity.badRequest().body(error);
     }
 
-    // ✅ 403 (auth ok, mais pas les droits)
     @ExceptionHandler(AccessDeniedException.class)
     public ResponseEntity<ApiErrorDto> handleAccessDenied(
             AccessDeniedException ex,
@@ -70,7 +69,6 @@ public class ApiExceptionHandler {
         return ResponseEntity.status(HttpStatus.FORBIDDEN).body(error);
     }
 
-    // ✅ 401 (pas authentifié / auth invalide)
     @ExceptionHandler(AuthenticationException.class)
     public ResponseEntity<ApiErrorDto> handleAuthentication(
             AuthenticationException ex,
@@ -91,7 +89,6 @@ public class ApiExceptionHandler {
             MethodArgumentNotValidException ex,
             HttpServletRequest request) {
 
-        // ✅ ne pas écraser : on garde le premier message et on concatène si plusieurs erreurs
         Map<String, String> details = new LinkedHashMap<>();
         ex.getBindingResult().getFieldErrors().forEach(err -> {
             details.merge(

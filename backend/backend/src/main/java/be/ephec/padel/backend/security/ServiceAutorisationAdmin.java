@@ -105,7 +105,6 @@ public class ServiceAutorisationAdmin {
             try {
                 map.put(login, Long.parseLong(siteIdTexte));
             } catch (NumberFormatException ignore) {
-                // MVP : on ignore les entrees invalides
             }
         }
 

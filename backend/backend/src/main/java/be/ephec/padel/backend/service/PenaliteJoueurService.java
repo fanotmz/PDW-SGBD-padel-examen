@@ -19,7 +19,7 @@ public class PenaliteJoueurService {
 
     public void appliquerPenaliteReservation(Joueur joueur) {
         if (joueur == null) {
-            throw new BusinessException("Joueur obligatoire pour appliquer une penalite");
+            throw new BusinessException("Joueur obligatoire pour appliquer une pénalité");
         }
 
         LocalDateTime finPenalite = LocalDateTime.now(clock)

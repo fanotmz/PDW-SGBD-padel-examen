@@ -1,7 +1,6 @@
-import { HttpErrorResponse } from '@angular/common/http';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, convertToParamMap, provideRouter, Router } from '@angular/router';
-import { of, throwError } from 'rxjs';
+import { of } from 'rxjs';
 import { AdminSiteMatchSummaryResponse } from '../../../core/admin/admin.models';
 import { AdminService } from '../../../core/admin/admin.service';
 import { AdminSiteMatchesPageComponent } from './admin-site-matches-page.component';

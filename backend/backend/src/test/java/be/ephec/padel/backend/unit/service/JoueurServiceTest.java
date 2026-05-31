@@ -190,10 +190,6 @@ class JoueurServiceTest {
         verifyNoInteractions(joueurRepo, siteRepo);
     }
 
-    // ----------------
-    // creerJoueur matricule patterns
-    // ----------------
-
     @Test
     void creerJoueur_global_matriculeInvalide_refuse() {
         assertThrows(BusinessException.class, () -> service.creerJoueur("S0001", "Nom", TypeJoueur.GLOBAL, null));
@@ -215,10 +211,6 @@ class JoueurServiceTest {
         assertThrows(BusinessException.class, () -> service.creerJoueur("L12", "Nom", TypeJoueur.LIBRE, null));
         verifyNoInteractions(joueurRepo, siteRepo);
     }
-
-    // ----------------
-    // creerJoueur unicité + site rules
-    // ----------------
 
     @Test
     void creerJoueur_matriculeDejaUtilise_refuse() {
@@ -308,10 +300,6 @@ class JoueurServiceTest {
         verify(joueurRepo).save(any(Joueur.class));
     }
 
-    // ----------------
-    // getJoueur / lister
-    // ----------------
-
     @Test
     void getJoueur_introuvable_notFound() {
         when(joueurRepo.findById("G0001")).thenReturn(Optional.empty());
@@ -331,9 +319,6 @@ class JoueurServiceTest {
         assertEquals(2, service.lister().size());
     }
 
-    // ----------------
-    // dette checks
-    // ----------------
 
     @Test
     void aDette_false_si_soldeNull_ou_zero() {
@@ -373,9 +358,6 @@ class JoueurServiceTest {
 
         assertDoesNotThrow(() -> service.verifierPasDeDette("G0001"));
     }
-// ----------------
-// getPlayerMatches
-// ----------------
 
     @Test
     void getPlayerMatches_joueurIntrouvable_notFound() {
@@ -409,11 +391,11 @@ class JoueurServiceTest {
         when(joueurRepo.findById("G0001")).thenReturn(Optional.of(joueur));
 
         Participation participation = mockParticipation(
-                "G9999",                // organisateur
-                "G0001",                // joueur courant
+                "G9999",
+                "G0001",
                 LocalDate.now().plusDays(5),
                 MatchVisibilite.PUBLIC,
-                false,                  // paiement
+                false,
                 10L,
                 "Terrain 1",
                 1L,
@@ -450,7 +432,7 @@ class JoueurServiceTest {
         when(joueurRepo.findById("G0001")).thenReturn(Optional.of(joueur));
 
         Participation participation = mockParticipation(
-                "G0001",                // organisateur = joueur courant
+                "G0001",
                 "G0001",
                 LocalDate.now().plusDays(3),
                 MatchVisibilite.PRIVE,
@@ -731,9 +713,6 @@ class JoueurServiceTest {
         assertEquals(new BigDecimal("13.50"), dto.montantRestantJoueur());
         assertFalse(dto.peutPayerParticipation());
     }
-    // ----------------
-// getOrganizedMatches
-// ----------------
 
     @Test
     void getOrganizedMatches_joueurIntrouvable_notFound() {

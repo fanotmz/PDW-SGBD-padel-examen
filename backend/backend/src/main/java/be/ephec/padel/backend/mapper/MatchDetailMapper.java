@@ -13,6 +13,7 @@ public final class MatchDetailMapper {
     private static final int CAPACITE_MATCH = 4;
 
     private MatchDetailMapper() {
+
     }
 
     public static MatchDetailDto toDto(MatchPadel m,

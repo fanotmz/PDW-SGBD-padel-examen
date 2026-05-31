@@ -29,7 +29,6 @@ public class TerrainService {
 
     public List<Terrain> listerParSite(Long siteId) {
         if (siteId == null) throw new BusinessException("SiteId obligatoire");
-        // utilise une des deux méthodes, on choisit findBySite_Id
         return terrainRepository.findBySite_Id(siteId);
     }
 
@@ -46,7 +45,6 @@ public class TerrainService {
         Site site = siteRepository.findById(siteId)
                 .orElseThrow(() -> new NotFoundException("Site introuvable"));
 
-        // Bonus (utile) : éviter doublon de terrain dans le même site
         if (terrainRepository.existsByNomAndSiteId(nom, siteId)) {
             throw new BusinessException("Terrain déjà existant pour ce site");
         }

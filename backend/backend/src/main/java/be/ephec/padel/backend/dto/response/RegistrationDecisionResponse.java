@@ -14,9 +14,6 @@ public class RegistrationDecisionResponse {
     private TypeJoueur joueurType;
     private Long joueurSiteId;
 
-    public RegistrationDecisionResponse() {
-    }
-
     public RegistrationDecisionResponse(Long userId,
                                         String username,
                                         UserStatus status,

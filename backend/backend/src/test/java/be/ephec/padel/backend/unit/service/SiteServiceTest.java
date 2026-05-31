@@ -31,9 +31,6 @@ class SiteServiceTest {
         service = new SiteService(siteRepo, horaireSiteRepo);
     }
 
-    // --------
-    // lister
-    // --------
     @Test
     void lister_ok() {
         when(siteRepo.findAll()).thenReturn(List.of(mock(Site.class), mock(Site.class)));
@@ -44,9 +41,6 @@ class SiteServiceTest {
         verify(siteRepo).findAll();
     }
 
-    // --------
-    // getSite
-    // --------
     @Test
     void getSite_idNull_refuse() {
         assertThrows(BusinessException.class, () -> service.getSite(null));
@@ -72,9 +66,6 @@ class SiteServiceTest {
         verify(siteRepo).findById(1L);
     }
 
-    // --------
-    // creerSite
-    // --------
     @Test
     void creerSite_nomNullOuBlank_refuse() {
         assertThrows(BusinessException.class,

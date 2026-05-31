@@ -25,6 +25,7 @@ import be.ephec.padel.backend.repository.projection.PublicMatchSummaryProjection
 import be.ephec.padel.backend.security.CurrentUserFacade;
 import be.ephec.padel.backend.security.ServiceAutorisationAdmin;
 import be.ephec.padel.backend.service.*;
+import be.ephec.padel.backend.service.enums.ModeAnnulationMatch;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -100,10 +101,6 @@ class MatchPadelServiceTest {
 
         stubCurrentJoueur("G0001", TypeJoueur.GLOBAL, BigDecimal.ZERO);
     }
-
-    // ----------------
-    // Helpers
-    // ----------------
 
     private LocalDateTime dateValide() {
         return LocalDateTime.now(clock)
@@ -267,10 +264,6 @@ class MatchPadelServiceTest {
         verifyNoInteractions(annulationMatchService);
     }
 
-    // ----------------
-    // getMatch / getMatchDto
-    // ----------------
-
     @Test
     void getMatch_introuvable_notFound() {
         when(matchRepo.findByIdWithDetails(1L)).thenReturn(Optional.empty());
@@ -410,10 +403,6 @@ class MatchPadelServiceTest {
         assertEquals(new BigDecimal("35.00"), dto.getResteAPayer());
     }
 
-    // ----------------
-    // creerMatch validations
-    // ----------------
-
     @Test
     void creerMatch_terrainIdNull_refuse() {
         assertThrows(BusinessException.class, () ->
@@ -536,10 +525,6 @@ class MatchPadelServiceTest {
         assertSame(savedMatch, res);
     }
 
-    // ----------------
-    // creerMatch droits réservation : GLOBAL / SITE / LIBRE
-    // ----------------
-
     @Test
     void creerMatch_global_tropLoin_refuse() {
         Terrain t = mock(Terrain.class);
@@ -642,10 +627,6 @@ class MatchPadelServiceTest {
                 service.creerMatch(1L, date, MatchVisibilite.PUBLIC));
     }
 
-    // ----------------
-    // Issue 14 - overlap terrain
-    // ----------------
-
     @Test
     void creerMatch_refuse_si_terrain_occupe_overlap() {
         Terrain t = mock(Terrain.class);
@@ -702,10 +683,6 @@ class MatchPadelServiceTest {
         verify(paiementService).payerParticipation(123L, Tarifs.PART_PAR_JOUEUR);
     }
 
-    // ----------------
-    // Issue 30 - fermeture globale
-    // ----------------
-
     @Test
     void creerMatch_refuse_si_fermeture_globale() {
         Terrain t = mock(Terrain.class);
@@ -745,10 +722,6 @@ class MatchPadelServiceTest {
         MatchPadel res = service.creerMatch(1L, date, MatchVisibilite.PUBLIC);
         assertSame(savedMatch, res);
     }
-
-    // ----------------
-    // Issue 30 - horaires + jours fermeture site
-    // ----------------
 
     @Test
     void creerMatch_refuse_si_site_ferme_ce_jour() {

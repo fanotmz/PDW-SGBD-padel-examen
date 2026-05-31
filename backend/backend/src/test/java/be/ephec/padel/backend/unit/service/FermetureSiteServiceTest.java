@@ -50,10 +50,6 @@ class FermetureSiteServiceTest {
         doNothing().when(serviceAutorisationAdmin).verifierAccesAuSite(anyLong());
     }
 
-    // --------
-    // listerParSite
-    // --------
-
     @Test
     void listerParSite_idNull_refuse() {
         assertThrows(BusinessException.class, () -> service.listerParSite(null));
@@ -108,10 +104,6 @@ class FermetureSiteServiceTest {
         verify(siteRepository).findById(1L);
         verify(fermetureSiteRepository).findBySiteIdOrderByDateAscDateDebutAsc(1L);
     }
-
-    // --------
-    // getById
-    // --------
 
     @Test
     void getById_refuse_si_admin_hors_perimetre() {
@@ -173,10 +165,6 @@ class FermetureSiteServiceTest {
         verify(siteRepository).findById(1L);
         verify(fermetureSiteRepository).findByIdAndSiteId(10L, 1L);
     }
-
-    // --------
-    // creerDate
-    // --------
 
     @Test
     void creerDate_siteIdNull_refuse() {
@@ -295,10 +283,6 @@ class FermetureSiteServiceTest {
         );
     }
 
-    // --------
-    // creerPeriode
-    // --------
-
     @Test
     void creerPeriode_refuse_si_admin_hors_perimetre() {
         CreateFermetureSitePeriodeRequest req = new CreateFermetureSitePeriodeRequest();
@@ -387,10 +371,6 @@ class FermetureSiteServiceTest {
         );
     }
 
-    // --------
-    // updateDate
-    // --------
-
     @Test
     void updateDate_refuse_si_admin_hors_perimetre() {
         doThrow(new ForbiddenException("Accès refusé à ce site"))
@@ -476,10 +456,6 @@ class FermetureSiteServiceTest {
                 LocalDate.of(2030, 1, 21).atStartOfDay()
         );
     }
-
-    // --------
-    // updatePeriode
-    // --------
 
     @Test
     void updatePeriode_refuse_si_admin_hors_perimetre() {
@@ -582,10 +558,6 @@ class FermetureSiteServiceTest {
         );
     }
 
-    // --------
-    // delete
-    // --------
-
     @Test
     void delete_refuse_si_admin_hors_perimetre() {
         doThrow(new ForbiddenException("Accès refusé à ce site"))
@@ -614,10 +586,6 @@ class FermetureSiteServiceTest {
         verify(fermetureSiteRepository).delete(fermeture);
         verifyNoInteractions(annulationMatchService);
     }
-
-    // --------
-    // isDateFermeePourSite
-    // --------
 
     @Test
     void isDateFermeePourSite_siteIdNull_refuse() {
