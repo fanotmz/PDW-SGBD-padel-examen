@@ -1,0 +1,822 @@
+package be.ephec.padel.backend.service;
+
+import be.ephec.padel.backend.common.Tarifs;
+import be.ephec.padel.backend.dto.response.CreneauxMatchResponseDto;
+import be.ephec.padel.backend.dto.response.MatchDetailDto;
+import be.ephec.padel.backend.dto.response.MatchDto;
+import be.ephec.padel.backend.dto.response.PublicMatchSummaryDto;
+import be.ephec.padel.backend.exception.BusinessException;
+import be.ephec.padel.backend.exception.ForbiddenException;
+import be.ephec.padel.backend.exception.NotFoundException;
+import be.ephec.padel.backend.mapper.MatchDetailMapper;
+import be.ephec.padel.backend.mapper.MatchMapper;
+import be.ephec.padel.backend.mapper.PublicMatchSummaryMapper;
+import be.ephec.padel.backend.model.entities.HoraireSite;
+import be.ephec.padel.backend.model.entities.Joueur;
+import be.ephec.padel.backend.model.entities.MatchPadel;
+import be.ephec.padel.backend.model.entities.Participation;
+import be.ephec.padel.backend.model.entities.Site;
+import be.ephec.padel.backend.model.entities.Terrain;
+import be.ephec.padel.backend.model.enums.MatchStatut;
+import be.ephec.padel.backend.model.enums.MatchVisibilite;
+import be.ephec.padel.backend.model.enums.OrigineMouvementSoldeType;
+import be.ephec.padel.backend.model.enums.SecurityRole;
+import be.ephec.padel.backend.model.enums.TypePaiement;
+import be.ephec.padel.backend.model.enums.TypeJoueur;
+import be.ephec.padel.backend.repository.FermetureGlobaleRepository;
+import be.ephec.padel.backend.repository.MatchPadelRepository;
+import be.ephec.padel.backend.repository.PaiementRepository;
+import be.ephec.padel.backend.repository.ParticipationRepository;
+import be.ephec.padel.backend.repository.TerrainRepository;
+import be.ephec.padel.backend.repository.projection.PublicMatchSummaryProjection;
+import be.ephec.padel.backend.security.CurrentUserFacade;
+import be.ephec.padel.backend.security.ServiceAutorisationAdmin;
+import be.ephec.padel.backend.service.enums.ModeAnnulationMatch;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.time.Clock;
+import java.time.DayOfWeek;
+import java.time.Duration;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Set;
+
+@Service
+@Transactional
+public class MatchPadelService {
+
+    private static final long DUREE_MATCH_MIN = 90;
+    private static final long BUFFER_MIN = 15;
+    private static final long SLOT_MIN = DUREE_MATCH_MIN + BUFFER_MIN;
+    private static final long PAS_CRENEAU_MIN = 15;
+    private static final Duration SEUIL_ANNULATION_TARDIVE = Duration.ofHours(24);
+    private static final DateTimeFormatter CRENEAU_FORMATTER = DateTimeFormatter.ofPattern("HH:mm");
+    private static final String MESSAGE_HORAIRE_MANQUANT =
+            "Aucun horaire n'est configuré pour ce site et cette année.";
+    private static final String MESSAGE_SITE_FERME =
+            "Le site est fermé à cette date. Aucun créneau n'est disponible.";
+    private static final String MESSAGE_AUCUN_CRENEAU =
+            "Aucun créneau disponible pour ce terrain et cette date.";
+    private static final String MESSAGE_DETTE =
+            "Vous ne pouvez pas réserver tant qu'un solde est dû.";
+    private static final String MESSAGE_PENALITE =
+            "Vous ne pouvez pas réserver pendant votre période de pénalité.";
+    private static final String MESSAGE_GLOBAL_TROP_LOIN =
+            "Vous pouvez réserver au maximum 3 semaines à l'avance.";
+    private static final String MESSAGE_SITE_TROP_LOIN =
+            "Vous pouvez réserver au maximum 2 semaines à l'avance.";
+    private static final String MESSAGE_LIBRE_TROP_LOIN =
+            "Vous pouvez réserver au maximum 5 jours à l'avance.";
+    private static final String MESSAGE_SITE_HORS_PERIMETRE =
+            "Votre abonnement SITE permet de réserver uniquement sur votre site.";
+    private static final String MESSAGE_TERRAIN_OCCUPE =
+            "Tous les créneaux de cette date sont déjà occupés pour ce terrain.";
+    private static final String MESSAGE_PLUS_DE_CRENEAU_AUJOURDHUI =
+            "Il n'y a plus de créneau disponible aujourd'hui pour ce terrain.";
+    private static final String MESSAGE_DATE_PASSEE =
+            "La date choisie est passée.";
+    private static final String MESSAGE_HORAIRE_TROP_COURT =
+            "L'horaire du site ne permet pas de placer un match complet à cette date.";
+
+    private final MatchPadelRepository matchPadelRepository;
+    private final TerrainRepository terrainRepository;
+    private final SoldeService soldeService;
+    private final ParticipationRepository participationRepository;
+    private final PaiementService paiementService;
+    private final HoraireSiteService horaireSiteService;
+    private final FermetureSiteService fermetureSiteService;
+    private final PaiementRepository paiementRepository;
+    private final FermetureGlobaleRepository fermetureGlobaleRepository;
+    private final AnnulationMatchService annulationMatchService;
+    private final Clock clock;
+    private final CurrentUserFacade currentUserFacade;
+    private final ServiceAutorisationAdmin serviceAutorisationAdmin;
+
+    @Autowired
+    public MatchPadelService(MatchPadelRepository matchPadelRepository,
+                             TerrainRepository terrainRepository,
+                             SoldeService soldeService,
+                             ParticipationRepository participationRepository,
+                             PaiementService paiementService,
+                             HoraireSiteService horaireSiteService,
+                             FermetureSiteService fermetureSiteService,
+                             PaiementRepository paiementRepository,
+                             FermetureGlobaleRepository fermetureGlobaleRepository,
+                             AnnulationMatchService annulationMatchService,
+                             Clock clock,
+                             CurrentUserFacade currentUserFacade,
+                             ServiceAutorisationAdmin serviceAutorisationAdmin) {
+        this.matchPadelRepository = matchPadelRepository;
+        this.terrainRepository = terrainRepository;
+        this.soldeService = soldeService;
+        this.participationRepository = participationRepository;
+        this.paiementService = paiementService;
+        this.horaireSiteService = horaireSiteService;
+        this.fermetureSiteService = fermetureSiteService;
+        this.paiementRepository = paiementRepository;
+        this.fermetureGlobaleRepository = fermetureGlobaleRepository;
+        this.annulationMatchService = annulationMatchService;
+        this.clock = clock;
+        this.currentUserFacade = currentUserFacade;
+        this.serviceAutorisationAdmin = serviceAutorisationAdmin;
+    }
+
+    @Transactional(readOnly = true)
+    public MatchPadel getMatch(Long id) {
+        return matchPadelRepository.findByIdWithDetails(id)
+                .orElseThrow(() -> new NotFoundException("Match introuvable"));
+    }
+
+    @Transactional(readOnly = true)
+    public MatchDto getMatchDto(Long id) {
+        MatchPadel match = getMatch(id);
+
+        BigDecimal montantTotal = Tarifs.PRIX_MATCH;
+        BigDecimal montantPaye = getMontantEncaisseParMatch(match);
+        BigDecimal resteAPayer = calculerResteAPayer(match, montantTotal, montantPaye);
+
+        return MatchMapper.toDtoComplet(match, montantTotal, montantPaye, resteAPayer);
+    }
+
+    private void verifierFermetureGlobale(LocalDateTime dateDebut) {
+        if (dateDebut == null) {
+            throw new BusinessException("Date de début obligatoire");
+        }
+        if (fermetureGlobaleRepository.existsByDate(dateDebut.toLocalDate())) {
+            throw new BusinessException("Réservation impossible : fermeture globale (jour férié).");
+        }
+    }
+
+    private void verifierOuvertureSite(Terrain terrain, LocalDateTime dateDebut) {
+        if (terrain == null || terrain.getSite() == null) {
+            throw new BusinessException("Terrain sans site associé.");
+        }
+
+        Site site = terrain.getSite();
+        DayOfWeek jour = dateDebut.getDayOfWeek();
+        if (estJourFermetureSite(site, jour)) {
+            throw new BusinessException("Réservation impossible : site fermé ce jour-là.");
+        }
+
+        HoraireSite horaire = horaireSiteService.getApplicable(site.getId(), dateDebut);
+
+        LocalTime ouverture = horaire.getHeureOuverture();
+        LocalTime fermeture = horaire.getHeureFermeture();
+        LocalTime start = dateDebut.toLocalTime();
+        LocalTime end = dateDebut.plusMinutes(SLOT_MIN).toLocalTime();
+
+        if (end.isBefore(start)) {
+            throw new BusinessException("Réservation impossible : le créneau dépasse minuit.");
+        }
+
+        if (start.isBefore(ouverture) || end.isAfter(fermeture)) {
+            throw new BusinessException("Réservation impossible : en dehors des horaires d'ouverture.");
+        }
+    }
+
+    public MatchPadel creerMatch(Long terrainId,
+                                 LocalDateTime dateDebut,
+                                 MatchVisibilite visibilite) {
+        Joueur organisateur = currentUserFacade.getCurrentJoueur();
+        if (organisateur == null) {
+            throw new BusinessException("Organisateur obligatoire");
+        }
+
+        if (terrainId == null) {
+            throw new BusinessException("Terrain obligatoire");
+        }
+        if (dateDebut == null) {
+            throw new BusinessException("Date début obligatoire");
+        }
+        if (visibilite == null) {
+            throw new BusinessException("Visibilité obligatoire");
+        }
+
+        LocalDateTime now = LocalDateTime.now(clock);
+        if (!dateDebut.isAfter(now)) {
+            throw new BusinessException("La date du match doit être dans le futur.");
+        }
+
+        Terrain terrain = terrainRepository.findById(terrainId)
+                .orElseThrow(() -> new NotFoundException("Terrain introuvable"));
+
+        if (aDette(organisateur)) {
+            throw new BusinessException("Réservation impossible : dette en cours (" + organisateur.getSolde() + ").");
+        }
+
+        if (aPenaliteActive(organisateur, now)) {
+            throw new BusinessException(
+                    "Réservation impossible : pénalité active jusqu'au "
+                            + organisateur.getPenaliteJusqua().toLocalDate()
+                            + " inclus."
+            );
+        }
+
+        verifierDroitReservation(organisateur, terrain, dateDebut, now);
+        verifierFermetureGlobale(dateDebut);
+        verifierOuvertureSite(terrain, dateDebut);
+        verifierFermetureSite(terrain, dateDebut);
+        verifierTerrainDisponible(terrainId, dateDebut);
+
+        MatchPadel match = new MatchPadel(terrain, organisateur, dateDebut, visibilite);
+        MatchPadel saved = matchPadelRepository.save(match);
+
+        Participation participationOrganisateur = participationRepository.save(new Participation(saved, organisateur));
+
+        BigDecimal part = Tarifs.PART_PAR_JOUEUR;
+        soldeService.debiter(
+                organisateur.getMatricule(),
+                part,
+                new SoldeOriginContext(
+                        OrigineMouvementSoldeType.CREATION_MATCH_ORGANISATEUR,
+                        participationOrganisateur.getId(),
+                        saved.getId(),
+                        null
+                )
+        );
+        paiementService.payerParticipation(participationOrganisateur.getId(), part);
+
+        return saved;
+    }
+
+    @Transactional(readOnly = true)
+    public CreneauxMatchResponseDto getCreneauxDisponibles(Long terrainId, LocalDate date) {
+        if (terrainId == null) {
+            throw new BusinessException("Terrain obligatoire");
+        }
+        if (date == null) {
+            throw new BusinessException("Date obligatoire");
+        }
+
+        Joueur joueur = currentUserFacade.getCurrentJoueur();
+        if (joueur == null) {
+            throw new BusinessException("Joueur obligatoire");
+        }
+
+        Terrain terrain = terrainRepository.findById(terrainId)
+                .orElseThrow(() -> new NotFoundException("Terrain introuvable"));
+
+        if (terrain.getSite() == null || terrain.getSite().getId() == null) {
+            throw new BusinessException("Terrain sans site associé.");
+        }
+
+        LocalDateTime now = LocalDateTime.now(clock);
+        if (aDette(joueur)) {
+            return creerReponseCreneaux(List.of(), MESSAGE_DETTE, date, null);
+        }
+        if (aPenaliteActive(joueur, now)) {
+            return creerReponseCreneaux(List.of(), MESSAGE_PENALITE, date, null);
+        }
+
+        Site site = terrain.getSite();
+        Long siteId = site.getId();
+
+        HoraireSite horaire;
+        try {
+            horaire = horaireSiteService.getApplicable(siteId, date.atStartOfDay());
+        } catch (BusinessException exception) {
+            return creerReponseCreneaux(List.of(), MESSAGE_HORAIRE_MANQUANT, date, null);
+        }
+
+        if (estJourFermetureSite(site, date.getDayOfWeek())
+                || fermetureGlobaleRepository.existsByDate(date)
+                || fermetureSiteService.isDateFermeePourSite(siteId, date)) {
+            return creerReponseCreneaux(List.of(), MESSAGE_SITE_FERME, date, null);
+        }
+
+        LocalTime ouverture = horaire.getHeureOuverture();
+        LocalTime fermeture = horaire.getHeureFermeture();
+        LocalTime dernierDebut = fermeture.minusMinutes(SLOT_MIN);
+
+        if (dernierDebut.isBefore(ouverture)) {
+            return creerReponseCreneaux(List.of(), MESSAGE_HORAIRE_TROP_COURT, date, horaire);
+        }
+
+        LocalDateTime debutRecherche = date.atStartOfDay().minusMinutes(SLOT_MIN);
+        LocalDateTime finRecherche = date.plusDays(1).atStartOfDay().plusMinutes(SLOT_MIN);
+        List<MatchPadel> matchsProches = matchPadelRepository.findByTerrainIdAndDateDebutBetween(
+                terrainId,
+                debutRecherche,
+                finRecherche
+        );
+
+        List<String> creneaux = new ArrayList<>();
+        int nbCreneauxCandidats = 0;
+        int nbCreneauxFuturs = 0;
+        int nbCreneauxAutorises = 0;
+        int nbCreneauxOccupes = 0;
+        String premierMessageDroit = null;
+
+        for (LocalTime heure = ouverture;
+             !heure.isAfter(dernierDebut);
+             heure = heure.plusMinutes(PAS_CRENEAU_MIN)) {
+
+            nbCreneauxCandidats++;
+            LocalDateTime dateDebut = date.atTime(heure);
+
+            if (!dateDebut.isAfter(now)) {
+                continue;
+            }
+
+            nbCreneauxFuturs++;
+
+            String messageDroit = getMessageIndisponibiliteReservation(joueur, terrain, dateDebut, now);
+            if (messageDroit != null) {
+                if (premierMessageDroit == null) {
+                    premierMessageDroit = messageDroit;
+                }
+                continue;
+            }
+
+            nbCreneauxAutorises++;
+
+            if (!estTerrainDisponible(matchsProches, dateDebut)) {
+                nbCreneauxOccupes++;
+                continue;
+            }
+
+            creneaux.add(heure.format(CRENEAU_FORMATTER));
+        }
+
+        return creerReponseCreneaux(
+                creneaux,
+                creneaux.isEmpty()
+                        ? determinerMessageAucunCreneau(
+                                date,
+                                nbCreneauxCandidats,
+                                nbCreneauxFuturs,
+                                nbCreneauxAutorises,
+                                nbCreneauxOccupes,
+                                premierMessageDroit
+                        )
+                        : null,
+                date,
+                horaire
+        );
+    }
+
+    private String determinerMessageAucunCreneau(LocalDate date,
+                                                 int nbCreneauxCandidats,
+                                                 int nbCreneauxFuturs,
+                                                 int nbCreneauxAutorises,
+                                                 int nbCreneauxOccupes,
+                                                 String messageDroit) {
+        LocalDate today = LocalDate.now(clock);
+
+        if (nbCreneauxCandidats > 0 && nbCreneauxFuturs == 0) {
+            return date.isBefore(today) ? MESSAGE_DATE_PASSEE : MESSAGE_PLUS_DE_CRENEAU_AUJOURDHUI;
+        }
+
+        if (nbCreneauxFuturs > 0 && messageDroit != null && nbCreneauxAutorises == 0) {
+            return messageDroit;
+        }
+
+        if (nbCreneauxAutorises > 0 && nbCreneauxOccupes == nbCreneauxAutorises) {
+            return MESSAGE_TERRAIN_OCCUPE;
+        }
+
+        return MESSAGE_AUCUN_CRENEAU;
+    }
+
+    private CreneauxMatchResponseDto creerReponseCreneaux(List<String> creneaux,
+                                                          String message,
+                                                          LocalDate date,
+                                                          HoraireSite horaire) {
+        return new CreneauxMatchResponseDto(
+                creneaux,
+                message,
+                date == null ? null : date.getYear(),
+                horaire == null ? null : horaire.getHeureOuverture(),
+                horaire == null ? null : horaire.getHeureFermeture(),
+                DUREE_MATCH_MIN,
+                BUFFER_MIN
+        );
+    }
+
+    private boolean aDette(Joueur joueur) {
+        return joueur.getSolde() != null && joueur.getSolde().signum() > 0;
+    }
+
+    private boolean aPenaliteActive(Joueur joueur, LocalDateTime now) {
+        return joueur.getPenaliteJusqua() != null && joueur.getPenaliteJusqua().isAfter(now);
+    }
+
+    private String getMessageIndisponibiliteReservation(Joueur joueur,
+                                                        Terrain terrain,
+                                                        LocalDateTime dateDebut,
+                                                        LocalDateTime now) {
+        try {
+            verifierDroitReservation(joueur, terrain, dateDebut, now);
+            return null;
+        } catch (BusinessException exception) {
+            return toMessageCreneauDroitReservation(exception.getMessage());
+        }
+    }
+
+    private String toMessageCreneauDroitReservation(String message) {
+        if (message == null) {
+            return MESSAGE_AUCUN_CRENEAU;
+        }
+
+        if (message.contains("3 semaines")) {
+            return MESSAGE_GLOBAL_TROP_LOIN;
+        }
+        if (message.contains("2 semaines")) {
+            return MESSAGE_SITE_TROP_LOIN;
+        }
+        if (message.contains("5 jours")) {
+            return MESSAGE_LIBRE_TROP_LOIN;
+        }
+        if (message.contains("ne peut réserver que sur son site")) {
+            return MESSAGE_SITE_HORS_PERIMETRE;
+        }
+
+        return MESSAGE_AUCUN_CRENEAU;
+    }
+
+    private void verifierTerrainDisponible(Long terrainId, LocalDateTime newStart) {
+        if (terrainId == null) {
+            throw new BusinessException("Terrain obligatoire");
+        }
+        if (newStart == null) {
+            throw new BusinessException("Date de début obligatoire");
+        }
+
+        LocalDateTime from = newStart.minusMinutes(SLOT_MIN);
+        LocalDateTime to = newStart.plusMinutes(SLOT_MIN);
+
+        List<MatchPadel> candidats =
+                matchPadelRepository.findByTerrainIdAndDateDebutBetween(terrainId, from, to);
+
+        if (!estTerrainDisponible(candidats, newStart)) {
+            throw new BusinessException(
+                    "Terrain indisponible : un match est déjà prévu sur ce terrain (1h30 + 15 minutes de battement)."
+            );
+        }
+    }
+
+    private boolean estTerrainDisponible(List<MatchPadel> candidats, LocalDateTime newStart) {
+        LocalDateTime newEndBuffer = newStart.plusMinutes(SLOT_MIN);
+
+        for (MatchPadel existing : candidats) {
+            LocalDateTime existingStart = existing.getDateDebut();
+            if (existingStart == null) {
+                continue;
+            }
+
+            LocalDateTime existingEndBuffer = existingStart.plusMinutes(SLOT_MIN);
+            boolean overlap = existingStart.isBefore(newEndBuffer) && newStart.isBefore(existingEndBuffer);
+
+            if (overlap) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    private boolean estJourFermetureSite(Site site, DayOfWeek jour) {
+        Set<DayOfWeek> joursFermeture = site.getJoursFermeture();
+        return joursFermeture != null && joursFermeture.contains(jour);
+    }
+
+    private void verifierDroitReservation(Joueur organisateur,
+                                          Terrain terrain,
+                                          LocalDateTime dateDebut,
+                                          LocalDateTime now) {
+        TypeJoueur type = organisateur.getType();
+        if (type == null) {
+            throw new BusinessException("Type joueur manquant.");
+        }
+
+        switch (type) {
+            case GLOBAL -> {
+                if (dateDebut.isAfter(now.plusWeeks(3))) {
+                    throw new BusinessException("Un membre GLOBAL peut réserver au maximum 3 semaines à l'avance.");
+                }
+            }
+            case SITE -> {
+                if (dateDebut.isAfter(now.plusWeeks(2))) {
+                    throw new BusinessException("Un membre SITE peut réserver au maximum 2 semaines à l'avance.");
+                }
+                if (organisateur.getSite() == null) {
+                    throw new BusinessException("Joueur SITE sans site associé.");
+                }
+                if (terrain.getSite() == null) {
+                    throw new BusinessException("Terrain sans site associé.");
+                }
+
+                Long siteJoueur = organisateur.getSite().getId();
+                Long siteTerrain = terrain.getSite().getId();
+                if (!siteJoueur.equals(siteTerrain)) {
+                    throw new BusinessException("Un membre SITE ne peut réserver que sur son site.");
+                }
+            }
+            case LIBRE -> {
+                if (dateDebut.isAfter(now.plusDays(5))) {
+                    throw new BusinessException("Un membre LIBRE peut réserver au maximum 5 jours à l'avance.");
+                }
+            }
+            default -> throw new BusinessException("Type joueur inconnu.");
+        }
+    }
+
+    private void verifierFermetureSite(Terrain terrain, LocalDateTime dateDebut) {
+        if (terrain == null || terrain.getSite() == null || terrain.getSite().getId() == null) {
+            throw new BusinessException("Terrain sans site associé.");
+        }
+        if (dateDebut == null) {
+            throw new BusinessException("Date de début obligatoire");
+        }
+
+        Long siteId = terrain.getSite().getId();
+        LocalDate date = dateDebut.toLocalDate();
+
+        if (fermetureSiteService.isDateFermeePourSite(siteId, date)) {
+            throw new BusinessException("Réservation impossible : site fermé à cette date.");
+        }
+    }
+
+    @Transactional(readOnly = true)
+    public List<PublicMatchSummaryDto> getPublicMatchSummaries(LocalDate from,
+                                                               LocalDate to,
+                                                               Long siteId) {
+        if (from != null && to != null && from.isAfter(to)) {
+            throw new BusinessException("Le paramètre 'from' doit être antérieur ou égal à 'to'.");
+        }
+
+        LocalDateTime fromDateTime = (from != null)
+                ? from.atStartOfDay()
+                : LocalDate.now(clock).atStartOfDay();
+
+        LocalDateTime toDateTime = (to != null)
+                ? to.atTime(LocalTime.MAX)
+                : null;
+
+        List<PublicMatchSummaryProjection> rows = matchPadelRepository.findPublicMatchSummaries(
+                MatchVisibilite.PUBLIC,
+                fromDateTime,
+                toDateTime,
+                siteId
+        );
+
+        return rows.stream()
+                .map(row -> PublicMatchSummaryMapper.toDto(row, Tarifs.PART_PAR_JOUEUR))
+                .toList();
+    }
+
+    private boolean peutVoirMatchPrive(MatchPadel match, String matricule) {
+        if (matricule == null || matricule.isBlank()) {
+            return false;
+        }
+
+        if (match.getOrganisateur() != null
+                && matricule.equals(match.getOrganisateur().getMatricule())) {
+            return true;
+        }
+
+        if (match.getParticipations() == null) {
+            return false;
+        }
+
+        return match.getParticipations().stream()
+                .map(Participation::getJoueur)
+                .filter(joueur -> joueur != null && joueur.getMatricule() != null)
+                .anyMatch(joueur -> matricule.equals(joueur.getMatricule()));
+    }
+
+    @Transactional(readOnly = true)
+    public MatchDetailDto getMatchDetailDto(Long id) {
+        MatchPadel match = getMatch(id);
+
+        if (currentUserFacade.hasRole(SecurityRole.ROLE_ADMIN_GLOBAL)) {
+            return buildMatchDetailDto(match);
+        }
+
+        if (currentUserFacade.hasRole(SecurityRole.ROLE_ADMIN_SITE)) {
+            if (!serviceAutorisationAdmin.peutAdministrerSite(getSiteId(match))) {
+                throw new ForbiddenException("Accès interdit : site non autorisé");
+            }
+            return buildMatchDetailDto(match);
+        }
+
+        String matricule = currentUserFacade.getCurrentJoueur().getMatricule();
+        if (match.getVisibilite() == MatchVisibilite.PRIVE && !peutVoirMatchPrive(match, matricule)) {
+            throw new ForbiddenException("Accès refusé à ce match privé.");
+        }
+
+        return buildMatchDetailDto(match);
+    }
+
+    public void annulerMatchParUtilisateurCourant(Long matchId) {
+        MatchPadel match = getMatch(matchId);
+        ModeAnnulationMatch mode = determinerModeAnnulation(match);
+        annulationMatchService.annulerMatch(matchId, mode);
+    }
+
+    private ModeAnnulationMatch determinerModeAnnulation(MatchPadel match) {
+        verifierMatchAnnulable(match);
+
+        if (currentUserFacade.hasRole(SecurityRole.ROLE_ADMIN_GLOBAL)) {
+            return ModeAnnulationMatch.ADMIN_OU_FERMETURE;
+        }
+
+        if (currentUserFacade.hasRole(SecurityRole.ROLE_ADMIN_SITE)) {
+            if (serviceAutorisationAdmin.peutAdministrerSite(getSiteId(match))) {
+                return ModeAnnulationMatch.ADMIN_OU_FERMETURE;
+            }
+            throw new ForbiddenException("Accès interdit : site non autorisé");
+        }
+
+        if (!estOrganisateur(match)) {
+            throw new ForbiddenException("Seul l'organisateur ou un administrateur autorisé peut annuler ce match.");
+        }
+
+        return estAnnulationTardive(match.getDateDebut())
+                ? ModeAnnulationMatch.ORGANISATEUR_TARDIVE
+                : ModeAnnulationMatch.ORGANISATEUR_STANDARD;
+    }
+
+    private void verifierMatchAnnulable(MatchPadel match) {
+        if (match.getStatut() != MatchStatut.PLANIFIE) {
+            throw new BusinessException("Seul un match planifié peut être annulé.");
+        }
+        if (match.getDateDebut() == null || !match.getDateDebut().isAfter(LocalDateTime.now(clock))) {
+            throw new BusinessException("Seul un match futur peut être annulé.");
+        }
+    }
+
+    private boolean estAnnulationTardive(LocalDateTime dateDebut) {
+        return Duration.between(LocalDateTime.now(clock), dateDebut)
+                .compareTo(SEUIL_ANNULATION_TARDIVE) < 0;
+    }
+
+    private MatchDetailDto buildMatchDetailDto(MatchPadel match) {
+        BigDecimal montantTotal = Tarifs.PRIX_MATCH;
+        BigDecimal montantPaye = getMontantEncaisseParMatch(match);
+        BigDecimal montantRembourse = getMontantRembourseParMatch(match);
+        BigDecimal resteAPayer = calculerResteAPayer(match, montantTotal, montantPaye);
+        boolean peutAjouterJoueurPrive = peutAjouterJoueurPrive(match);
+        boolean peutAnnuler = peutAnnuler(match);
+
+        return MatchDetailMapper.toDto(
+                match,
+                peutAjouterJoueurPrive,
+                peutAnnuler,
+                montantTotal,
+                montantPaye,
+                resteAPayer,
+                montantRembourse
+        );
+    }
+
+    private boolean peutAnnuler(MatchPadel match) {
+        if (match == null
+                || match.getStatut() != MatchStatut.PLANIFIE
+                || match.getDateDebut() == null
+                || !match.getDateDebut().isAfter(LocalDateTime.now(clock))) {
+            return false;
+        }
+
+        if (currentUserFacade.hasRole(SecurityRole.ROLE_ADMIN_GLOBAL)) {
+            return true;
+        }
+
+        if (currentUserFacade.hasRole(SecurityRole.ROLE_ADMIN_SITE)) {
+            try {
+                return serviceAutorisationAdmin.peutAdministrerSite(getSiteId(match));
+            } catch (RuntimeException exception) {
+                return false;
+            }
+        }
+
+        return estOrganisateur(match);
+    }
+
+    private boolean peutAjouterJoueurPrive(MatchPadel match) {
+        if (match.getVisibilite() != MatchVisibilite.PRIVE) {
+            return false;
+        }
+
+        if (match.getStatut() != MatchStatut.PLANIFIE) {
+            return false;
+        }
+
+        if (match.getParticipations() != null && match.getParticipations().size() >= 4) {
+            return false;
+        }
+
+        if (currentUserFacade.hasRole(SecurityRole.ROLE_ADMIN_GLOBAL)
+                || currentUserFacade.hasRole(SecurityRole.ROLE_ADMIN_SITE)) {
+            return serviceAutorisationAdmin.peutAdministrerSite(getSiteId(match));
+        }
+
+        if (estOrganisateur(match)) {
+            return true;
+        }
+
+        return false;
+    }
+
+    private boolean estOrganisateur(MatchPadel match) {
+        try {
+            Joueur currentJoueur = currentUserFacade.getCurrentJoueur();
+            Joueur organisateur = match.getOrganisateur();
+
+            return currentJoueur != null
+                    && organisateur != null
+                    && currentJoueur.getMatricule() != null
+                    && currentJoueur.getMatricule().equals(organisateur.getMatricule());
+        } catch (ForbiddenException exception) {
+            return false;
+        }
+    }
+
+    private Long getSiteId(MatchPadel match) {
+        if (match == null
+                || match.getTerrain() == null
+                || match.getTerrain().getSite() == null) {
+            return null;
+        }
+
+        return match.getTerrain().getSite().getId();
+    }
+
+    private BigDecimal getMontantEncaisseParMatch(MatchPadel match) {
+        BigDecimal montantPaye = BigDecimal.ZERO.setScale(2, RoundingMode.HALF_UP);
+        if (match.getParticipations() == null) {
+            return montantPaye;
+        }
+
+        for (Participation participation : match.getParticipations()) {
+            montantPaye = montantPaye.add(getMontantEncaisseAffecteParticipation(participation));
+        }
+
+        return montantPaye;
+    }
+
+    private BigDecimal getMontantRembourseParMatch(MatchPadel match) {
+        BigDecimal totalRembourse = BigDecimal.ZERO.setScale(2, RoundingMode.HALF_UP);
+        if (match.getParticipations() == null) {
+            return totalRembourse;
+        }
+
+        for (Participation participation : match.getParticipations()) {
+            totalRembourse = totalRembourse.add(getMontantRembourseAffecteParticipation(participation));
+        }
+
+        return totalRembourse;
+    }
+
+    private BigDecimal getMontantEncaisseAffecteParticipation(Participation participation) {
+        if (participation == null || participation.getId() == null) {
+            return BigDecimal.ZERO.setScale(2, RoundingMode.HALF_UP);
+        }
+
+        BigDecimal encaisseParticipation = nullSafeAmount(
+                paiementRepository.sumMontantByParticipationIdAndType(participation.getId(), TypePaiement.ENCAISSEMENT)
+        );
+
+        return encaisseParticipation.min(Tarifs.PART_PAR_JOUEUR).setScale(2, RoundingMode.HALF_UP);
+    }
+
+    private BigDecimal getMontantRembourseAffecteParticipation(Participation participation) {
+        if (participation == null || participation.getId() == null) {
+            return BigDecimal.ZERO.setScale(2, RoundingMode.HALF_UP);
+        }
+
+        BigDecimal encaisseAffecteParticipation = getMontantEncaisseAffecteParticipation(participation);
+        BigDecimal rembourseParticipation = nullSafeAmount(
+                paiementRepository.sumMontantByParticipationIdAndType(participation.getId(), TypePaiement.REMBOURSEMENT)
+        ).abs();
+
+        return rembourseParticipation.min(encaisseAffecteParticipation).setScale(2, RoundingMode.HALF_UP);
+    }
+
+    private BigDecimal nullSafeAmount(BigDecimal montant) {
+        if (montant == null) {
+            return BigDecimal.ZERO.setScale(2, RoundingMode.HALF_UP);
+        }
+        return montant.setScale(2, RoundingMode.HALF_UP);
+    }
+
+    private BigDecimal calculerResteAPayer(MatchPadel match, BigDecimal montantTotal, BigDecimal montantPaye) {
+        if (match.getStatut() == MatchStatut.ANNULE) {
+            return BigDecimal.ZERO;
+        }
+
+        BigDecimal resteAPayer = montantTotal.subtract(montantPaye);
+        if (resteAPayer.signum() < 0) {
+            resteAPayer = BigDecimal.ZERO;
+        }
+        return resteAPayer;
+    }
+}

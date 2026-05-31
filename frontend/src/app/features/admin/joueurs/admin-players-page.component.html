@@ -1,0 +1,96 @@
+<section class="admin-players-page">
+  <app-page-header
+    eyebrow="Administration"
+    title="Joueurs"
+    description="Consultez les joueurs que vous pouvez administrer."
+    backLink="/admin"
+    backLabel="Retour à l’administration"
+  />
+
+  @if (isLoading()) {
+    <p class="page-state">Chargement en cours...</p>
+  } @else if (errorMessage()) {
+    <p class="page-state is-error">{{ errorMessage() }}</p>
+  } @else {
+    <p class="page-state">{{ playersCountMessage() }}</p>
+
+    @if (isEmpty()) {
+      <p class="page-state">Aucun joueur trouvé dans votre périmètre.</p>
+    }
+
+    <section class="penalized-section">
+      <div class="section-heading">
+        <h2>Joueurs actuellement pénalisés</h2>
+        <p>Consultez les joueurs dont la pénalité est active.</p>
+      </div>
+
+      @if (penalizedPlayers().length === 0) {
+        <p class="page-state">Aucun joueur actuellement pénalisé.</p>
+      } @else {
+        <div class="penalized-list">
+          @for (player of penalizedPlayers(); track player.matricule) {
+            <article class="penalized-card">
+              <div class="player-heading">
+                <h3>{{ player.nom }}</h3>
+                <p class="player-id">{{ player.matricule }}</p>
+              </div>
+
+              <div class="player-meta">
+                <p>
+                  <span>Type</span>
+                  <strong>{{ getTypeLabel(player.type) }}</strong>
+                </p>
+
+                @if (hasSite(player)) {
+                  <p>
+                    <span>Site</span>
+                    <strong>{{ player.siteNom }}</strong>
+                  </p>
+                }
+
+                <p class="penalty-date">
+                  <span>Pénalité</span>
+                  <strong>
+                    Pénalisé jusqu’au
+                    {{ player.penaliteJusqua | date:'dd/MM/yyyy' }}
+                    à {{ player.penaliteJusqua | date:'HH:mm' }}
+                  </strong>
+                </p>
+              </div>
+            </article>
+          }
+        </div>
+      }
+    </section>
+
+    <div class="players-list">
+      @for (player of players(); track player.matricule) {
+        <article class="player-card">
+          <div class="player-heading">
+            <h2>{{ player.nom }}</h2>
+            <p class="player-id">{{ player.matricule }}</p>
+          </div>
+
+          <div class="player-meta">
+            <p>
+              <span>Type</span>
+              <strong>{{ getTypeLabel(player.type) }}</strong>
+            </p>
+
+            @if (hasSite(player)) {
+              <p>
+                <span>Site</span>
+                <strong>{{ player.siteNom }}</strong>
+              </p>
+            }
+
+            <p>
+              <span>{{ getBalanceLabel(player) }}</span>
+              <strong>{{ formatBalance(player.solde) }}</strong>
+            </p>
+          </div>
+        </article>
+      }
+    </div>
+  }
+</section>

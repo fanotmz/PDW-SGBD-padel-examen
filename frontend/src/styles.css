@@ -1,0 +1,200 @@
+@import 'tailwindcss';
+
+:root {
+  color-scheme: light;
+  --app-surface: #ffffff;
+  --app-surface-muted: #f8fbff;
+  --app-border: #d7e0eb;
+  --app-text: #10233f;
+  --app-muted: #526277;
+  --app-primary: #2563eb;
+  --app-primary-soft: #eff6ff;
+  --app-primary-border: #bfdbfe;
+  --app-primary-hover: #1d4ed8;
+  --app-danger: #b91c1c;
+  --app-danger-soft: #fef2f2;
+  --app-success: #166534;
+  --app-success-soft: #f0fdf4;
+  --app-warning: #92400e;
+  --app-warning-soft: #fffbeb;
+  --app-info: #075985;
+  --app-info-soft: #eff6ff;
+  --app-radius: 0.5rem;
+  --app-shadow: 0 6px 18px rgba(15, 23, 42, 0.05);
+  line-height: 1.5;
+  font-weight: 400;
+  background:
+    radial-gradient(circle at top, rgba(147, 197, 253, 0.32), transparent 32%),
+    linear-gradient(180deg, #f7fafc 0%, #eef4f8 100%);
+  color: var(--app-text);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  min-height: 100%;
+}
+
+body {
+  min-height: 100vh;
+}
+
+.back-link {
+  display: inline-flex;
+  align-items: center;
+  width: fit-content;
+  padding: 0.2rem 0.35rem;
+  border: 0;
+  border-radius: 0.35rem;
+  background: transparent;
+  color: var(--app-primary);
+  font-family: inherit;
+  font-size: 0.95rem;
+  font-weight: 700;
+  line-height: 1.4;
+  text-decoration: none;
+  transition: background-color 120ms ease;
+}
+
+.back-link:hover,
+.back-link:focus-visible {
+  background: var(--app-primary-soft);
+  text-decoration: underline;
+}
+
+.back-link:focus-visible {
+  outline: 2px solid var(--app-primary-border);
+  outline-offset: 2px;
+}
+
+.page-state {
+  margin: 0;
+  padding: 1rem 1.2rem;
+  border: 1px solid var(--app-border);
+  border-radius: var(--app-radius);
+  background: var(--app-surface);
+  color: var(--app-muted);
+}
+
+.page-state.is-error {
+  border-color: #fecaca;
+  background: var(--app-danger-soft);
+  color: var(--app-danger);
+}
+
+.page-state.is-success {
+  border-color: #86efac;
+  background: var(--app-success-soft);
+  color: var(--app-success);
+}
+
+.detail-link,
+.secondary-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--app-radius);
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.detail-link {
+  min-height: 2.35rem;
+  padding: 0.45rem 0.8rem;
+  border: 1px solid var(--app-primary);
+  color: var(--app-primary);
+}
+
+.detail-link:hover,
+.detail-link:focus-visible,
+.secondary-action:hover,
+.secondary-action:focus-visible {
+  border-color: var(--app-primary-border);
+  background: var(--app-primary-soft);
+}
+
+.detail-link:focus-visible,
+.secondary-action:focus-visible,
+.button:focus-visible {
+  outline: 2px solid var(--app-primary-border);
+  outline-offset: 2px;
+}
+
+.button-primary:hover:not(:disabled) {
+  background: var(--app-primary-hover);
+}
+
+.button-secondary:hover:not(:disabled) {
+  background: var(--app-primary-soft);
+}
+
+.button-danger:hover:not(:disabled) {
+  background: #991b1b;
+}
+
+.status-badge,
+.state-badge,
+.meta-badge,
+.future-badge,
+.closure-badge {
+  display: inline-flex;
+  align-items: center;
+  width: fit-content;
+  min-height: 2rem;
+  padding: 0.3rem 0.7rem;
+  border-radius: 999px;
+  font-size: 0.84rem;
+  font-weight: 800;
+}
+
+.status-badge,
+.closure-badge {
+  background: var(--app-info-soft);
+  color: var(--app-info);
+}
+
+.status-badge.is-cancelled,
+.state-badge.is-cancelled {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.status-badge.is-open,
+.future-badge.is-active {
+  background: var(--app-success-soft);
+  color: var(--app-success);
+}
+
+.status-badge.is-registered {
+  background: var(--app-success-soft);
+  color: var(--app-success);
+}
+
+.status-badge.is-organizer {
+  background: var(--app-primary-soft);
+  color: var(--app-primary);
+}
+
+.temporal-passe,
+.status-badge.is-past,
+.status-badge.is-full,
+.future-badge,
+.meta-badge.is-secondary {
+  background: #e5e7eb;
+  color: #374151;
+}
+
+.temporal-aujourd_hui {
+  background: #fef3c7;
+  color: var(--app-warning);
+}
+
+.temporal-futur,
+.meta-badge {
+  background: var(--app-primary-soft);
+  color: var(--app-primary);
+}

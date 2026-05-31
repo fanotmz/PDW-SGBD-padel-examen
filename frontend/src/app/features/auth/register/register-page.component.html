@@ -1,0 +1,135 @@
+<section class="register-page">
+  <div class="register-card">
+    <p class="eyebrow">Padel Manager</p>
+
+    @if (successResponse()) {
+      <h1>Demande envoyée</h1>
+      <p class="register-subtitle">
+        Votre compte est en attente de validation par un administrateur.
+      </p>
+      <p class="success-detail">
+        Vous pourrez vous connecter une fois votre inscription validée.
+      </p>
+
+      <div class="success-actions">
+        <a routerLink="/" class="secondary-action">Retour à l’accueil</a>
+        <a routerLink="/login" class="primary-action">Aller à la connexion</a>
+      </div>
+    } @else {
+      <h1>Demande d’inscription</h1>
+      <p class="register-subtitle">
+        Remplissez ce formulaire pour demander l’accès à l’espace joueur. Votre demande restera en attente de validation.
+      </p>
+
+      <form class="register-form" [formGroup]="form" (ngSubmit)="onSubmit()">
+        <label class="field">
+          <span>Nom</span>
+          <input type="text" formControlName="nom" autocomplete="name" />
+          @if (showFieldError('nom')) {
+            <small class="field-error">Le nom est obligatoire.</small>
+          }
+        </label>
+
+        <label class="field">
+          <span>Login</span>
+          <input type="text" formControlName="username" autocomplete="username" />
+          @if (showFieldError('username')) {
+            <small class="field-error">Le login est obligatoire.</small>
+          }
+        </label>
+
+        <label class="field">
+          <span>Mot de passe</span>
+          <div class="password-field">
+            <input
+              [type]="showPassword() ? 'text' : 'password'"
+              formControlName="password"
+              autocomplete="new-password"
+            />
+            <button
+              type="button"
+              class="password-toggle"
+              [attr.aria-label]="showPassword() ? 'Masquer le mot de passe' : 'Afficher le mot de passe'"
+              (click)="togglePasswordVisibility()"
+            >
+              &#128065;
+            </button>
+          </div>
+          @if (showFieldError('password')) {
+            <small class="field-error">Le mot de passe est obligatoire.</small>
+          }
+        </label>
+
+        <label class="field">
+          <span>Confirmation du mot de passe</span>
+          <div class="password-field">
+            <input
+              [type]="showConfirmPassword() ? 'text' : 'password'"
+              formControlName="confirmPassword"
+              autocomplete="new-password"
+            />
+            <button
+              type="button"
+              class="password-toggle"
+              [attr.aria-label]="showConfirmPassword() ? 'Masquer le mot de passe' : 'Afficher le mot de passe'"
+              (click)="toggleConfirmPasswordVisibility()"
+            >
+              &#128065;
+            </button>
+          </div>
+          @if (showFieldError('confirmPassword')) {
+            <small class="field-error">La confirmation du mot de passe est obligatoire.</small>
+          } @else if (showPasswordMismatchError()) {
+            <small class="field-error">Les mots de passe doivent être identiques.</small>
+          }
+        </label>
+
+        <label class="field">
+          <span>Type de membre demandé</span>
+          <select formControlName="typeAbonnementDemande">
+            @for (playerType of playerTypes; track playerType.value) {
+              <option [value]="playerType.value">{{ playerType.label }}</option>
+            }
+          </select>
+        </label>
+
+        @if (isSiteTypeSelected()) {
+          <label class="field">
+            <span>Site demandé</span>
+            <select formControlName="siteIdDemande" [disabled]="isLoadingSites() || sites().length === 0">
+              <option [ngValue]="null">Sélectionnez un site</option>
+              @for (site of sites(); track site.id) {
+                <option [ngValue]="site.id">{{ site.nom }} - {{ site.ville }}</option>
+              }
+            </select>
+
+            @if (isLoadingSites()) {
+              <small class="field-hint">Chargement des sites...</small>
+            } @else if (sitesErrorMessage()) {
+              <small class="field-error">{{ sitesErrorMessage() }}</small>
+            } @else if (showFieldError('siteIdDemande')) {
+              <small class="field-error">
+                Veuillez sélectionner un site pour une demande de type membre d’un site.
+              </small>
+            }
+          </label>
+        }
+
+        @if (errorMessage()) {
+          <p class="error-message">{{ errorMessage() }}</p>
+        }
+
+        <p class="form-note">
+          Votre compte ne sera pas actif immédiatement. Un administrateur devra valider votre demande avant toute connexion.
+        </p>
+
+        <div class="form-actions">
+          <a routerLink="/" class="secondary-action">Retour à l’accueil</a>
+          <button type="submit" class="primary-action" [disabled]="isSubmitting()">
+            {{ isSubmitting() ? 'Envoi en cours...' : 'Envoyer ma demande' }}
+          </button>
+        </div>
+      </form>
+    }
+  </div>
+</section>

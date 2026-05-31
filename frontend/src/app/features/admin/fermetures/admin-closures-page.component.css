@@ -1,0 +1,252 @@
+.admin-closures-page {
+  width: min(100%, 72rem);
+  margin: 0 auto;
+  display: grid;
+  gap: 1.25rem;
+  padding: 1.5rem 0 2.5rem;
+}
+
+.site-picker select:focus-visible,
+.form-field input:focus-visible,
+.form-field select:focus-visible,
+.button:focus-visible {
+  outline: 2px solid var(--app-primary-border);
+  outline-offset: 2px;
+}
+
+.site-scope {
+  margin: 0;
+  color: var(--app-muted);
+}
+
+.closures-layout,
+.closures-section,
+.closures-list,
+.section-heading,
+.closure-form,
+.form-header,
+.form-field,
+.confirmation-box {
+  display: grid;
+}
+
+.closures-layout {
+  gap: 2rem;
+}
+
+.closures-section {
+  gap: 1rem;
+}
+
+.section-heading {
+  gap: 0.75rem;
+}
+
+.section-heading h2 {
+  margin: 0;
+  color: var(--app-text);
+  font-size: 1.45rem;
+}
+
+.site-picker {
+  width: min(100%, 22rem);
+  display: grid;
+  gap: 0.35rem;
+}
+
+.site-picker span {
+  color: var(--app-muted);
+  font-size: 0.86rem;
+  font-weight: 700;
+}
+
+.site-picker select {
+  min-height: 2.75rem;
+  padding: 0.55rem 0.8rem;
+  border: 1px solid #bac7d6;
+  border-radius: var(--app-radius);
+  background: var(--app-surface);
+  color: var(--app-text);
+  font: inherit;
+}
+
+.closure-form {
+  gap: 0.9rem;
+  padding: 1.25rem;
+  border: 1px solid #d7e0eb;
+  border-radius: var(--app-radius);
+  background: var(--app-surface-muted);
+}
+
+.closure-form.edit-form {
+  background: #ffffff;
+}
+
+.form-header {
+  gap: 0.25rem;
+}
+
+.form-header h3 {
+  margin: 0;
+  color: var(--app-text);
+  font-size: 1.05rem;
+}
+
+.form-header p {
+  margin: 0;
+  color: var(--app-muted);
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr));
+  gap: 0.85rem;
+}
+
+.form-field {
+  gap: 0.35rem;
+}
+
+.form-field span {
+  color: var(--app-muted);
+  font-size: 0.86rem;
+  font-weight: 700;
+}
+
+.form-field input,
+.form-field select {
+  min-height: 2.65rem;
+  padding: 0.55rem 0.75rem;
+  border: 1px solid #bac7d6;
+  border-radius: var(--app-radius);
+  background: var(--app-surface);
+  color: var(--app-text);
+  font: inherit;
+}
+
+.form-field small,
+.form-message {
+  color: #b91c1c;
+  font-size: 0.86rem;
+}
+
+.form-message {
+  margin: 0;
+}
+
+.confirmation-box {
+  gap: 0.75rem;
+  padding: 1rem;
+  border: 1px solid #facc15;
+  border-radius: var(--app-radius);
+  background: #fffbeb;
+}
+
+.confirmation-box p {
+  margin: 0;
+  color: #713f12;
+  font-weight: 700;
+}
+
+.confirmation-box.is-danger {
+  border-color: #fecaca;
+  background: #fef2f2;
+}
+
+.confirmation-box.is-danger p {
+  color: #991b1b;
+}
+
+.form-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+}
+
+.button {
+  min-height: 2.5rem;
+  padding: 0.55rem 0.9rem;
+  border: 1px solid transparent;
+  border-radius: var(--app-radius);
+  cursor: pointer;
+  font: inherit;
+  font-weight: 800;
+}
+
+.button:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.button-primary {
+  background: var(--app-primary);
+  color: #ffffff;
+}
+
+.button-secondary {
+  border-color: #bac7d6;
+  background: #ffffff;
+  color: #10233f;
+}
+
+.button-danger {
+  background: #b91c1c;
+  color: #ffffff;
+}
+
+.closures-list {
+  gap: 1rem;
+}
+
+.closure-card {
+  display: grid;
+  gap: 0.8rem;
+  padding: 1.25rem;
+  border: 1px solid #d7e0eb;
+  border-radius: var(--app-radius);
+  background: var(--app-surface);
+  box-shadow: var(--app-shadow);
+}
+
+.closure-heading {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.closure-heading h3 {
+  margin: 0;
+  color: var(--app-text);
+  font-size: 1.15rem;
+}
+
+.closure-motif {
+  margin: 0;
+  color: var(--app-muted);
+}
+
+.closure-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+}
+
+@media (max-width: 760px) {
+  .admin-closures-page {
+    gap: 1rem;
+    padding: 1.25rem 0 2rem;
+  }
+
+  .closures-layout {
+    gap: 1.5rem;
+  }
+
+  .closure-card {
+    padding: 1.1rem;
+  }
+
+  .form-grid {
+    grid-template-columns: 1fr;
+  }
+}

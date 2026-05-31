@@ -1,0 +1,85 @@
+<section class="organized-matches-page">
+  <app-page-header
+    eyebrow="Matchs organisés"
+    title="Matchs organisés"
+    description="Retrouvez ici les matchs que vous organisez actuellement."
+  />
+
+  @if (isLoading()) {
+    <app-page-state type="loading" message="Chargement de vos matchs organisés..." />
+  } @else if (errorMessage()) {
+    <app-page-state type="error" [message]="errorMessage()" />
+  } @else if (matches().length === 0) {
+    <app-page-state type="empty" message="Vous n'avez aucun match organisé pour le moment." />
+  } @else {
+    <div class="match-list">
+      @for (match of matches(); track match.id) {
+        <article class="match-card">
+          <div class="match-card-top">
+            <div>
+              <p class="match-site">{{ match.siteNom }}</p>
+              <h2>{{ match.terrainNom }}</h2>
+            </div>
+
+            <div class="badge-group">
+              <span
+                class="status-badge"
+                [ngClass]="getStatusClassMap(match)"
+              >
+                {{ getDisplayStatusLabel(match) }}
+              </span>
+
+              @if (getOrganizerBadgeLabel(match)) {
+                <span class="status-badge" [class]=" 'status-badge ' + getOrganizerBadgeClass(match) ">
+                  {{ getOrganizerBadgeLabel(match) }}
+                </span>
+              }
+            </div>
+          </div>
+
+          <dl class="match-details">
+            <div>
+              <dt>Date</dt>
+              <dd>{{ match.dateDebut | date:'dd/MM/yyyy' }}</dd>
+            </div>
+            <div>
+              <dt>Heure</dt>
+              <dd>{{ match.dateDebut | date:'HH:mm' }}</dd>
+            </div>
+            <div>
+              <dt>Visibilité</dt>
+              <dd>{{ match.visibilite }}</dd>
+            </div>
+            <div>
+              <dt>Statut</dt>
+              <dd>{{ getDisplayStatusLabel(match) }}</dd>
+            </div>
+            <div>
+              <dt>Participants</dt>
+              <dd>{{ match.nbParticipants }}</dd>
+            </div>
+            <div>
+              <dt>Places restantes</dt>
+              <dd>{{ match.placesRestantes }}</dd>
+            </div>
+            @if (match.joursAvantMatch !== null) {
+              <div>
+                <dt>Jours avant match</dt>
+                <dd>{{ match.joursAvantMatch }}</dd>
+              </div>
+            }
+          </dl>
+
+          @if (match.risquePenaliteJ1) {
+            <p class="risk-message">
+              Attention : ce match privé est incomplet. S’il reste incomplet à J-1,
+              il pourra devenir public et une pénalité pourra être appliquée.
+            </p>
+          }
+
+          <a [routerLink]="['/matchs', match.id]" class="detail-link">Voir le détail</a>
+        </article>
+      }
+    </div>
+  }
+</section>

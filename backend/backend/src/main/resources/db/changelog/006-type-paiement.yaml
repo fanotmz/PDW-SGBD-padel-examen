@@ -1,0 +1,31 @@
+databaseChangeLog:
+  - changeSet:
+      id: 006-1-add-paiement-type-column
+      author: fanoa
+      changes:
+        - addColumn:
+            tableName: paiement
+            columns:
+              - column:
+                  name: type
+                  type: varchar(20)
+
+  - changeSet:
+      id: 006-2-backfill-paiement-type
+      author: fanoa
+      changes:
+        - update:
+            tableName: paiement
+            columns:
+              - column:
+                  name: type
+                  value: ENCAISSEMENT
+
+  - changeSet:
+      id: 006-3-set-paiement-type-not-null
+      author: fanoa
+      changes:
+        - addNotNullConstraint:
+            tableName: paiement
+            columnName: type
+            columnDataType: varchar(20)

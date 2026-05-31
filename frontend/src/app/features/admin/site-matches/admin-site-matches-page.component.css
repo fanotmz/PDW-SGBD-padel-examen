@@ -1,0 +1,250 @@
+.admin-site-matches-page {
+  width: min(100%, 72rem);
+  margin: 0 auto;
+  display: grid;
+  gap: 1.25rem;
+  padding: 1.5rem 0 2.5rem;
+}
+
+.page-header {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.page-eyebrow {
+  margin: 0;
+  color: var(--app-primary);
+  font-size: 0.84rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.back-link {
+  cursor: pointer;
+}
+
+.page-header h1 {
+  margin: 0;
+  font-size: clamp(1.9rem, 4vw, 2.35rem);
+  line-height: 1.12;
+  color: var(--app-text);
+}
+
+.page-intro {
+  margin: 0;
+  color: var(--app-muted);
+}
+
+.filters-panel {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.85rem;
+  align-items: end;
+  padding: 1rem;
+  border: 1px solid var(--app-border);
+  border-radius: var(--app-radius);
+  background: var(--app-surface);
+  box-shadow: var(--app-shadow);
+}
+
+.filters-panel label {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.filters-panel span {
+  color: var(--app-muted);
+  font-size: 0.82rem;
+  font-weight: 800;
+}
+
+.filters-panel select,
+.filters-panel input {
+  min-height: 2.55rem;
+  padding: 0.55rem 0.65rem;
+  border: 1px solid #c3d0de;
+  border-radius: 0.5rem;
+  background: #ffffff;
+  color: var(--app-text);
+  font: inherit;
+}
+
+.filters-panel select:disabled {
+  background: #f1f5f9;
+  color: #94a3b8;
+}
+
+.filter-actions {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 0.6rem;
+  justify-content: flex-start;
+  align-items: center;
+}
+
+.filter-button {
+  min-height: 2.25rem;
+  padding: 0.42rem 0.8rem;
+  border: 1px solid var(--app-primary);
+  border-radius: var(--app-radius);
+  background: var(--app-surface);
+  color: var(--app-primary);
+  font: inherit;
+  font-weight: 800;
+  cursor: pointer;
+  width: auto;
+}
+
+.filter-button.is-primary {
+  background: var(--app-primary);
+  color: #ffffff;
+}
+
+.filter-button:hover {
+  background: var(--app-primary-soft);
+}
+
+.filter-button.is-primary:hover {
+  background: var(--app-primary-hover);
+}
+
+.matches-list {
+  display: grid;
+  gap: 1rem;
+}
+
+.match-card {
+  display: grid;
+  gap: 1rem;
+  padding: 1.25rem;
+  border: 1px solid var(--app-border);
+  border-radius: var(--app-radius);
+  background: var(--app-surface);
+  box-shadow: var(--app-shadow);
+}
+
+.match-main,
+.match-actions {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.match-date,
+.state-badge,
+.cancel-indicator {
+  color: var(--app-muted);
+  font-size: 0.86rem;
+  font-weight: 800;
+}
+
+.match-main h2,
+.match-main p {
+  margin: 0;
+}
+
+.match-main h2 {
+  color: var(--app-text);
+}
+
+.match-main p {
+  color: #526277;
+}
+
+.match-badges {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.5rem;
+}
+
+.state-badge {
+  border: 1px solid #c3d0de;
+  background: var(--app-surface-muted);
+  color: var(--app-text);
+}
+
+.state-badge.is-cancelled {
+  border-color: #fecaca;
+}
+
+.state-badge.is-upcoming {
+  border-color: #bfdbfe;
+  background: var(--app-primary-soft);
+  color: var(--app-primary);
+}
+
+.state-badge.is-played {
+  border-color: #e5e7eb;
+  background: #f3f4f6;
+  color: #374151;
+}
+
+.match-meta {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
+  gap: 0.75rem;
+  margin: 0;
+}
+
+.match-meta div {
+  display: grid;
+  gap: 0.2rem;
+}
+
+.match-meta dt {
+  color: var(--app-muted);
+  font-size: 0.82rem;
+  font-weight: 800;
+}
+
+.match-meta dd {
+  margin: 0;
+  color: var(--app-text);
+  font-weight: 700;
+}
+
+.cancel-indicator {
+  color: var(--app-danger);
+}
+
+.detail-link {
+  padding-inline: 0.85rem;
+}
+
+@media (max-width: 900px) {
+  .filters-panel {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 640px) {
+  .filters-panel {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-site-matches-page {
+    padding: 1.25rem 0 2rem;
+  }
+
+  .match-main,
+  .match-actions {
+    display: grid;
+  }
+
+  .match-badges {
+    justify-content: flex-start;
+  }
+
+  .filter-actions {
+    display: grid;
+  }
+
+  .filter-button,
+  .detail-link {
+    width: 100%;
+  }
+}

@@ -1,0 +1,403 @@
+<section class="admin-closures-page">
+  <app-page-header
+    eyebrow="Administration"
+    title="Fermetures"
+    description="Consultez les fermetures globales et les fermetures de site."
+    backLink="/admin"
+    backLabel="Retour à l’administration"
+  />
+
+  @if (isLoading()) {
+    <p class="page-state">Chargement en cours...</p>
+  } @else if (errorMessage()) {
+    <p class="page-state is-error">{{ errorMessage() }}</p>
+  } @else {
+    @if (successMessage()) {
+      <p class="page-state is-success" role="status" aria-live="polite">{{ successMessage() }}</p>
+    }
+
+    <div class="closures-layout">
+      <section class="closures-section">
+        <div class="section-heading">
+          <h2>Fermetures globales</h2>
+        </div>
+
+        @if (isAdminGlobal()) {
+          <form class="closure-form" [formGroup]="globalClosureForm" (ngSubmit)="requestGlobalClosureCreation()">
+            <div class="form-header">
+              <h3>Créer une fermeture globale</h3>
+              <p>Une fermeture globale concerne tous les sites.</p>
+            </div>
+
+            <div class="form-grid">
+              <label class="form-field">
+                <span>Date</span>
+                <input type="date" formControlName="date">
+                @if (showGlobalDateError()) {
+                  <small>La date est obligatoire.</small>
+                }
+              </label>
+
+              <label class="form-field">
+                <span>Motif</span>
+                <input type="text" formControlName="motif" placeholder="Optionnel">
+              </label>
+            </div>
+
+            @if (globalCreateError()) {
+              <p class="form-message is-error" role="alert">{{ globalCreateError() }}</p>
+            }
+
+            @if (isPendingAction('global')) {
+              <div class="confirmation-box">
+                <p>Confirmer la création de cette fermeture ? Des matchs futurs peuvent être annulés.</p>
+                <div class="form-actions">
+                  <button type="button" class="button button-primary" (click)="confirmPendingAction()" [disabled]="isSubmittingGlobalClosure()">
+                    Confirmer
+                  </button>
+                  <button type="button" class="button button-secondary" (click)="cancelPendingAction()" [disabled]="isSubmittingGlobalClosure()">
+                    Annuler
+                  </button>
+                </div>
+              </div>
+            } @else {
+              <div class="form-actions">
+                <button type="submit" class="button button-primary" [disabled]="isSubmittingGlobalClosure()">
+                  Créer une fermeture globale
+                </button>
+              </div>
+            }
+          </form>
+        }
+
+        @if (globalClosuresError()) {
+          <p class="page-state is-error">{{ globalClosuresError() }}</p>
+        } @else {
+          @if (globalDeleteError()) {
+            <p class="page-state is-error">{{ globalDeleteError() }}</p>
+          }
+
+          @if (hasNoGlobalClosures()) {
+            <p class="page-state">Aucune fermeture globale enregistrée.</p>
+          } @else {
+            <div class="closures-list">
+              @for (closure of globalClosures(); track getGlobalClosureTrack(closure)) {
+                <article class="closure-card">
+                  <div class="closure-heading">
+                    <span class="closure-badge">Date unique</span>
+                    <h3>{{ formatDate(closure.date) }}</h3>
+                  </div>
+                  <p class="closure-motif">{{ getMotifLabel(closure.motif) }}</p>
+
+                  @if (canDeleteGlobalClosure()) {
+                    <div class="closure-actions">
+                      <button
+                        type="button"
+                        class="button button-danger"
+                        (click)="requestGlobalClosureDeletion(closure)"
+                        [disabled]="deletingGlobalClosureId() === closure.id"
+                      >
+                        Supprimer
+                      </button>
+                    </div>
+                  }
+
+                  @if (isPendingGlobalDelete(closure.id)) {
+                    <div class="confirmation-box is-danger">
+                      <p>Confirmer la suppression de cette fermeture ?</p>
+                      <div class="form-actions">
+                        <button
+                          type="button"
+                          class="button button-danger"
+                          (click)="confirmDeleteAction()"
+                          [disabled]="deletingGlobalClosureId() === closure.id"
+                        >
+                          Confirmer
+                        </button>
+                        <button
+                          type="button"
+                          class="button button-secondary"
+                          (click)="cancelDeleteConfirmation()"
+                          [disabled]="deletingGlobalClosureId() === closure.id"
+                        >
+                          Annuler
+                        </button>
+                      </div>
+                    </div>
+                  }
+                </article>
+              }
+            </div>
+          }
+        }
+      </section>
+
+      <section class="closures-section">
+        <div class="section-heading">
+          <h2>Fermetures du site</h2>
+
+          @if (isAdminGlobal()) {
+            @if (sites().length > 0) {
+              <label class="site-picker">
+                <span>Site</span>
+                <select [value]="selectedSiteId() ?? ''" (change)="onSiteChange($any($event.target).value)">
+                  @for (site of sites(); track site.id) {
+                    <option [value]="site.id">{{ site.nom }}</option>
+                  }
+                </select>
+              </label>
+            }
+          } @else {
+            <p class="site-scope">{{ siteScopeLabel() }}</p>
+          }
+        </div>
+
+        @if (canCreateSiteClosure()) {
+          <form class="closure-form" [formGroup]="siteClosureForm" (ngSubmit)="requestSiteClosureCreation()">
+            <div class="form-header">
+              <h3>Créer une fermeture de site</h3>
+              <p>La fermeture sera appliquée au site affiché dans cette section.</p>
+            </div>
+
+            <div class="form-grid">
+              <label class="form-field">
+                <span>Type</span>
+                <select formControlName="mode">
+                  @for (mode of siteClosureModes; track mode.value) {
+                    <option [value]="mode.value">{{ mode.label }}</option>
+                  }
+                </select>
+              </label>
+
+              @if (isSiteClosureMode('date')) {
+                <label class="form-field">
+                  <span>Date</span>
+                  <input type="date" formControlName="date">
+                  @if (showSiteDateError()) {
+                    <small>La date est obligatoire.</small>
+                  }
+                </label>
+              } @else {
+                <label class="form-field">
+                  <span>Date de début</span>
+                  <input type="date" formControlName="dateDebut">
+                  @if (showSiteDateDebutError()) {
+                    <small>La date de début est obligatoire.</small>
+                  }
+                </label>
+
+                <label class="form-field">
+                  <span>Date de fin</span>
+                  <input type="date" formControlName="dateFin">
+                  @if (showSiteDateFinError()) {
+                    <small>La date de fin est obligatoire.</small>
+                  }
+                </label>
+              }
+
+              <label class="form-field">
+                <span>Motif</span>
+                <input type="text" formControlName="motif" placeholder="Optionnel">
+              </label>
+            </div>
+
+            @if (siteCreateError()) {
+              <p class="form-message is-error" role="alert">{{ siteCreateError() }}</p>
+            }
+
+            @if (isPendingAction('site-date') || isPendingAction('site-period')) {
+              <div class="confirmation-box">
+                <p>Confirmer la création de cette fermeture ? Des matchs futurs peuvent être annulés.</p>
+                <div class="form-actions">
+                  <button type="button" class="button button-primary" (click)="confirmPendingAction()" [disabled]="isSubmittingSiteClosure()">
+                    Confirmer
+                  </button>
+                  <button type="button" class="button button-secondary" (click)="cancelPendingAction()" [disabled]="isSubmittingSiteClosure()">
+                    Annuler
+                  </button>
+                </div>
+              </div>
+            } @else {
+              <div class="form-actions">
+                <button type="submit" class="button button-primary" [disabled]="isSubmittingSiteClosure()">
+                  Créer la fermeture
+                </button>
+              </div>
+            }
+          </form>
+        }
+
+        @if (isAdminGlobal() && sites().length === 0) {
+          <p class="page-state">Aucun site disponible.</p>
+        } @else if (isLoadingSiteClosures()) {
+          <p class="page-state">Chargement des fermetures du site...</p>
+        } @else if (siteClosuresError()) {
+          <p class="page-state is-error">{{ siteClosuresError() }}</p>
+        } @else {
+          @if (siteDeleteError()) {
+            <p class="page-state is-error">{{ siteDeleteError() }}</p>
+          }
+
+          @if (siteUpdateError()) {
+            <p class="page-state is-error">{{ siteUpdateError() }}</p>
+          }
+
+          @if (hasNoSiteClosures()) {
+            <p class="page-state">Aucune fermeture enregistrée pour ce site.</p>
+          } @else {
+            <div class="closures-list">
+              @for (closure of siteClosures(); track getSiteClosureTrack(closure)) {
+                <article class="closure-card">
+                  <div class="closure-heading">
+                    <span class="closure-badge">{{ getSiteClosureTypeLabel(closure) }}</span>
+                    <h3>{{ getSiteClosureDateLabel(closure) }}</h3>
+                  </div>
+                  <p class="closure-motif">{{ getMotifLabel(closure.motif) }}</p>
+
+                  @if (canDeleteSiteClosure()) {
+                    <div class="closure-actions">
+                      <button
+                        type="button"
+                        class="button button-secondary"
+                        (click)="openSiteClosureEdit(closure)"
+                        [disabled]="updatingSiteClosureId() === closure.id || deletingSiteClosureId() === closure.id"
+                      >
+                        Modifier
+                      </button>
+
+                      <button
+                        type="button"
+                        class="button button-danger"
+                        (click)="requestSiteClosureDeletion(closure)"
+                        [disabled]="deletingSiteClosureId() === closure.id"
+                      >
+                        Supprimer
+                      </button>
+                    </div>
+                  }
+
+                  @if (isEditingSiteClosure(closure.id)) {
+                    <form class="closure-form edit-form" [formGroup]="editSiteClosureForm" (ngSubmit)="requestSiteClosureUpdate(closure)">
+                      <div class="form-header">
+                        <h3>Modifier la fermeture</h3>
+                        <p>Choisissez une date unique ou une période.</p>
+                      </div>
+
+                      <div class="form-grid">
+                        <label class="form-field">
+                          <span>Type</span>
+                          <select formControlName="mode">
+                            @for (mode of siteClosureModes; track mode.value) {
+                              <option [value]="mode.value">{{ mode.label }}</option>
+                            }
+                          </select>
+                        </label>
+
+                        @if (isEditSiteClosureMode('date')) {
+                          <label class="form-field">
+                            <span>Date</span>
+                            <input type="date" formControlName="date">
+                            @if (showEditDateError()) {
+                              <small>La date est obligatoire.</small>
+                            }
+                          </label>
+                        } @else {
+                          <label class="form-field">
+                            <span>Date de début</span>
+                            <input type="date" formControlName="dateDebut">
+                            @if (showEditDateDebutError()) {
+                              <small>La date de début est obligatoire.</small>
+                            }
+                          </label>
+
+                          <label class="form-field">
+                            <span>Date de fin</span>
+                            <input type="date" formControlName="dateFin">
+                            @if (showEditDateFinError()) {
+                              <small>La date de fin est obligatoire.</small>
+                            }
+                          </label>
+                        }
+
+                        <label class="form-field">
+                          <span>Motif</span>
+                          <input type="text" formControlName="motif" placeholder="Optionnel">
+                        </label>
+                      </div>
+
+                      @if (isPendingEdit(closure.id)) {
+                        <div class="confirmation-box">
+                          <p>Confirmer la modification de cette fermeture ? Des matchs futurs peuvent être impactés.</p>
+                          <div class="form-actions">
+                            <button
+                              type="button"
+                              class="button button-primary"
+                              (click)="confirmSiteClosureUpdate()"
+                              [disabled]="updatingSiteClosureId() === closure.id"
+                            >
+                              Confirmer
+                            </button>
+                            <button
+                              type="button"
+                              class="button button-secondary"
+                              (click)="cancelEditConfirmation()"
+                              [disabled]="updatingSiteClosureId() === closure.id"
+                            >
+                              Annuler
+                            </button>
+                          </div>
+                        </div>
+                      } @else {
+                        <div class="form-actions">
+                          <button
+                            type="submit"
+                            class="button button-primary"
+                            [disabled]="updatingSiteClosureId() === closure.id"
+                          >
+                            Enregistrer
+                          </button>
+                          <button
+                            type="button"
+                            class="button button-secondary"
+                            (click)="cancelSiteClosureEdit()"
+                            [disabled]="updatingSiteClosureId() === closure.id"
+                          >
+                            Annuler
+                          </button>
+                        </div>
+                      }
+                    </form>
+                  }
+
+                  @if (isPendingSiteDelete(closure.id)) {
+                    <div class="confirmation-box is-danger">
+                      <p>Confirmer la suppression de cette fermeture ?</p>
+                      <div class="form-actions">
+                        <button
+                          type="button"
+                          class="button button-danger"
+                          (click)="confirmDeleteAction()"
+                          [disabled]="deletingSiteClosureId() === closure.id"
+                        >
+                          Confirmer
+                        </button>
+                        <button
+                          type="button"
+                          class="button button-secondary"
+                          (click)="cancelDeleteConfirmation()"
+                          [disabled]="deletingSiteClosureId() === closure.id"
+                        >
+                          Annuler
+                        </button>
+                      </div>
+                    </div>
+                  }
+                </article>
+              }
+            </div>
+          }
+        }
+      </section>
+    </div>
+  }
+</section>

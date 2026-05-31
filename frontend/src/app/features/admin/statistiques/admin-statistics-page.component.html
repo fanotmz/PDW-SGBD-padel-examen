@@ -1,0 +1,88 @@
+<section class="admin-statistics-page">
+  <app-page-header
+    eyebrow="Administration"
+    title="Statistiques"
+    description="Consultez les statistiques disponibles dans votre périmètre."
+    backLink="/admin"
+    backLabel="Retour à l’administration"
+  />
+
+  @if (isLoading()) {
+    <app-page-state type="loading" message="Chargement en cours..." />
+  } @else if (errorMessage()) {
+    <app-page-state type="error" [message]="errorMessage()" />
+  } @else {
+    <section class="filters-panel">
+      <div class="scope-block">
+        <span>Périmètre</span>
+        <strong>{{ selectedScopeLabel() }}</strong>
+      </div>
+
+      @if (isAdminGlobal()) {
+        <label class="form-field scope-select">
+          <span>Vue</span>
+          <select [value]="selectedSiteId() ?? 'global'" (change)="onScopeChange($any($event.target).value)">
+            <option value="global">Tous les sites</option>
+            @for (site of sites(); track trackSite(site)) {
+              <option [value]="site.id">{{ site.nom }}</option>
+            }
+          </select>
+        </label>
+      }
+
+      <form class="period-form" [formGroup]="periodForm" (ngSubmit)="refreshStats()">
+        <p class="period-help">
+          La période s’applique au chiffre d’affaires et au nombre de matchs. Les dettes affichent l’état actuel.
+        </p>
+
+        <label class="form-field">
+          <span>Du</span>
+          <input type="date" formControlName="from">
+        </label>
+
+        <label class="form-field">
+          <span>Au</span>
+          <input type="date" formControlName="to">
+        </label>
+
+        <button type="submit" class="button button-primary" [disabled]="isLoadingStats()">
+          Actualiser
+        </button>
+      </form>
+    </section>
+
+    @if (isLoadingStats()) {
+      <app-page-state type="loading" message="Chargement des statistiques..." />
+    } @else if (statsError()) {
+      <app-page-state type="error" [message]="statsError()" />
+    } @else if (hasStats()) {
+      <div class="stats-grid">
+        <article class="stat-card">
+          <span>Chiffre d’affaires</span>
+          <strong>{{ formatCurrency(caStats()?.caTotal) }}</strong>
+          <p>Encaissements sur la période.</p>
+        </article>
+
+        <article class="stat-card">
+          <span>Matchs</span>
+          <strong>{{ formatNumber(matchsStats()?.nbMatchs) }}</strong>
+          <p>Matchs sur la période.</p>
+        </article>
+
+        <article class="stat-card">
+          <span>Dette totale</span>
+          <strong>{{ formatCurrency(dettesStats()?.detteTotale) }}</strong>
+          <p>Solde total restant dû.</p>
+        </article>
+
+        <article class="stat-card">
+          <span>Joueurs en dette</span>
+          <strong>{{ formatNumber(dettesStats()?.nbJoueursEnDette) }}</strong>
+          <p>Joueurs avec un solde ouvert.</p>
+        </article>
+      </div>
+    } @else {
+      <app-page-state type="empty" message="Aucune statistique chargée." />
+    }
+  }
+</section>

@@ -1,0 +1,22 @@
+databaseChangeLog:
+  - include:
+      file: db/changelog/001-init-schema.yaml
+  - include:
+      file: db/changelog/002-fermeture-site.yaml
+  - include:
+      file: db/changelog/003-horaire-site.yaml
+  - include:
+      file: db/changelog/004-drop-site-horaires.yaml
+  - include:
+      file: db/changelog/005-match-statut.yaml
+  - include:
+      file: db/changelog/006-type-paiement.yaml
+  - include:
+      file: db/changelog/007-auth-user.yaml
+  - include:
+      file: db/changelog/008-user-registration.yaml
+  - include:
+      file: db/changelog/009-registration-hardening.yaml
+  - include:
+      file: db/changelog/010-mouvement-solde-origine.yaml
+

@@ -1,0 +1,31 @@
+databaseChangeLog:
+  - changeSet:
+      id: 008-1-add-user-registration-columns
+      author: codex
+      changes:
+        - addColumn:
+            tableName: app_user
+            columns:
+              - column:
+                  name: status
+                  type: varchar(20)
+                  defaultValue: ACTIVE
+                  constraints:
+                    nullable: false
+              - column:
+                  name: requested_nom
+                  type: varchar(255)
+              - column:
+                  name: requested_type
+                  type: varchar(20)
+              - column:
+                  name: requested_site_id
+                  type: bigint
+        - addForeignKeyConstraint:
+            baseTableName: app_user
+            baseColumnNames: requested_site_id
+            referencedTableName: site
+            referencedColumnNames: id
+            constraintName: fk_app_user_requested_site_id
+            onDelete: NO ACTION
+            onUpdate: NO ACTION

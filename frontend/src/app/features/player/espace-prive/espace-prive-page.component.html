@@ -1,0 +1,274 @@
+<section class="space-page">
+  <app-page-header
+    eyebrow="Espace joueur"
+    title="Mon espace"
+    description="Consultez vos informations personnelles, votre solde et vos accès rapides."
+  />
+
+  @if (isLoading()) {
+    <p class="page-state">Chargement en cours...</p>
+  } @else if (errorMessage()) {
+    <p class="page-state is-error">{{ errorMessage() }}</p>
+  } @else if (profile(); as profile) {
+    <div class="page-grid">
+      @if (hasActivePenalty() && profile.penaliteJusqua) {
+        <section class="penalty-alert" role="alert">
+          <h2>Pénalité active</h2>
+          <p>
+            Vous êtes pénalisé jusqu’au
+            {{ profile.penaliteJusqua | date:'dd/MM/yyyy' }} à
+            {{ profile.penaliteJusqua | date:'HH:mm' }}.
+            Vous ne pouvez pas créer de nouveau match pendant cette période.
+          </p>
+        </section>
+      }
+
+      <section class="info-section">
+        <h2>Informations personnelles</h2>
+
+        <dl class="details-list">
+          <div>
+            <dt>Nom</dt>
+            <dd>{{ profile.nom }}</dd>
+          </div>
+          <div>
+            <dt>Matricule</dt>
+            <dd>{{ profile.matricule }}</dd>
+          </div>
+          <div>
+            <dt>Type</dt>
+            <dd>{{ getTypeLabel(profile.type) }}</dd>
+          </div>
+          @if (profile.siteId != null) {
+            <div>
+              <dt>Site</dt>
+              <dd>{{ profile.siteId }}</dd>
+            </div>
+          }
+        </dl>
+      </section>
+
+      <section class="info-section">
+        <h2>Solde / dette</h2>
+
+        <p class="balance-amount" [class.has-debt]="hasDebt()">
+          {{ formatAmount(profile.solde) }}
+        </p>
+        <p class="balance-message" [class.has-debt]="hasDebt()">
+          {{ debtMessage() }}
+        </p>
+      </section>
+
+      <section class="info-section">
+        <h2>Matchs à payer</h2>
+
+        @if (hasRegularisations()) {
+          <p class="section-note">Voici les matchs pour lesquels un paiement est encore attendu.</p>
+        }
+
+        @if (hasRegularisations()) {
+          <p class="traceable-total">
+            <span>Total à payer identifié</span>
+            <strong>{{ formatAmount(totalTracable()) }}</strong>
+          </p>
+        }
+
+        @if (hasTraceableGap()) {
+          <p class="traceable-warning">
+            Une partie de votre solde peut concerner d’anciens mouvements non détaillés ici.
+          </p>
+        }
+
+        @if (paymentSuccessMessage()) {
+          <p class="page-state is-success">{{ paymentSuccessMessage() }}</p>
+        }
+
+        @if (paymentErrorMessage()) {
+          <p class="page-state is-error">{{ paymentErrorMessage() }}</p>
+        }
+
+        @if (!hasRegularisations()) {
+          <p class="empty-regularizations">Tous vos paiements sont à jour.</p>
+          <p class="empty-regularizations">Aucun match ne nécessite de paiement pour le moment.</p>
+        } @else {
+          <div class="regularization-list">
+            @for (regularisation of regularisationItems(); track regularisation.participationId) {
+              <article class="regularization-card">
+                <div class="regularization-main">
+                  <div class="regularization-summary">
+                    <p class="regularization-site">{{ regularisation.siteNom }}</p>
+                    <h3>{{ regularisation.terrainNom }}</h3>
+                    <p class="regularization-datetime">
+                      {{ regularisation.dateMatch | date:'dd/MM/yyyy' }} à
+                      {{ regularisation.dateMatch | date:'HH:mm' }}
+                    </p>
+
+                    <div class="regularization-badges">
+                      <span class="meta-badge">{{ regularisation.visibilite }}</span>
+                      <span class="meta-badge is-secondary">{{ getRoleLabel(regularisation.roleJoueur) }}</span>
+                    </div>
+
+                    @if (isLateCancellationRegularisation(regularisation)) {
+                      <p class="regularization-note">
+                        Cette régularisation concerne la dette créée par l’annulation tardive du match.
+                        Le paiement règle le montant dû, mais la pénalité de réservation
+                        reste active jusqu’à sa date de fin.
+                      </p>
+                    }
+                  </div>
+
+                  <div class="regularization-payment">
+                    <p class="payment-amount">
+                      <span>Montant à payer</span>
+                      <strong>{{ formatAmount(regularisation.montantRestant) }}</strong>
+                    </p>
+
+                    @if (regularisation.payable) {
+                      <button
+                        type="button"
+                        class="pay-button"
+                        [disabled]="isPaying(regularisation.participationId) || isRegularisationConfirmationOpen(regularisation)"
+                        (click)="requestRegularisationPayment(regularisation)">
+                        {{ getPaymentButtonLabel(regularisation) }}
+                      </button>
+                    } @else {
+                      <p class="payment-unavailable">Paiement indisponible</p>
+                    }
+                  </div>
+                </div>
+
+                @if (isRegularisationConfirmationOpen(regularisation)) {
+                  <div class="regularization-confirmation-box" role="alert" aria-live="polite">
+                    <div>
+                      <h3>Confirmer la régularisation de {{ formatAmount(regularisation.montantRestant) }} ?</h3>
+                      <p>Ce paiement règle votre dette financière liée à l’annulation tardive du match.</p>
+                      <p>La pénalité de réservation reste active jusqu’à sa date de fin.</p>
+                    </div>
+
+                    <div class="regularization-confirmation-actions">
+                      <button
+                        type="button"
+                        class="confirm-regularization-button"
+                        [disabled]="isPaying(regularisation.participationId)"
+                        (click)="payerRegularisation(regularisation)">
+                        {{ isPaying(regularisation.participationId) ? 'Paiement en cours...' : 'Confirmer la régularisation' }}
+                      </button>
+                      <button
+                        type="button"
+                        class="keep-regularization-button"
+                        [disabled]="isPaying(regularisation.participationId)"
+                        (click)="closeRegularisationConfirmation()">
+                        Ne pas régulariser
+                      </button>
+                    </div>
+                  </div>
+                }
+              </article>
+            }
+          </div>
+        }
+      </section>
+
+      <section class="info-section">
+        <h2>Mes statistiques</h2>
+
+        @if (isLoadingStats()) {
+          <p class="page-state">Chargement des statistiques...</p>
+        } @else if (statsErrorMessage()) {
+          <p class="page-state is-error">{{ statsErrorMessage() }}</p>
+        } @else if (stats(); as stats) {
+          <div class="player-stats-layout">
+            <article class="regularization-card">
+              @if (stats.prochainMatch; as prochainMatch) {
+                <div class="regularization-main">
+                  <div class="regularization-summary">
+                    <p class="regularization-site">Prochain match</p>
+                    <h3>{{ prochainMatch.siteNom }}</h3>
+                    <p class="regularization-datetime">
+                      {{ prochainMatch.dateDebut | date:'dd/MM/yyyy' }} à
+                      {{ prochainMatch.dateDebut | date:'HH:mm' }}
+                    </p>
+                    <p class="regularization-datetime">{{ prochainMatch.terrainNom }}</p>
+                  </div>
+
+                  <div class="regularization-badges">
+                    <span class="meta-badge">{{ getRoleLabel(prochainMatch.roleJoueur) }}</span>
+                  </div>
+                </div>
+              } @else {
+                <p class="page-state">Aucun match à venir pour le moment.</p>
+              }
+            </article>
+
+            <article class="stats-group">
+              <h3>Matchs comme organisateur</h3>
+              <dl class="stats-metrics">
+                <div>
+                  <dt>Joués</dt>
+                  <dd>{{ formatNumber(stats.matchsCommeOrganisateur.joues) }}</dd>
+                </div>
+                <div>
+                  <dt>À venir</dt>
+                  <dd>{{ formatNumber(stats.matchsCommeOrganisateur.aVenir) }}</dd>
+                </div>
+                <div>
+                  <dt>Annulés</dt>
+                  <dd>{{ formatNumber(stats.matchsCommeOrganisateur.annules) }}</dd>
+                </div>
+              </dl>
+            </article>
+
+            <article class="stats-group">
+              <h3>Matchs comme participant</h3>
+              <dl class="stats-metrics">
+                <div>
+                  <dt>Joués</dt>
+                  <dd>{{ formatNumber(stats.matchsCommeParticipant.joues) }}</dd>
+                </div>
+                <div>
+                  <dt>À venir</dt>
+                  <dd>{{ formatNumber(stats.matchsCommeParticipant.aVenir) }}</dd>
+                </div>
+                <div>
+                  <dt>Annulés</dt>
+                  <dd>{{ formatNumber(stats.matchsCommeParticipant.annules) }}</dd>
+                </div>
+              </dl>
+            </article>
+
+            <article class="stats-group">
+              <h3>Paiements</h3>
+              <dl class="stats-metrics is-payment">
+                <div>
+                  <dt>Participations payées</dt>
+                  <dd>{{ formatNumber(stats.paiements.participationsPayees) }}</dd>
+                </div>
+                <div>
+                  <dt>Participations non payées</dt>
+                  <dd>{{ formatNumber(stats.paiements.participationsAPayer) }}</dd>
+                </div>
+                <div>
+                  <dt>Montant net payé</dt>
+                  <dd>{{ formatAmount(stats.paiements.montantNetPaye) }}</dd>
+                </div>
+                <div>
+                  <dt>Montant remboursé</dt>
+                  <dd>{{ formatAmount(stats.paiements.montantRembourse) }}</dd>
+                </div>
+              </dl>
+            </article>
+          </div>
+        }
+      </section>
+
+      <section class="info-section shortcuts-section">
+        <h2>Accès rapides</h2>
+
+        <div class="shortcuts">
+          <a routerLink="/me/matchs" class="shortcut-link">Mes matchs</a>
+          <a routerLink="/me/matchs/organises" class="shortcut-link">Mes matchs organisés</a>
+        </div>
+      </section>
+    </div>
+  }
+</section>

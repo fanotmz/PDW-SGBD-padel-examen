@@ -1,0 +1,107 @@
+<section class="admin-site-matches-page">
+  <header class="page-header">
+    <p class="page-eyebrow">Administration</p>
+    <button type="button" class="back-link" (click)="goBackToSites()">← Retour au détail du site</button>
+    <h1>{{ pageTitle() }}</h1>
+    <p class="page-intro">Consultez les matchs du site selon la période, l’état et la visibilité.</p>
+  </header>
+
+  <section class="filters-panel" aria-label="Filtres des matchs">
+    <label>
+      <span>Du</span>
+      <input
+        type="date"
+        [value]="from()"
+        (change)="onFromChange($any($event.target).value)" />
+    </label>
+
+    <label>
+      <span>Au</span>
+      <input
+        type="date"
+        [value]="to()"
+        (change)="onToChange($any($event.target).value)" />
+    </label>
+
+    <label>
+      <span>État</span>
+      <select [value]="etat()" (change)="onStateChange($any($event.target).value)">
+        <option value="ALL">Tous</option>
+        <option value="UPCOMING">À venir</option>
+        <option value="PLAYED">Déjà joué</option>
+        <option value="CANCELLED">Annulé</option>
+      </select>
+    </label>
+
+    <label>
+      <span>Visibilité</span>
+      <select [value]="visibilite()" (change)="onVisibilityChange($any($event.target).value)">
+        <option value="">Toutes</option>
+        <option value="PUBLIC">Public</option>
+        <option value="PRIVE">Privé</option>
+      </select>
+    </label>
+
+    <div class="filter-actions">
+      <button type="button" class="filter-button is-primary" (click)="applyFilters()">Appliquer</button>
+      <button type="button" class="filter-button" (click)="resetFilters()">Réinitialiser</button>
+    </div>
+  </section>
+
+  @if (isLoading()) {
+    <p class="page-state">Chargement en cours...</p>
+  } @else if (errorMessage()) {
+    <p class="page-state is-error">{{ errorMessage() }}</p>
+  } @else if (hasNoMatches()) {
+    <p class="page-state">Aucun match ne correspond aux filtres sélectionnés.</p>
+  } @else {
+    <div class="matches-list">
+      @for (match of matches(); track trackMatch(match)) {
+        <article class="match-card">
+          <div class="match-main">
+            <div>
+              <span class="match-date">{{ match.dateDebut | date: 'dd/MM/yyyy' }} - {{ formatTime(match.heureDebut) }}</span>
+              <h2>{{ match.terrainNom }}</h2>
+              <p>{{ match.siteNom }}</p>
+            </div>
+            <div class="match-badges">
+              <span
+                class="state-badge"
+                [class.is-cancelled]="isCancelled(match)"
+                [class.is-played]="isPlayed(match)"
+                [class.is-upcoming]="isUpcoming(match)">
+                {{ getMatchStateLabel(match) }}
+              </span>
+            </div>
+          </div>
+
+          <dl class="match-meta">
+            <div>
+              <dt>Organisateur</dt>
+              <dd>{{ match.organisateurNom }} ({{ match.organisateurMatricule }})</dd>
+            </div>
+            <div>
+              <dt>Visibilité</dt>
+              <dd>{{ getVisibilityLabel(match.visibilite) }}</dd>
+            </div>
+            <div>
+              <dt>Participants</dt>
+              <dd>{{ match.nbParticipants }}/4</dd>
+            </div>
+            <div>
+              <dt>Places restantes</dt>
+              <dd>{{ match.placesRestantes }}</dd>
+            </div>
+          </dl>
+
+          <div class="match-actions">
+            @if (match.peutAnnuler) {
+              <span class="cancel-indicator">Annulation possible</span>
+            }
+            <a class="detail-link" [routerLink]="['/matchs', match.id]">Voir détail</a>
+          </div>
+        </article>
+      }
+    </div>
+  }
+</section>

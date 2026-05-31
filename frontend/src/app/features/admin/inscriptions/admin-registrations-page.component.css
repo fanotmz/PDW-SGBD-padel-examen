@@ -1,0 +1,217 @@
+.admin-registrations-page {
+  width: min(100%, 72rem);
+  margin: 0 auto;
+  display: grid;
+  gap: 1.25rem;
+  padding: 1.5rem 0 2.5rem;
+}
+
+.registrations-list {
+  display: grid;
+  gap: 1rem;
+}
+
+.registration-card {
+  padding: 1.5rem;
+  border: 1px solid #d7e0eb;
+  border-radius: 0.5rem;
+  background: #ffffff;
+  box-shadow: var(--app-shadow);
+}
+
+.registration-main {
+  display: grid;
+  gap: 1rem;
+}
+
+.registration-heading {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.registration-heading h2 {
+  margin: 0;
+  color: #10233f;
+  font-size: 1.25rem;
+}
+
+.registration-login {
+  margin: 0;
+  color: #526277;
+  font-weight: 600;
+}
+
+.registration-meta {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr));
+  gap: 0.9rem;
+}
+
+.registration-meta p {
+  margin: 0;
+  display: grid;
+  gap: 0.35rem;
+  padding: 0.9rem 1rem;
+  border: 1px solid #d7e0eb;
+  border-radius: 0.5rem;
+  background: #f8fbff;
+}
+
+.registration-meta span {
+  color: #526277;
+  font-size: 0.86rem;
+  font-weight: 700;
+}
+
+.registration-meta strong {
+  color: #10233f;
+}
+
+.status-badge {
+  justify-content: center;
+  min-height: 2rem;
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.registration-actions,
+.validation-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.primary-action,
+.secondary-action,
+.danger-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 2.75rem;
+  padding: 0.8rem 1rem;
+  border-radius: 0.5rem;
+  border: 0;
+  font: inherit;
+  font-weight: 700;
+}
+
+.primary-action {
+  background: #166534;
+  color: #ffffff;
+  cursor: pointer;
+}
+
+.secondary-action {
+  border: 1px solid #c7d3e0;
+  background: #f8fbff;
+  color: #10233f;
+  cursor: pointer;
+}
+
+.danger-action {
+  background: #fef2f2;
+  color: #b91c1c;
+  cursor: pointer;
+}
+
+.primary-action:disabled,
+.secondary-action:disabled,
+.danger-action:disabled {
+  opacity: 0.7;
+  cursor: wait;
+}
+
+.validation-panel {
+  display: grid;
+  gap: 1rem;
+  padding: 1rem;
+  border: 1px solid #d7e0eb;
+  border-radius: 0.5rem;
+  background: #f8fbff;
+}
+
+.confirm-panel {
+  display: grid;
+  gap: 1rem;
+  padding: 1rem;
+  border: 1px solid #bbf7d0;
+  border-radius: 0.5rem;
+  background: #f0fdf4;
+}
+
+.confirm-panel-danger {
+  border: 1px solid #fecaca;
+  background: #fff7f7;
+}
+
+.confirm-message {
+  margin: 0;
+  color: #166534;
+  font-weight: 600;
+}
+
+.confirm-message-danger {
+  color: #7f1d1d;
+}
+
+.field {
+  display: grid;
+  gap: 0.45rem;
+  color: #10233f;
+  font-weight: 600;
+}
+
+.field select {
+  width: 100%;
+  padding: 0.8rem 0.9rem;
+  border: 1px solid #c3d0de;
+  border-radius: 0.75rem;
+  font: inherit;
+  background: #ffffff;
+}
+
+.field select:focus {
+  outline: 2px solid var(--app-primary-border);
+  outline-offset: 2px;
+}
+
+.field select:disabled {
+  background: #f3f6fa;
+  color: #7a8899;
+}
+
+.field-hint,
+.field-error {
+  margin: 0;
+  font-size: 0.9rem;
+}
+
+.field-hint {
+  color: #526277;
+  font-weight: 400;
+}
+
+.field-error {
+  color: #b91c1c;
+}
+
+@media (max-width: 760px) {
+  .admin-registrations-page {
+    gap: 1rem;
+    padding: 1.25rem 0 2rem;
+  }
+
+  .registration-card {
+    padding: 1.25rem;
+  }
+
+  .registration-meta {
+    grid-template-columns: 1fr;
+  }
+
+  .registration-actions,
+  .validation-actions {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+}

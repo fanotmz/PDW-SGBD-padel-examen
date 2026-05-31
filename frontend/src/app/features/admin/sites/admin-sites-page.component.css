@@ -1,0 +1,60 @@
+.site-section p {
+  margin: 0;
+  color: #526277;
+}
+
+mat-card {
+  border: 1px solid #d7e0eb;
+  box-shadow: var(--app-shadow);
+}
+
+.site-meta,
+.schedule-card span {
+  margin: 0;
+  color: #526277;
+  font-size: 0.86rem;
+  font-weight: 700;
+}
+
+.site-section {
+  display: grid;
+  gap: 0.55rem;
+}
+
+.site-section h3 {
+  margin: 0;
+  color: #10233f;
+}
+
+.compact-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.compact-list li {
+  padding: 0.35rem 0.65rem;
+  border: 1px solid #c3d0de;
+  border-radius: 999px;
+  background: #f8fbff;
+  color: #10233f;
+  font-weight: 700;
+}
+
+.schedule-card {
+  display: grid;
+  gap: 0.3rem;
+  padding: 0.85rem;
+  border: 1px solid #d7e0eb;
+  border-radius: 0.5rem;
+  background: #f8fbff;
+}
+
+.schedule-card p {
+  margin: 0;
+  color: #10233f;
+  font-weight: 800;
+}

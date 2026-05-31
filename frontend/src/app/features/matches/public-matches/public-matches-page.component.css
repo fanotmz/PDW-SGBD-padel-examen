@@ -1,0 +1,94 @@
+mat-card {
+  border: 1px solid #d7e0eb;
+  box-shadow: var(--app-shadow);
+}
+
+mat-form-field {
+  width: 100%;
+}
+
+button[mat-flat-button] {
+  min-height: 3.5rem;
+}
+
+.display-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+  margin-bottom: 1.25rem;
+}
+
+.display-filter-button {
+  min-height: 2.35rem;
+  padding: 0.45rem 0.85rem;
+  border: 1px solid #cbd5e1;
+  border-radius: 999px;
+  background: #ffffff;
+  color: var(--app-muted);
+  font: inherit;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.display-filter-button.is-active {
+  border-color: var(--app-primary);
+  background: var(--app-primary);
+  color: #ffffff;
+}
+
+.display-filter-button:hover:not(.is-active) {
+  border-color: var(--app-primary);
+  color: var(--app-primary);
+}
+
+.match-site {
+  margin: 0 0 0.25rem;
+  color: var(--app-primary);
+  font-weight: 700;
+}
+
+h2 {
+  margin: 0;
+  color: #10233f;
+  font-size: 1.35rem;
+}
+
+.badge-group {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-start;
+  gap: 0.5rem;
+}
+
+.status-badge.is-registered {
+  background: var(--app-success-soft);
+  color: var(--app-success);
+}
+
+.status-badge.is-organizer {
+  background: var(--app-primary-soft);
+  color: var(--app-primary);
+}
+
+.match-details {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
+  gap: 0.9rem 1.2rem;
+  margin: 0 0 0.75rem;
+}
+
+.match-details div {
+  display: grid;
+  gap: 0.2rem;
+}
+
+dt {
+  color: #526277;
+  font-size: 0.92rem;
+  font-weight: 700;
+}
+
+dd {
+  margin: 0;
+  color: #10233f;
+}

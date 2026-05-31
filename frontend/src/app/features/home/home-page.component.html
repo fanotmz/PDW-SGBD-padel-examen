@@ -1,0 +1,162 @@
+<section class="home-shell">
+  <mat-card class="home-card">
+    <mat-card-content class="home-content">
+      <div class="hero-section">
+        <div class="hero-copy">
+          <p class="eyebrow">
+            <mat-icon aria-hidden="true">sports_tennis</mat-icon>
+            <span>Padel Manager</span>
+          </p>
+
+          @if (isAdminView()) {
+            <h1>Bienvenue dans Padel Manager</h1>
+            <p class="home-intro">
+              Accédez à l'espace d'administration pour gérer l'activité de la plateforme.
+            </p>
+
+            <div class="action-group">
+              <a mat-flat-button routerLink="/admin" color="primary">Administration</a>
+              @if (hasPlayerProfile()) {
+                <a mat-stroked-button routerLink="/espace-prive">Mon espace joueur</a>
+                <a mat-stroked-button routerLink="/matchs">Voir les matchs</a>
+              }
+            </div>
+          } @else if (isPlayerView()) {
+            <h1>Bienvenue sur Padel Manager</h1>
+            <p class="home-intro">
+              Retrouvez vos matchs, créez une réservation selon votre profil joueur, rejoignez un match
+              public disponible et suivez vos paiements depuis votre espace.
+            </p>
+
+            <div class="action-group">
+              <a mat-flat-button routerLink="/espace-prive" color="primary">Mon espace</a>
+              <a mat-stroked-button routerLink="/matchs">Voir les matchs</a>
+              <a mat-stroked-button routerLink="/matchs/creer">Créer un match</a>
+            </div>
+          } @else if (isVisitorView()) {
+            <h1>Bienvenue sur Padel Manager</h1>
+            <p class="home-intro">
+              Organisez vos matchs privés avec vos amis, rejoignez des matchs publics disponibles et
+              réservez selon votre profil joueur, sur les sites accessibles à votre compte.
+            </p>
+
+            <div class="action-group">
+              <a mat-flat-button routerLink="/login" color="primary">Se connecter</a>
+              <a mat-stroked-button routerLink="/inscription">Demander une inscription</a>
+            </div>
+          }
+        </div>
+
+        <aside class="hero-panel" aria-label="Accès principaux">
+          @if (isAdminView()) {
+            <div class="panel-row">
+              <mat-icon aria-hidden="true">location_on</mat-icon>
+              <div>
+                <span>{{ adminSitesLabel() }}</span>
+                <p>{{ adminSitesDescription() }}</p>
+              </div>
+            </div>
+            <div class="panel-row">
+              <mat-icon aria-hidden="true">how_to_reg</mat-icon>
+              <div>
+                <span>Inscriptions</span>
+                <p>Validez les demandes d'inscription des joueurs.</p>
+              </div>
+            </div>
+            <div class="panel-row">
+              <mat-icon aria-hidden="true">bar_chart</mat-icon>
+              <div>
+                <span>Statistiques</span>
+                <p>Suivez le chiffre d'affaires, les matchs et les dettes.</p>
+              </div>
+            </div>
+          } @else if (hasPlayerProfile()) {
+            <div class="panel-row">
+              <mat-icon aria-hidden="true">sports_tennis</mat-icon>
+              <div>
+                <span>Matchs publics</span>
+                <p>Consultez les matchs ouverts et rejoignez une partie disponible.</p>
+              </div>
+            </div>
+            <div class="panel-row">
+              <mat-icon aria-hidden="true">add_circle</mat-icon>
+              <div>
+                <span>Créer un match</span>
+                <p>Réservez selon votre profil joueur et les sites accessibles.</p>
+              </div>
+            </div>
+            <div class="panel-row">
+              <mat-icon aria-hidden="true">payments</mat-icon>
+              <div>
+                <span>Paiements</span>
+                <p>Suivez votre solde et vos régularisations depuis votre espace.</p>
+              </div>
+            </div>
+          } @else {
+            <div class="panel-row">
+              <mat-icon aria-hidden="true">calendar_month</mat-icon>
+              <div>
+                <span>Matchs</span>
+                <p>Découvrez les matchs publics accessibles après validation.</p>
+              </div>
+            </div>
+            <div class="panel-row">
+              <mat-icon aria-hidden="true">event_available</mat-icon>
+              <div>
+                <span>Réservations</span>
+                <p>Consultez les créneaux et rejoignez des matchs publics disponibles.</p>
+              </div>
+            </div>
+            <div class="panel-row">
+              <mat-icon aria-hidden="true">verified_user</mat-icon>
+              <div>
+                <span>Accès joueur</span>
+                <p>Les réservations dépendent de votre profil et de vos droits.</p>
+              </div>
+            </div>
+          }
+        </aside>
+      </div>
+
+      @if (isVisitorView()) {
+        <p class="availability-note">
+          L'accès aux matchs et aux réservations est réservé aux joueurs dont l'inscription a été validée.
+        </p>
+
+        <div class="feature-grid">
+          <article class="info-item">
+            <span class="feature-icon">
+              <mat-icon aria-hidden="true">add_circle</mat-icon>
+            </span>
+            <h2>Organiser</h2>
+            <p>Créez un match privé avec vos amis ou organisez un match public ouvert aux autres joueurs.</p>
+          </article>
+
+          <article class="info-item">
+            <span class="feature-icon">
+              <mat-icon aria-hidden="true">groups</mat-icon>
+            </span>
+            <h2>Rejoindre</h2>
+            <p>Trouvez un match public disponible une fois votre compte validé.</p>
+          </article>
+
+          <article class="info-item">
+            <span class="feature-icon">
+              <mat-icon aria-hidden="true">receipt_long</mat-icon>
+            </span>
+            <h2>Suivre</h2>
+            <p>Consultez vos matchs, vos paiements et votre solde depuis votre espace joueur.</p>
+          </article>
+
+          <article class="info-item">
+            <span class="feature-icon">
+              <mat-icon aria-hidden="true">verified_user</mat-icon>
+            </span>
+            <h2>Profil joueur</h2>
+            <p>Global, site ou libre : votre profil définit les sites accessibles et les règles de réservation.</p>
+          </article>
+        </div>
+      }
+    </mat-card-content>
+  </mat-card>
+</section>

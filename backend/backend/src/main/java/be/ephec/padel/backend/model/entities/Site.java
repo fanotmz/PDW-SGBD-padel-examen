@@ -1,0 +1,89 @@
+package be.ephec.padel.backend.model.entities;
+
+import jakarta.persistence.*;
+
+import java.time.DayOfWeek;
+import java.util.*;
+
+@Entity
+@Table(name = "site")
+public class Site {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @Column(nullable = false, unique = true)
+    private String nom;
+
+    @Column(nullable = false)
+    private String ville;
+
+    @ElementCollection(fetch = FetchType.EAGER)
+    @CollectionTable(
+            name = "site_jour_fermeture",
+            joinColumns = @JoinColumn(name = "site_id")
+    )
+    @Column(name = "jour", nullable = false)
+    @Enumerated(EnumType.STRING)
+    private Set<DayOfWeek> joursFermeture = new HashSet<>();
+
+    @OneToMany(mappedBy = "site",
+            cascade = CascadeType.ALL,
+            orphanRemoval = true)
+    private List<Terrain> terrains = new ArrayList<>();
+
+    public Site() {
+    }
+
+    public Site(String nom, String ville) {
+        this.nom = nom;
+        this.ville = ville;
+    }
+
+    public Long getId() {
+        return id;
+    }
+
+    public String getNom() {
+        return nom;
+    }
+
+    public String getVille() {
+        return ville;
+    }
+
+    public List<Terrain> getTerrains() {
+        return terrains;
+    }
+
+    public Set<DayOfWeek> getJoursFermeture() {
+        return joursFermeture;
+    }
+
+    public void setNom(String nom) {
+        this.nom = nom;
+    }
+
+    public void setVille(String ville) {
+        this.ville = ville;
+    }
+
+
+    public void setJoursFermeture(Set<DayOfWeek> joursFermeture) {
+        this.joursFermeture.clear();
+        if (joursFermeture != null) {
+            this.joursFermeture.addAll(joursFermeture);
+        }
+    }
+
+    public void addTerrain(Terrain terrain) {
+        terrains.add(terrain);
+        terrain.setSite(this);
+    }
+
+    public void removeTerrain(Terrain terrain) {
+        terrains.remove(terrain);
+        terrain.setSite(null);
+    }
+}

@@ -1,0 +1,127 @@
+.layout-shell {
+  background:
+    radial-gradient(circle at top left, rgba(147, 197, 253, 0.18), transparent 24rem),
+    linear-gradient(180deg, #f8fbff 0%, #eef4fb 100%);
+}
+
+.main-header {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  border-bottom: 1px solid #d7e0eb;
+  background: rgba(255, 255, 255, 0.98);
+}
+
+.toolbar-inner {
+  width: min(100%, 80rem);
+  height: auto;
+  min-height: 4rem;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+  padding: 0.8rem 1rem;
+}
+
+.brand {
+  color: #10233f;
+  font-size: 1rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-decoration: none;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.desktop-nav {
+  display: none;
+  flex: 1 1 auto;
+  align-items: center;
+  gap: 0.45rem;
+  min-width: 0;
+}
+
+.desktop-actions {
+  display: none;
+  align-items: center;
+  gap: 0.75rem;
+  margin-left: auto;
+}
+
+.mobile-menu-button {
+  display: inline-grid;
+  width: 2.5rem;
+  height: 2.5rem;
+  margin-left: auto;
+  place-items: center;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: #10233f;
+  cursor: pointer;
+}
+
+.nav-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 2.4rem;
+  padding: 0 0.85rem;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: #526277;
+  font: inherit;
+  font-weight: 700;
+  text-decoration: none;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.nav-link.is-active,
+.nav-link:hover,
+.mobile-menu-button:hover {
+  background: var(--app-primary-soft);
+  color: var(--app-primary);
+}
+
+.session-badge {
+  display: inline-flex;
+  align-items: center;
+  min-height: 2rem;
+  padding: 0 0.75rem;
+  border-radius: 999px;
+  background: #e0f2fe;
+  color: #075985;
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+
+.logout-button {
+  min-height: 2.45rem;
+  padding: 0 1rem;
+  border: 0;
+  border-radius: 999px;
+  background: var(--app-primary);
+  color: #ffffff;
+  font: inherit;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+@media (min-width: 768px) {
+  .toolbar-inner {
+    padding-inline: 1.5rem;
+  }
+}
+
+@media (min-width: 1100px) {
+  .desktop-nav,
+  .desktop-actions {
+    display: flex;
+  }
+
+  .mobile-menu-button {
+    display: none;
+  }
+}

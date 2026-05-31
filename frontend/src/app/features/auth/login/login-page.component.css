@@ -1,0 +1,25 @@
+mat-card {
+  border: 1px solid #d7e0eb;
+  box-shadow: var(--app-shadow);
+}
+
+mat-form-field {
+  width: 100%;
+}
+
+button[mat-flat-button] {
+  min-height: 2.75rem;
+}
+
+button[mat-flat-button] mat-spinner {
+  display: inline-block;
+  margin-right: 0.5rem;
+}
+
+.error-message {
+  margin: 0;
+  padding: 0.8rem 0.9rem;
+  border-radius: 0.5rem;
+  background: #fef2f2;
+  color: #b91c1c;
+}

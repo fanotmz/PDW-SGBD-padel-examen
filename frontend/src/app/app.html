@@ -1,0 +1,10 @@
+@if (uiMessageService.message(); as message) {
+  <div class="app-message" role="alert" aria-live="polite">
+    <span>{{ message }}</span>
+    <button type="button" class="app-message-close" (click)="clearMessage()" aria-label="Fermer le message">
+      Fermer
+    </button>
+  </div>
+}
+
+<router-outlet />
