@@ -19,15 +19,6 @@ public class Site {
     @Column(nullable = false)
     private String ville;
 
-    // ----------------------------
-    // Issue #30 : horaires + fermetures site
-    // ----------------------------
-
-    // TEMP (dev) : nullable=true pour éviter l’échec Hibernate sur SQL Server quand la table `site` contient déjà des lignes.
-// SQL Server n’autorise pas l’ajout d’une colonne NOT NULL sans DEFAULT sur une table non vide.
-// À remplacer par une vraie migration (Flyway/Liquibase) :
-// 1) ajouter colonne nullable, 2) backfill des valeurs, 3) passer NOT NULL (+ éventuellement DEFAULT).
-
     @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(
             name = "site_jour_fermeture",
@@ -36,10 +27,6 @@ public class Site {
     @Column(name = "jour", nullable = false)
     @Enumerated(EnumType.STRING)
     private Set<DayOfWeek> joursFermeture = new HashSet<>();
-
-    // ----------------------------
-    // Relation terrains
-    // ----------------------------
 
     @OneToMany(mappedBy = "site",
             cascade = CascadeType.ALL,
@@ -53,8 +40,6 @@ public class Site {
         this.nom = nom;
         this.ville = ville;
     }
-
-    // ---- Getters ----
 
     public Long getId() {
         return id;
@@ -76,8 +61,6 @@ public class Site {
         return joursFermeture;
     }
 
-    // ---- Setters ----
-
     public void setNom(String nom) {
         this.nom = nom;
     }
@@ -93,8 +76,6 @@ public class Site {
             this.joursFermeture.addAll(joursFermeture);
         }
     }
-
-    // ---- Helpers ----
 
     public void addTerrain(Terrain terrain) {
         terrains.add(terrain);

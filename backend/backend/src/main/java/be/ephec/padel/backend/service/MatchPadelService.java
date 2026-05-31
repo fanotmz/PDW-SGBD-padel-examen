@@ -31,6 +31,7 @@ import be.ephec.padel.backend.repository.TerrainRepository;
 import be.ephec.padel.backend.repository.projection.PublicMatchSummaryProjection;
 import be.ephec.padel.backend.security.CurrentUserFacade;
 import be.ephec.padel.backend.security.ServiceAutorisationAdmin;
+import be.ephec.padel.backend.service.enums.ModeAnnulationMatch;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;

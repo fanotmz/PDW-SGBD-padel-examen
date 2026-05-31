@@ -14,9 +14,6 @@ import java.util.List;
 @Table(name = "joueur")
 public class Joueur {
 
-    // `matricule` remains the JPA identifier and business key.
-    // `id` is a separate technical database identifier introduced for security-side relations,
-    // especially the optional `User -> Joueur` link.
     @Generated(GenerationTime.INSERT)
     @Column(name = "id", nullable = false, unique = true, insertable = false, updatable = false)
     private Long id;

@@ -20,10 +20,9 @@ public class MatchDto {
 
     private int nbParticipants;
 
-    // ✅ nouveaux champs
-    private BigDecimal montantTotal;   // 60.00
-    private BigDecimal montantPaye;    // somme des paiements
-    private BigDecimal resteAPayer;    // montantTotal - montantPaye (min 0)
+    private BigDecimal montantTotal;
+    private BigDecimal montantPaye;
+    private BigDecimal resteAPayer;
 
     public MatchDto(Long id,
                     Long terrainId,

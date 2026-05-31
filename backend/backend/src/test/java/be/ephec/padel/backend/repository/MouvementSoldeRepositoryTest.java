@@ -51,9 +51,9 @@ class MouvementSoldeRepositoryTest extends SqlServerTestContainerConfig {
                 mouvementSoldeRepository.findByJoueur_MatriculeOrderByDateMouvementDesc("J001");
 
         assertThat(res).hasSize(3);
-        assertThat(res.get(0).getId()).isEqualTo(m2.getId()); // 2026-02-02
-        assertThat(res.get(1).getId()).isEqualTo(m1.getId()); // 2026-02-01
-        assertThat(res.get(2).getId()).isEqualTo(m3.getId()); // 2026-01-31
+        assertThat(res.get(0).getId()).isEqualTo(m2.getId());
+        assertThat(res.get(1).getId()).isEqualTo(m1.getId());
+        assertThat(res.get(2).getId()).isEqualTo(m3.getId());
         assertThat(res.get(0).getOrigineType()).isEqualTo(OrigineMouvementSoldeType.LEGACY);
     }
 

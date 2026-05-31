@@ -51,7 +51,6 @@ public class SoldeService {
         mouvementSoldeRepository.save(buildMouvement(TypeMouvement.CREDIT, joueur, m, originContext));
     }
 
-    // DEBIT = dette : augmente la dette
     public void debiter(String matricule, BigDecimal montant) {
         debiter(matricule, montant, SoldeOriginContext.legacy());
     }

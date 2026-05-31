@@ -27,8 +27,6 @@ class FermetureGlobaleControllerTest extends SqlServerTestContainerConfig {
         fermetureGlobaleRepository.deleteAll();
     }
 
-    // ===== Issue 62 : public refusé sur WRITE =====
-
     @Test
     void public_ne_peut_pas_creer_401() throws Exception {
         mvc.perform(post("/api/v1/fermetures-globales")
@@ -43,15 +41,12 @@ class FermetureGlobaleControllerTest extends SqlServerTestContainerConfig {
                 .andExpect(status().isUnauthorized());
     }
 
-    // GET reste public
     @Test
     @WithMockUser(username = "joueur1", roles = "JOUEUR")
     void get_list_public_ok_200() throws Exception {
         mvc.perform(get("/api/v1/fermetures-globales"))
                 .andExpect(status().isOk());
     }
-
-    // ===== Admin global : WRITE autorisé =====
 
     @Test
     @WithMockUser(roles = "ADMIN_GLOBAL")

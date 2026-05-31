@@ -53,7 +53,6 @@ class PaiementControllerTest {
     void pay_ok_201_location_et_body() throws Exception {
         long participationId = 12L;
 
-        // Peu importe le format Java, on sait que Jackson renvoie "…:00"
         LocalDateTime date = LocalDateTime.of(2026, 2, 24, 16, 0);
         Paiement saved = paiement(99L, participationId, new BigDecimal("7.50"), date);
 
@@ -72,7 +71,6 @@ class PaiementControllerTest {
                 .andExpect(jsonPath("$.id").value(99))
                 .andExpect(jsonPath("$.participationId").value((int) participationId))
                 .andExpect(jsonPath("$.montant").value(7.5))
-                // ✅ Assertion exacte sur le JSON renvoyé
                 .andExpect(jsonPath("$.datePaiement").value("2026-02-24T16:00:00"));
     }
 

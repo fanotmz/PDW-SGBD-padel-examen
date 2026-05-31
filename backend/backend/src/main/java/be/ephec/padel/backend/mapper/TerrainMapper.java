@@ -23,10 +23,6 @@ public final class TerrainMapper {
         );
     }
 
-    /**
-     * Ici on suppose que le service a déjà récupéré le Site
-     * à partir du siteId (lookup + validation).
-     */
     public static Terrain toEntity(CreateTerrainRequest req, Site site) {
         if (req == null) return null;
 

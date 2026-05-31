@@ -30,9 +30,6 @@ class TerrainServiceTest {
         service = new TerrainService(terrainRepo, siteRepo);
     }
 
-    // --------
-    // lister
-    // --------
     @Test
     void lister_ok() {
         when(terrainRepo.findAll()).thenReturn(List.of(mock(Terrain.class), mock(Terrain.class)));
@@ -43,9 +40,6 @@ class TerrainServiceTest {
         verify(terrainRepo).findAll();
     }
 
-    // ----------------
-    // listerParSite
-    // ----------------
     @Test
     void listerParSite_siteIdNull_refuse() {
         assertThrows(BusinessException.class, () -> service.listerParSite(null));
@@ -63,9 +57,6 @@ class TerrainServiceTest {
         verifyNoInteractions(siteRepo);
     }
 
-    // --------
-    // getTerrain
-    // --------
     @Test
     void getTerrain_idNull_refuse() {
         assertThrows(BusinessException.class, () -> service.getTerrain(null));
@@ -91,9 +82,6 @@ class TerrainServiceTest {
         verify(terrainRepo).findById(10L);
     }
 
-    // --------
-    // creerTerrain
-    // --------
     @Test
     void creerTerrain_nomNullOuBlank_refuse() {
         assertThrows(BusinessException.class, () -> service.creerTerrain(null, 1L));

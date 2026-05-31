@@ -39,10 +39,6 @@ class AdminGlobalControllerTest {
     @MockitoBean
     private AdminInfoService adminInfoService;
 
-    // -----------------------------
-    // /api/v1/admin/info
-    // -----------------------------
-
     @Test
     void adminInfo_sansAuth_401() throws Exception {
         mvc.perform(get("/api/v1/admin/info"))
@@ -77,10 +73,6 @@ class AdminGlobalControllerTest {
                 .andExpect(jsonPath("$.siteId").value(nullValue()))
                 .andExpect(jsonPath("$.siteNom").value(nullValue()));
     }
-
-    // -----------------------------
-    // /api/v1/admin/stats/** (GLOBAL only)
-    // -----------------------------
 
     @Test
     @WithMockUser(username = "adminSite1", roles = {"ADMIN_SITE"})

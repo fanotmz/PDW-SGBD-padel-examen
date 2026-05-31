@@ -31,11 +31,6 @@ public final class JoueurMapper {
         );
     }
 
-    /**
-     * Mapping request -> entity.
-     * IMPORTANT : l'entity Joueur n'a pas de setMatricule(), donc on utilise le constructeur.
-     * Le Site (si nécessaire) doit être résolu par le service (lookup + règles métier).
-     */
     public static Joueur toEntity(JoueurCreateRequest req) {
         if (req == null) return null;
 
@@ -46,9 +41,6 @@ public final class JoueurMapper {
         );
     }
 
-    /**
-     * Variante utile si ton service a déjà résolu le Site à partir de siteId.
-     */
     public static Joueur toEntity(JoueurCreateRequest req, Site site) {
         if (req == null) return null;
 

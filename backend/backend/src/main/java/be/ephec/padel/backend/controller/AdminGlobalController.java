@@ -29,14 +29,12 @@ public class AdminGlobalController {
         this.adminInfoService = adminInfoService;
     }
 
-    // ex AdminController
     @Operation(summary = "Récupérer les informations administrateur")
     @GetMapping("/info")
     public AdminInfoDto adminInfo() {
         return adminInfoService.getAdminInfo();
     }
 
-    // ex AdminStatsController (on garde les routes pour éviter de casser)
     @Operation(summary = "Consulter le chiffre d'affaires global")
     @GetMapping("/stats/ca")
     public AdminCaStatsDto ca(

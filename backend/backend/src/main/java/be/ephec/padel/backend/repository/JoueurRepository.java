@@ -10,7 +10,7 @@ import java.util.Optional;
 
 public interface JoueurRepository extends JpaRepository<Joueur, String> {
 
-    Optional<Joueur> findById(String matricule); // déjà fourni par JpaRepository
+    Optional<Joueur> findById(String matricule);
     boolean existsById(String matricule);
     Optional<Joueur> findFirstByMatriculeStartingWithOrderByMatriculeDesc(String prefix);
     List<Joueur> findBySite_Id(Long siteId);

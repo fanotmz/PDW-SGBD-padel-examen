@@ -101,8 +101,6 @@ class TerrainControllerTest {
                 .andExpect(jsonPath("$.message").value("Terrain introuvable"));
     }
 
-    // ===== Issue 62 : public refusé sur WRITE =====
-
     @Test
     @WithAnonymousUser
     void public_ne_peut_pas_creer_terrain_401() throws Exception {
@@ -111,8 +109,6 @@ class TerrainControllerTest {
                         .content("{\"nom\":\"T1\",\"siteId\":10}"))
                 .andExpect(status().isUnauthorized());
     }
-
-    // ===== Admin global : WRITE autorisé =====
 
     @Test
     @WithMockUser(roles = "ADMIN_GLOBAL")

@@ -62,8 +62,6 @@ public class TraitementDebutMatchService {
     }
 
     private void appliquerSoldeSiIncomplet(MatchPadel match) {
-        // Si déjà complet => solde = 0 (normalement total payé = 60)
-        // Si incomplet => solde = 60 - total payé, débité à l'organisateur (dette)
         BigDecimal totalPayeMatch = BigDecimal.ZERO.setScale(2, RoundingMode.HALF_UP);
         for (Participation participation : match.getParticipations()) {
             if (participation == null || participation.getId() == null) {

@@ -80,7 +80,7 @@ public class AdminSiteStatsService {
 
     private void validatePeriod(LocalDate from, LocalDate to) {
         if (from == null || to == null) {
-            throw new BusinessException("Les parametres 'from' et 'to' sont obligatoires.");
+            throw new BusinessException("Les paramètres 'from' et 'to' sont obligatoires.");
         }
         if (from.isAfter(to)) {
             throw new BusinessException("La date 'from' doit être <= à la date 'to'.");

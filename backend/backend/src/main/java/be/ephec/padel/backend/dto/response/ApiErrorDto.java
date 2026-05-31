@@ -30,7 +30,6 @@ public class ApiErrorDto {
     private Map<String, String> details;
 
     public ApiErrorDto() {
-        // Constructeur vide requis (Jackson)
     }
 
     public ApiErrorDto(LocalDateTime timestamp,

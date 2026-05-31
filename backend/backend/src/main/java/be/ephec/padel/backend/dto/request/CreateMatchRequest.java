@@ -13,8 +13,8 @@ public class CreateMatchRequest {
     @Positive
     private Long terrainId;
 
-    @NotNull(message = "La date de debut est obligatoire")
-    @Future(message = "La date de debut doit être dans le futur")
+    @NotNull(message = "La date de début est obligatoire")
+    @Future(message = "La date de début doit être dans le futur")
     private LocalDateTime dateDebut;
 
     @NotNull

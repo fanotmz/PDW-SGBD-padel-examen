@@ -13,7 +13,7 @@ public class TraitementJ1Scheduler {
         this.traitementJ1Service = traitementJ1Service;
     }
 
-    @Scheduled(fixedDelay = 300_000) // 5 minutes
+    @Scheduled(fixedDelay = 300_000)
     public void run() {
         traitementJ1Service.traiterJ1FenetreMinutes(5);
     }

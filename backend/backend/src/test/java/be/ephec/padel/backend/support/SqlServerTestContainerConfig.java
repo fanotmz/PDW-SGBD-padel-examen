@@ -20,7 +20,6 @@ public abstract class SqlServerTestContainerConfig {
     @DynamicPropertySource
     static void registerProps(DynamicPropertyRegistry registry) {
 
-        // Démarre explicitement le container avant que Spring ne tente la première connexion
         if (!SQLSERVER.isRunning()) {
             SQLSERVER.start();
         }
@@ -30,12 +29,7 @@ public abstract class SqlServerTestContainerConfig {
         registry.add("spring.datasource.password", SQLSERVER::getPassword);
         registry.add("spring.datasource.driver-class-name", () -> "com.microsoft.sqlserver.jdbc.SQLServerDriver");
 
-        // IMPORTANT : éviter "create" sur SQL Server (drop de contraintes sur tables inexistantes => erreurs)
-        // "update" crée le schéma si absent, sans phase drop agressive.
         registry.add("spring.jpa.hibernate.ddl-auto", () -> "validate");
-
-        // Inutile (et parfois contradictoire) de setter aussi hbm2ddl.auto à part.
-        // registry.add("spring.jpa.properties.hibernate.hbm2ddl.auto", () -> "update");
 
         registry.add("spring.jpa.show-sql", () -> "false");
         registry.add("spring.jpa.properties.hibernate.format_sql", () -> "false");

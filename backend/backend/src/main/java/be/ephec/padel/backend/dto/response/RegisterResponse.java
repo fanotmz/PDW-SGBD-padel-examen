@@ -9,9 +9,6 @@ public class RegisterResponse {
     private UserStatus status;
     private String message;
 
-    public RegisterResponse() {
-    }
-
     public RegisterResponse(Long userId, String username, UserStatus status, String message) {
         this.userId = userId;
         this.username = username;
