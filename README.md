@@ -1,5 +1,7 @@
 # Projet PDW / SGBD — Padel Manager
 
+**Auteur : Fano Alessio**
+
 Application web de gestion de réservations de matchs de padel.
 
 ## Technologies
